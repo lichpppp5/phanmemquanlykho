@@ -20,6 +20,28 @@ dotnet restore
 dotnet run
 ```
 
+## Đóng gói cài đặt Windows (1 script)
+
+Bạn có thể đóng gói trực tiếp bằng script có sẵn:
+
+1. Cài .NET 8 SDK trên Windows.
+2. (Khuyến nghị) Cài [Inno Setup 6](https://jrsoftware.org/isinfo.php).
+3. Từ thư mục gốc source, chạy:
+
+```bat
+scripts\build-installer.bat
+```
+
+Kết quả:
+
+- Nếu có Inno Setup: tạo file cài `.exe` trong `installer-output`.
+- Nếu chưa có Inno Setup: tạo gói portable `.zip` trong `installer-output`.
+
+Các file hỗ trợ đóng gói:
+
+- `scripts/build-installer.bat`
+- `installer/PMTapHoa.Setup.template.iss`
+
 ## Tài khoản mặc định
 
 - Manager: `admin` / `admin123`
