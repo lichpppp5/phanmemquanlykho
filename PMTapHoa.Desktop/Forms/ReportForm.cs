@@ -139,7 +139,7 @@ public class ReportForm : Form
                 return;
             }
 
-            var from = _dtFrom.Checked ? _dtFrom.Value.Date : null;
+            DateTime? from = _dtFrom.Checked ? _dtFrom.Value.Date : null;
             DateTime? to = null;
             if (_dtTo.Checked)
             {

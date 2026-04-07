@@ -83,7 +83,14 @@ public class ReceiptService
 
         printDocument.PrintPage += (_, e) =>
         {
-            var lineHeight = font.GetHeight(e.Graphics) + 1;
+            if (e.Graphics == null)
+            {
+                e.HasMorePages = false;
+                return;
+            }
+
+            var graphics = e.Graphics;
+            var lineHeight = font.GetHeight(graphics) + 1;
             float y = e.MarginBounds.Top;
             while (currentLine < lines.Length)
             {
@@ -93,7 +100,7 @@ public class ReceiptService
                     return;
                 }
 
-                e.Graphics.DrawString(lines[currentLine], font, Brushes.Black, e.MarginBounds.Left, y);
+                graphics.DrawString(lines[currentLine], font, Brushes.Black, e.MarginBounds.Left, y);
                 y += lineHeight;
                 currentLine++;
             }
