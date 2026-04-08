@@ -69,7 +69,7 @@ public class SettingsForm : Form
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Font = new Font("Segoe UI", 10, FontStyle.Regular)
-        });
+        };
         basicLayout.Controls.Add(_cmbPrinters, 1, 0);
 
         basicLayout.Controls.Add(new Label
@@ -93,7 +93,7 @@ public class SettingsForm : Form
             Text = "Bật cảnh báo tự động hàng sắp hết khi mở màn hình Kho",
             AutoSize = true,
             Anchor = AnchorStyles.Left
-        });
+        };
         basicLayout.Controls.Add(_chkLowStockReminder, 1, 2);
 
         var qrBox = new GroupBox
