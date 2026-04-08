@@ -80,19 +80,18 @@ public class InventoryForm : Form
             AllowUserToAddRows = false,
             AutoGenerateColumns = false
         };
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductID), HeaderText = "ID", Width = 55 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Barcode), HeaderText = "Mã vạch", Width = 140 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductName), HeaderText = "Tên sản phẩm", Width = 280 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.CategoryName), HeaderText = "Danh mục", Width = 130 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Unit), HeaderText = "ĐVT", Width = 70 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.StockQuantity), HeaderText = "Tồn", Width = 90 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.MinStock), HeaderText = "Mức tối thiểu", Width = 110 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.CostPrice), HeaderText = "Giá nhập", Width = 100 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.SellingPrice), HeaderText = "Giá bán", Width = 100 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ExpiryDate), HeaderText = "HSD", Width = 120 });
-        _grid.Columns[_grid.Columns.Count - 1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductID), HeaderText = "ID", Width = 60 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Barcode), HeaderText = "Mã vạch", Width = 170 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductName), HeaderText = "Tên sản phẩm", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, MinimumWidth = 260 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.CategoryName), HeaderText = "Danh mục", Width = 150 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Unit), HeaderText = "ĐVT", Width = 80 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.StockQuantity), HeaderText = "Tồn kho", Width = 95 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.MinStock), HeaderText = "Mức tối thiểu", Width = 130 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.CostPrice), HeaderText = "Giá nhập", Width = 120 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.SellingPrice), HeaderText = "Giá bán", Width = 120 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ExpiryDate), HeaderText = "HSD", Width = 130 });
         _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
-        _grid.ColumnHeadersHeight = 40;
+        _grid.ColumnHeadersHeight = 44;
         _grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
         _grid.RowTemplate.Height = 36;
         _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
@@ -174,10 +173,10 @@ public class InventoryForm : Form
             Anchor = AnchorStyles.Left
         };
 
-        _btnAdd = new Button { Text = "Thêm", Width = 120, Height = 38, BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
-        _btnUpdate = new Button { Text = "Sửa", Width = 120, Height = 38, BackColor = UiStyle.Primary, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
-        _btnDelete = new Button { Text = "Xóa", Width = 120, Height = 38, BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
-        var btnClear = new Button { Text = "Làm mới form", Width = 145, Height = 38, BackColor = UiStyle.Neutral, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+        _btnAdd = new Button { Text = "Thêm", Width = 126, Height = 44, BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold), Margin = new Padding(0, 2, 8, 2) };
+        _btnUpdate = new Button { Text = "Sửa", Width = 126, Height = 44, BackColor = UiStyle.Primary, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold), Margin = new Padding(0, 2, 8, 2) };
+        _btnDelete = new Button { Text = "Xóa", Width = 126, Height = 44, BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold), Margin = new Padding(0, 2, 8, 2) };
+        var btnClear = new Button { Text = "Làm mới form", Width = 160, Height = 44, BackColor = UiStyle.Neutral, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold), Margin = new Padding(0, 2, 8, 2) };
 
         _btnAdd.Click += (_, _) => CreateProduct();
         _btnUpdate.Click += (_, _) => UpdateProduct();
@@ -277,7 +276,7 @@ public class InventoryForm : Form
             BackColor = UiStyle.AccentBlueDark,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
-            Height = 38,
+            Height = 44,
             Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Margin = new Padding(0, 4, 10, 0)
         };
@@ -290,7 +289,7 @@ public class InventoryForm : Form
             BackColor = UiStyle.Warning,
             ForeColor = Color.Black,
             FlatStyle = FlatStyle.Flat,
-            Height = 38,
+            Height = 44,
             Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Margin = new Padding(0, 4, 0, 0)
         };

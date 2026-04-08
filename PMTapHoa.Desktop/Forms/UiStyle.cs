@@ -4,6 +4,8 @@ namespace PMTapHoa.Desktop.Forms;
 
 public static class UiStyle
 {
+    private const int ButtonMinHeight = 40;
+    private const int ButtonMinWidth = 96;
     public static bool FullScreenEnabled { get; set; }
 
     public static Color Background => Color.WhiteSmoke;
@@ -35,6 +37,7 @@ public static class UiStyle
         form.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
         form.KeyPreview = true;
         form.BackColor = Background;
+        EnsureConsistentButtons(form);
     }
 
     public static void ApplyDialogStyle(Form form, string title, Size size, bool sizable = false)
@@ -49,11 +52,13 @@ public static class UiStyle
         form.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
         form.KeyPreview = true;
         form.BackColor = Background;
+        EnsureConsistentButtons(form);
     }
 
     public static void ApplyWindowMode(Form form)
     {
         form.WindowState = FullScreenEnabled ? FormWindowState.Maximized : FormWindowState.Normal;
+        EnsureConsistentButtons(form);
     }
 
     public static void StyleGrid(DataGridView grid, bool fillLastColumn = false)
@@ -81,5 +86,71 @@ public static class UiStyle
         button.ForeColor = foreColor ?? Color.White;
         button.FlatStyle = FlatStyle.Flat;
         button.FlatAppearance.BorderSize = 0;
+        if (button.MinimumSize.Height < ButtonMinHeight)
+        {
+            button.MinimumSize = new Size(
+                Math.Max(button.MinimumSize.Width, ButtonMinWidth),
+                ButtonMinHeight);
+        }
+        if (button.Font.Size < 10F)
+        {
+            button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        }
+        if (button.Padding == Padding.Empty)
+        {
+            button.Padding = new Padding(10, 0, 10, 0);
+        }
+    }
+
+    private static void EnsureConsistentButtons(Form form)
+    {
+        form.Shown -= Form_ShownNormalizeButtons;
+        form.Shown += Form_ShownNormalizeButtons;
+    }
+
+    private static void Form_ShownNormalizeButtons(object? sender, EventArgs e)
+    {
+        if (sender is not Form form)
+        {
+            return;
+        }
+
+        NormalizeButtonsRecursive(form);
+    }
+
+    private static void NormalizeButtonsRecursive(Control parent)
+    {
+        foreach (Control child in parent.Controls)
+        {
+            if (child is Button button)
+            {
+                if (button.MinimumSize.Height < ButtonMinHeight)
+                {
+                    button.MinimumSize = new Size(
+                        Math.Max(button.MinimumSize.Width, ButtonMinWidth),
+                        ButtonMinHeight);
+                }
+
+                if (button.Height < ButtonMinHeight && button.Dock == DockStyle.None)
+                {
+                    button.Height = ButtonMinHeight;
+                }
+
+                if (button.Font.Size < 10F)
+                {
+                    button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+                }
+
+                if (button.Padding == Padding.Empty)
+                {
+                    button.Padding = new Padding(10, 0, 10, 0);
+                }
+            }
+
+            if (child.HasChildren)
+            {
+                NormalizeButtonsRecursive(child);
+            }
+        }
     }
 }

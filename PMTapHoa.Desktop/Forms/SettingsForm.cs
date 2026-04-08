@@ -57,19 +57,21 @@ public class SettingsForm : Form
             RowCount = 4,
             Padding = new Padding(12, 10, 12, 10)
         };
-        basicLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210f));
+        basicLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280f));
         basicLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        basicLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
-        basicLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
-        basicLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
-        basicLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
+        basicLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        basicLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        basicLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        basicLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
         basicBox.Controls.Add(basicLayout);
 
         basicLayout.Controls.Add(new Label
         {
             Text = "Máy in mặc định:",
-            AutoSize = true,
-            Anchor = AnchorStyles.Left
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         }, 0, 0);
         _cmbPrinters = new ComboBox
         {
@@ -82,8 +84,10 @@ public class SettingsForm : Form
         basicLayout.Controls.Add(new Label
         {
             Text = "Khổ giấy mặc định:",
-            AutoSize = true,
-            Anchor = AnchorStyles.Left
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         }, 0, 1);
         _cmbPaperWidth = new ComboBox
         {
@@ -98,8 +102,10 @@ public class SettingsForm : Form
         basicLayout.Controls.Add(new Label
         {
             Text = "Chế độ hiển thị:",
-            AutoSize = true,
-            Anchor = AnchorStyles.Left
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         }, 0, 2);
         _cmbDisplayMode = new ComboBox
         {
@@ -117,7 +123,8 @@ public class SettingsForm : Form
             AutoSize = true,
             Anchor = AnchorStyles.Left
         };
-        basicLayout.Controls.Add(_chkLowStockReminder, 1, 3);
+        basicLayout.Controls.Add(_chkLowStockReminder, 0, 3);
+        basicLayout.SetColumnSpan(_chkLowStockReminder, 2);
 
         var qrBox = new GroupBox
         {
@@ -134,9 +141,9 @@ public class SettingsForm : Form
             RowCount = 5,
             Padding = new Padding(12, 10, 12, 10)
         };
-        qrLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170f));
+        qrLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220f));
         qrLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-        qrLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160f));
+        qrLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200f));
         qrLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
         qrLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44f));
         qrLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
@@ -154,20 +161,20 @@ public class SettingsForm : Form
         qrLayout.Controls.Add(_chkQrEnabled, 0, 0);
         qrLayout.SetColumnSpan(_chkQrEnabled, 4);
 
-        qrLayout.Controls.Add(new Label { Text = "BIN ngân hàng:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
+        qrLayout.Controls.Add(new Label { Text = "BIN ngân hàng:", AutoSize = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 1);
         _txtQrBankBin = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         qrLayout.Controls.Add(_txtQrBankBin, 1, 1);
 
-        qrLayout.Controls.Add(new Label { Text = "Số tài khoản:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 1);
+        qrLayout.Controls.Add(new Label { Text = "Số tài khoản:", AutoSize = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 2, 1);
         _txtQrAccountNo = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         qrLayout.Controls.Add(_txtQrAccountNo, 3, 1);
 
-        qrLayout.Controls.Add(new Label { Text = "Tên nhận tiền:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
+        qrLayout.Controls.Add(new Label { Text = "Tên nhận tiền:", AutoSize = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 2);
         _txtQrAccountName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         qrLayout.Controls.Add(_txtQrAccountName, 1, 2);
         qrLayout.SetColumnSpan(_txtQrAccountName, 3);
 
-        qrLayout.Controls.Add(new Label { Text = "Tiền tố nội dung CK:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 3);
+        qrLayout.Controls.Add(new Label { Text = "Tiền tố nội dung CK:", AutoSize = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 3);
         _txtQrPrefix = new TextBox { Dock = DockStyle.Left, Width = 160, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         qrLayout.Controls.Add(_txtQrPrefix, 1, 3);
 

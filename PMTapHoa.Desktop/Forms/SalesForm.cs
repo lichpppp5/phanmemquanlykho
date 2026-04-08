@@ -8,7 +8,7 @@ namespace PMTapHoa.Desktop.Forms;
 public class SalesForm : Form
 {
     private const int PreferredLeftMin = 620;
-    private const int PreferredRightMin = 420;
+    private const int PreferredRightMin = 520;
     private readonly AppServices _services;
     private readonly BindingList<CartItem> _cartItems = [];
     private readonly TextBox _txtBarcode;
@@ -49,13 +49,22 @@ public class SalesForm : Form
             Height = 76,
             BackColor = UiStyle.HeaderDark
         };
+        var headerLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Padding = new Padding(18, 0, 18, 0)
+        };
+        headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         var lblTitle = new Label
         {
             Text = "POS BÁN HÀNG",
             ForeColor = Color.White,
             Font = new Font("Segoe UI", 20, FontStyle.Bold),
             AutoSize = true,
-            Location = new Point(20, 18)
+            Anchor = AnchorStyles.Left
         };
         var lblShortcut = new Label
         {
@@ -63,15 +72,17 @@ public class SalesForm : Form
             ForeColor = Color.Gainsboro,
             Font = new Font("Segoe UI", 11, FontStyle.Regular),
             AutoSize = true,
-            Location = new Point(820, 27)
+            Anchor = AnchorStyles.Right
         };
-        topHeader.Controls.Add(lblTitle);
-        topHeader.Controls.Add(lblShortcut);
+        headerLayout.Controls.Add(lblTitle, 0, 0);
+        headerLayout.Controls.Add(lblShortcut, 1, 0);
+        topHeader.Controls.Add(headerLayout);
         Controls.Add(topHeader);
 
         _mainSplit = new SplitContainer
         {
             Dock = DockStyle.Fill,
+            SplitterWidth = 8,
             BackColor = Color.WhiteSmoke
         };
         // Avoid setting PanelMinSize too early (can throw before real size is calculated).
@@ -108,12 +119,12 @@ public class SalesForm : Form
         };
         scanLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44f));
         scanLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
-        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
         scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55));
-        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
         scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
-        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
         scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
         scanGroup.Controls.Add(scanLayout);
 
         var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
@@ -218,7 +229,7 @@ public class SalesForm : Form
             RowCount = 3,
             Padding = new Padding(10)
         };
-        customerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130f));
+        customerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96f));
         customerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         customerLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
         customerLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
@@ -239,7 +250,7 @@ public class SalesForm : Form
         _cmbPaperWidth = new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 85,
+            Width = 100,
             Dock = DockStyle.Left
         };
         _cmbPaperWidth.Items.AddRange(["58", "80"]);
@@ -668,7 +679,7 @@ public class SalesForm : Form
 
         var splitterWidth = Math.Max(0, _mainSplit.SplitterWidth);
         var minLeft = Math.Min(PreferredLeftMin, Math.Max(160, (containerWidth - splitterWidth) / 2));
-        var minRight = Math.Min(PreferredRightMin, Math.Max(220, (containerWidth - splitterWidth) / 3));
+        var minRight = Math.Min(PreferredRightMin, Math.Max(360, (containerWidth - splitterWidth) / 2));
 
         var maxLeft = containerWidth - splitterWidth - minRight;
         if (maxLeft < minLeft)
@@ -676,7 +687,7 @@ public class SalesForm : Form
             return;
         }
 
-        var desiredLeft = (int)(containerWidth * 0.62);
+        var desiredLeft = (int)(containerWidth * 0.56);
         desiredLeft = Math.Max(minLeft, Math.Min(maxLeft, desiredLeft));
 
         if (_mainSplit.SplitterDistance == desiredLeft)
