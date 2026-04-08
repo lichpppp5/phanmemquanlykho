@@ -13,36 +13,74 @@ public class ReportForm : Form
         _services = services;
 
         Text = "Báo cáo doanh thu";
-        Width = 620;
-        Height = 400;
+        Width = 980;
+        Height = 560;
+        MinimumSize = new Size(900, 500);
         StartPosition = FormStartPosition.CenterParent;
         KeyPreview = true;
+        BackColor = Color.WhiteSmoke;
 
+        var title = new Label
+        {
+            Text = "BÁO CÁO DOANH THU",
+            AutoSize = true,
+            Font = new Font("Segoe UI", 20, FontStyle.Bold),
+            Location = new Point(28, 20)
+        };
+        Controls.Add(title);
+
+        var pnlRevenue = new Panel
+        {
+            Location = new Point(35, 80),
+            Size = new Size(430, 110),
+            BackColor = Color.FromArgb(39, 174, 96)
+        };
         _lblRevenueToday = new Label
         {
             Text = "Doanh thu hôm nay: 0 VND",
-            Font = new Font("Segoe UI", 15, FontStyle.Bold),
+            Font = new Font("Segoe UI", 16, FontStyle.Bold),
             AutoSize = true,
-            Location = new Point(35, 70)
+            ForeColor = Color.White,
+            Location = new Point(16, 36)
         };
+        pnlRevenue.Controls.Add(_lblRevenueToday);
+        Controls.Add(pnlRevenue);
 
+        var pnlDebt = new Panel
+        {
+            Location = new Point(495, 80),
+            Size = new Size(430, 110),
+            BackColor = Color.FromArgb(211, 84, 0)
+        };
         _lblOutstandingDebt = new Label
         {
             Text = "Tổng công nợ còn lại: 0 VND",
-            Font = new Font("Segoe UI", 13, FontStyle.Bold),
+            Font = new Font("Segoe UI", 16, FontStyle.Bold),
             AutoSize = true,
-            Location = new Point(35, 120)
+            ForeColor = Color.White,
+            Location = new Point(16, 36)
         };
+        pnlDebt.Controls.Add(_lblOutstandingDebt);
+        Controls.Add(pnlDebt);
+
+        var filterGroup = new GroupBox
+        {
+            Text = "Bộ lọc thời gian xuất báo cáo",
+            Location = new Point(35, 215),
+            Size = new Size(890, 90),
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+        };
+        Controls.Add(filterGroup);
 
         var lblFrom = new Label
         {
             Text = "Từ ngày:",
             AutoSize = true,
-            Location = new Point(35, 185)
+            Location = new Point(20, 42)
         };
         _dtFrom = new DateTimePicker
         {
-            Location = new Point(90, 181),
+            Location = new Point(80, 38),
             Width = 130,
             Format = DateTimePickerFormat.Short,
             ShowCheckBox = true
@@ -52,11 +90,11 @@ public class ReportForm : Form
         {
             Text = "Đến ngày:",
             AutoSize = true,
-            Location = new Point(245, 185)
+            Location = new Point(240, 42)
         };
         _dtTo = new DateTimePicker
         {
-            Location = new Point(310, 181),
+            Location = new Point(305, 38),
             Width = 130,
             Format = DateTimePickerFormat.Short,
             ShowCheckBox = true
@@ -66,38 +104,45 @@ public class ReportForm : Form
         {
             Text = "Làm mới",
             Width = 120,
-            Height = 40,
-            Location = new Point(35, 240)
+            Height = 36,
+            Location = new Point(470, 36),
+            BackColor = Color.FromArgb(52, 152, 219),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnRefresh.Click += (_, _) => LoadRevenue();
 
         var btnExportSales = new Button
         {
             Text = "Xuất DS hóa đơn (Excel)",
-            Width = 180,
-            Height = 40,
-            Location = new Point(170, 240)
+            Width = 170,
+            Height = 36,
+            Location = new Point(560, 36),
+            BackColor = Color.FromArgb(39, 174, 96),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnExportSales.Click += (_, _) => ExportSales();
 
         var btnExportDebt = new Button
         {
             Text = "Xuất công nợ (Excel)",
-            Width = 160,
-            Height = 40,
-            Location = new Point(365, 240)
+            Width = 130,
+            Height = 36,
+            Location = new Point(740, 36),
+            BackColor = Color.FromArgb(230, 126, 34),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnExportDebt.Click += (_, _) => ExportDebts();
 
-        Controls.Add(_lblRevenueToday);
-        Controls.Add(_lblOutstandingDebt);
-        Controls.Add(lblFrom);
-        Controls.Add(_dtFrom);
-        Controls.Add(lblTo);
-        Controls.Add(_dtTo);
-        Controls.Add(btnRefresh);
-        Controls.Add(btnExportSales);
-        Controls.Add(btnExportDebt);
+        filterGroup.Controls.Add(lblFrom);
+        filterGroup.Controls.Add(_dtFrom);
+        filterGroup.Controls.Add(lblTo);
+        filterGroup.Controls.Add(_dtTo);
+        filterGroup.Controls.Add(btnRefresh);
+        filterGroup.Controls.Add(btnExportSales);
+        filterGroup.Controls.Add(btnExportDebt);
 
         Load += (_, _) => LoadRevenue();
         KeyDown += (_, e) =>

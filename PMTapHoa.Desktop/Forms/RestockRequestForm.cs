@@ -26,17 +26,20 @@ public class RestockRequestForm : Form
         _defaultProductId = defaultProductId;
 
         Text = "Mối nhập hàng / Yêu cầu nhập hàng";
-        Width = 1120;
-        Height = 720;
+        Width = 1260;
+        Height = 840;
+        MinimumSize = new Size(1180, 760);
         StartPosition = FormStartPosition.CenterParent;
         KeyPreview = true;
+        BackColor = Color.WhiteSmoke;
 
         var panel = new GroupBox
         {
             Text = "Tạo yêu cầu nhập hàng",
             Location = new Point(20, 20),
             Width = 1060,
-            Height = 190
+            Height = 190,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
 
         panel.Controls.Add(new Label { Text = "Sản phẩm:", AutoSize = true, Location = new Point(20, 35) });
@@ -44,7 +47,8 @@ public class RestockRequestForm : Form
         {
             Location = new Point(85, 31),
             Width = 280,
-            DropDownStyle = ComboBoxStyle.DropDownList
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
         };
         panel.Controls.Add(_cmbProducts);
 
@@ -94,7 +98,10 @@ public class RestockRequestForm : Form
             Text = "Lưu yêu cầu",
             Width = 130,
             Height = 34,
-            Location = new Point(860, 115)
+            Location = new Point(860, 115),
+            BackColor = Color.FromArgb(39, 174, 96),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnSave.Click += (_, _) => SaveRequest();
         panel.Controls.Add(btnSave);
@@ -106,14 +113,18 @@ public class RestockRequestForm : Form
             Text = "Gợi ý tự động cho hàng sắp hết",
             Location = new Point(20, 220),
             Width = 1060,
-            Height = 180
+            Height = 180,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
 
         var btnLoadSuggestions = new Button
         {
             Text = "Tải gợi ý",
             Width = 100,
-            Location = new Point(20, 30)
+            Location = new Point(20, 30),
+            BackColor = Color.FromArgb(52, 152, 219),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnLoadSuggestions.Click += (_, _) => LoadSuggestions();
         suggestBox.Controls.Add(btnLoadSuggestions);
@@ -122,7 +133,10 @@ public class RestockRequestForm : Form
         {
             Text = "Tạo yêu cầu đã chọn",
             Width = 160,
-            Location = new Point(130, 30)
+            Location = new Point(130, 30),
+            BackColor = Color.FromArgb(230, 126, 34),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnCreateSuggested.Click += (_, _) => CreateRequestsFromSuggestions();
         suggestBox.Controls.Add(btnCreateSuggested);
@@ -151,6 +165,10 @@ public class RestockRequestForm : Form
         _gridSuggestions.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(LowStockSuggestionItem.MinStock), HeaderText = "Min", Width = 80, ReadOnly = true });
         _gridSuggestions.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(LowStockSuggestionItem.SuggestedQty), HeaderText = "SL gợi ý", Width = 100 });
         _gridSuggestions.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(LowStockSuggestionItem.HasOpenRequest), HeaderText = "Đang có YC mở", Width = 120, ReadOnly = true });
+        _gridSuggestions.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _gridSuggestions.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _gridSuggestions.ColumnHeadersHeight = 34;
+        _gridSuggestions.RowTemplate.Height = 32;
         _gridSuggestions.RowPrePaint += GridSuggestions_RowPrePaint;
         suggestBox.Controls.Add(_gridSuggestions);
 
@@ -161,7 +179,8 @@ public class RestockRequestForm : Form
         {
             Location = new Point(105, 411),
             Width = 140,
-            DropDownStyle = ComboBoxStyle.DropDownList
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
         };
         _cmbStatusFilter.Items.AddRange(["Tất cả", "Open", "Ordered", "Received", "Cancelled"]);
         _cmbStatusFilter.SelectedIndex = 0;
@@ -172,7 +191,10 @@ public class RestockRequestForm : Form
         {
             Text = "Làm mới",
             Width = 100,
-            Location = new Point(265, 410)
+            Location = new Point(265, 410),
+            BackColor = Color.FromArgb(127, 140, 141),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnRefresh.Click += (_, _) => LoadRequests();
         Controls.Add(btnRefresh);
@@ -194,6 +216,11 @@ public class RestockRequestForm : Form
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(RestockRequestItem.ExpectedCostPrice), HeaderText = "Giá dự kiến", Width = 120 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(RestockRequestItem.Status), HeaderText = "Trạng thái", Width = 100 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(RestockRequestItem.Note), HeaderText = "Ghi chú", Width = 130 });
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _grid.ColumnHeadersHeight = 34;
+        _grid.RowTemplate.Height = 32;
+        _grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
         _grid.CellDoubleClick += Grid_CellDoubleClick;
         Controls.Add(_grid);
 

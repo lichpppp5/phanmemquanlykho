@@ -15,31 +15,60 @@ public class DashboardForm : Form
         _services = services;
 
         Text = "Dashboard tổng quan";
-        Width = 650;
-        Height = 430;
+        Width = 980;
+        Height = 620;
+        MinimumSize = new Size(900, 560);
         StartPosition = FormStartPosition.CenterParent;
         KeyPreview = true;
+        BackColor = Color.WhiteSmoke;
 
-        _lblTodayRevenue = CreateMetricLabel("Doanh thu hôm nay: 0 VND", 25);
-        _lblMonthRevenue = CreateMetricLabel("Doanh thu tháng này: 0 VND", 70);
-        _lblTodayOrders = CreateMetricLabel("Số đơn hôm nay: 0", 115);
-        _lblDebtOutstanding = CreateMetricLabel("Tổng công nợ: 0 VND", 160);
-        _lblLowStock = CreateMetricLabel("Sản phẩm sắp hết hàng: 0", 205);
-        _lblNearExpiry = CreateMetricLabel("Sản phẩm gần hết hạn (14 ngày): 0", 250);
+        var title = new Label
+        {
+            Text = "DASHBOARD TỔNG QUAN",
+            AutoSize = true,
+            Font = new Font("Segoe UI", 20, FontStyle.Bold),
+            Location = new Point(26, 18)
+        };
+        Controls.Add(title);
 
-        Controls.Add(_lblTodayRevenue);
-        Controls.Add(_lblMonthRevenue);
-        Controls.Add(_lblTodayOrders);
-        Controls.Add(_lblDebtOutstanding);
-        Controls.Add(_lblLowStock);
-        Controls.Add(_lblNearExpiry);
+        var grid = new TableLayoutPanel
+        {
+            Location = new Point(24, 72),
+            Size = new Size(920, 420),
+            ColumnCount = 2,
+            RowCount = 3
+        };
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        for (var i = 0; i < 3; i++)
+        {
+            grid.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33f));
+        }
+        Controls.Add(grid);
+
+        var cardTodayRevenue = CreateCard(Color.FromArgb(39, 174, 96), out _lblTodayRevenue);
+        var cardMonthRevenue = CreateCard(Color.FromArgb(41, 128, 185), out _lblMonthRevenue);
+        var cardTodayOrders = CreateCard(Color.FromArgb(52, 73, 94), out _lblTodayOrders);
+        var cardDebt = CreateCard(Color.FromArgb(211, 84, 0), out _lblDebtOutstanding);
+        var cardLowStock = CreateCard(Color.FromArgb(241, 196, 15), out _lblLowStock, darkText: true);
+        var cardNearExpiry = CreateCard(Color.FromArgb(142, 68, 173), out _lblNearExpiry);
+
+        grid.Controls.Add(cardTodayRevenue, 0, 0);
+        grid.Controls.Add(cardMonthRevenue, 1, 0);
+        grid.Controls.Add(cardTodayOrders, 0, 1);
+        grid.Controls.Add(cardDebt, 1, 1);
+        grid.Controls.Add(cardLowStock, 0, 2);
+        grid.Controls.Add(cardNearExpiry, 1, 2);
 
         var btnRefresh = new Button
         {
             Text = "Làm mới",
-            Width = 120,
+            Width = 140,
             Height = 40,
-            Location = new Point(30, 305)
+            Location = new Point(24, 510),
+            BackColor = Color.FromArgb(52, 152, 219),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnRefresh.Click += (_, _) => LoadData();
         Controls.Add(btnRefresh);
@@ -54,15 +83,25 @@ public class DashboardForm : Form
         };
     }
 
-    private static Label CreateMetricLabel(string text, int top)
+    private static Panel CreateCard(Color color, out Label label, bool darkText = false)
     {
-        return new Label
+        var panel = new Panel
         {
-            Text = text,
-            AutoSize = true,
-            Font = new Font("Segoe UI", 12, FontStyle.Bold),
-            Location = new Point(30, top)
+            Margin = new Padding(10),
+            Dock = DockStyle.Fill,
+            BackColor = color
         };
+        label = new Label
+        {
+            Text = "-",
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Segoe UI", 16, FontStyle.Bold),
+            ForeColor = darkText ? Color.Black : Color.White
+        };
+        panel.Controls.Add(label);
+        return panel;
     }
 
     private void LoadData()

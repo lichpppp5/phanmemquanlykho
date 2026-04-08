@@ -29,10 +29,12 @@ public class InventoryForm : Form
         _services = services;
 
         Text = "Quản lý kho hàng";
-        Width = 1150;
-        Height = 760;
+        Width = 1300;
+        Height = 860;
+        MinimumSize = new Size(1220, 780);
         StartPosition = FormStartPosition.CenterParent;
         KeyPreview = true;
+        BackColor = Color.WhiteSmoke;
 
         var lblSearch = new Label
         {
@@ -44,7 +46,8 @@ public class InventoryForm : Form
         _txtSearch = new TextBox
         {
             Width = 300,
-            Location = new Point(180, 16)
+            Location = new Point(180, 16),
+            Font = new Font("Segoe UI", 11, FontStyle.Regular)
         };
         _txtSearch.TextChanged += (_, _) => LoadGrid();
 
@@ -67,6 +70,11 @@ public class InventoryForm : Form
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.CostPrice), HeaderText = "Giá nhập", Width = 100 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.SellingPrice), HeaderText = "Giá bán", Width = 100 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ExpiryDate), HeaderText = "HSD", Width = 120 });
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _grid.ColumnHeadersHeight = 38;
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _grid.RowTemplate.Height = 34;
+        _grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
         _grid.RowPrePaint += Grid_RowPrePaint;
         _grid.SelectionChanged += (_, _) => LoadSelectedProductToEditor();
 
@@ -75,7 +83,8 @@ public class InventoryForm : Form
             Text = "CRUD sản phẩm",
             Location = new Point(20, 410),
             Width = 1090,
-            Height = 190
+            Height = 190,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
 
         var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Location = new Point(18, 36) };
@@ -98,10 +107,10 @@ public class InventoryForm : Form
         var lblExpiry = new Label { Text = "HSD:", AutoSize = true, Location = new Point(785, 82) };
         _dtExpiry = new DateTimePicker { Location = new Point(825, 78), Width = 170, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
 
-        _btnAdd = new Button { Text = "Thêm", Width = 100, Location = new Point(295, 130) };
-        _btnUpdate = new Button { Text = "Sửa", Width = 100, Location = new Point(410, 130) };
-        _btnDelete = new Button { Text = "Xóa", Width = 100, Location = new Point(525, 130) };
-        var btnClear = new Button { Text = "Làm mới form", Width = 120, Location = new Point(640, 130) };
+        _btnAdd = new Button { Text = "Thêm", Width = 100, Location = new Point(295, 130), BackColor = Color.FromArgb(46, 204, 113), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnUpdate = new Button { Text = "Sửa", Width = 100, Location = new Point(410, 130), BackColor = Color.FromArgb(52, 152, 219), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnDelete = new Button { Text = "Xóa", Width = 100, Location = new Point(525, 130), BackColor = Color.FromArgb(192, 57, 43), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        var btnClear = new Button { Text = "Làm mới form", Width = 120, Location = new Point(640, 130), BackColor = Color.FromArgb(127, 140, 141), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
 
         _btnAdd.Click += (_, _) => CreateProduct();
         _btnUpdate.Click += (_, _) => UpdateProduct();
@@ -136,7 +145,8 @@ public class InventoryForm : Form
             Text = "Nhập hàng nhanh",
             Location = new Point(20, 615),
             Width = 1090,
-            Height = 90
+            Height = 90,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
 
         var lblQty = new Label
@@ -169,7 +179,10 @@ public class InventoryForm : Form
         {
             Text = "Cập nhật nhập hàng",
             Width = 170,
-            Location = new Point(600, 32)
+            Location = new Point(600, 32),
+            BackColor = Color.FromArgb(41, 128, 185),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnImport.Click += (_, _) => QuickImportSelectedProduct();
 
@@ -177,7 +190,10 @@ public class InventoryForm : Form
         {
             Text = "Ghi mối nhập hàng",
             Width = 160,
-            Location = new Point(785, 32)
+            Location = new Point(785, 32),
+            BackColor = Color.FromArgb(243, 156, 18),
+            ForeColor = Color.Black,
+            FlatStyle = FlatStyle.Flat
         };
         btnRestock.Click += (_, _) => OpenRestockForSelectedProduct();
 

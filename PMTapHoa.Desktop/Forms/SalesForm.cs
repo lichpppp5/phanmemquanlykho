@@ -17,6 +17,10 @@ public class SalesForm : Form
     private readonly Button _btnPay;
     private readonly Button _btnReprintLast;
     private readonly ComboBox _cmbPaperWidth;
+    private readonly Label _lblItemCount;
+    private readonly Button _btnIncreaseQty;
+    private readonly Button _btnDecreaseQty;
+    private readonly Button _btnRemoveLine;
     private int? _lastSaleId;
 
     public SalesForm(AppServices services)
@@ -24,155 +28,260 @@ public class SalesForm : Form
         _services = services;
 
         Text = "Màn hình bán hàng (POS)";
-        Width = 1000;
-        Height = 650;
+        Width = 1360;
+        Height = 820;
+        MinimumSize = new Size(1240, 740);
         StartPosition = FormStartPosition.CenterParent;
         KeyPreview = true;
+        BackColor = Color.WhiteSmoke;
 
-        var lblBarcode = new Label
+        var topHeader = new Panel
         {
-            Text = "Quét mã vạch:",
+            Dock = DockStyle.Top,
+            Height = 66,
+            BackColor = Color.FromArgb(44, 62, 80)
+        };
+        var lblTitle = new Label
+        {
+            Text = "POS BÁN HÀNG",
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 18, FontStyle.Bold),
             AutoSize = true,
-            Location = new Point(20, 20)
+            Location = new Point(20, 15)
         };
-
-        _txtBarcode = new TextBox
+        var lblShortcut = new Label
         {
-            Width = 280,
-            Location = new Point(120, 16)
+            Text = "Phím tắt: F2 Thanh toán | F3 Tìm nhanh | Esc Đóng",
+            ForeColor = Color.Gainsboro,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            AutoSize = true,
+            Location = new Point(980, 24)
         };
+        topHeader.Controls.Add(lblTitle);
+        topHeader.Controls.Add(lblShortcut);
+        Controls.Add(topHeader);
+
+        var mainSplit = new SplitContainer
+        {
+            Dock = DockStyle.Fill,
+            SplitterDistance = 930,
+            BackColor = Color.WhiteSmoke
+        };
+        Controls.Add(mainSplit);
+
+        var leftPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Padding = new Padding(14, 14, 8, 14)
+        };
+        leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 104f));
+        leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
+        mainSplit.Panel1.Controls.Add(leftPanel);
+
+        var scanGroup = new GroupBox
+        {
+            Text = "Quét mã & tìm kiếm",
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+        };
+        leftPanel.Controls.Add(scanGroup, 0, 0);
+
+        var scanLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 6,
+            RowCount = 2,
+            Padding = new Padding(8)
+        };
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55));
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
+        scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
+        scanGroup.Controls.Add(scanLayout);
+
+        var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _txtBarcode = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 14, FontStyle.Bold) };
         _txtBarcode.KeyDown += TxtBarcode_KeyDown;
 
-        var lblSearch = new Label
-        {
-            Text = "Tìm tên (F3):",
-            AutoSize = true,
-            Location = new Point(430, 20)
-        };
-
-        _txtSearchName = new TextBox
-        {
-            Width = 240,
-            Location = new Point(515, 16)
-        };
+        var lblSearch = new Label { Text = "Tên hàng:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _txtSearchName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12, FontStyle.Regular) };
         _txtSearchName.TextChanged += (_, _) => ApplyNameFilter();
         _txtSearchName.KeyDown += TxtSearchName_KeyDown;
 
-        var btnRefresh = new Button
-        {
-            Text = "Bỏ lọc",
-            Width = 90,
-            Location = new Point(770, 15)
-        };
+        var btnRefresh = new Button { Text = "Bỏ lọc", Dock = DockStyle.Fill };
         btnRefresh.Click += (_, _) =>
         {
             _txtSearchName.Clear();
             BindGrid(_cartItems.ToList());
         };
 
+        scanLayout.Controls.Add(lblBarcode, 0, 0);
+        scanLayout.Controls.Add(_txtBarcode, 1, 0);
+        scanLayout.SetColumnSpan(_txtBarcode, 2);
+        scanLayout.Controls.Add(lblSearch, 3, 0);
+        scanLayout.Controls.Add(_txtSearchName, 4, 0);
+        scanLayout.SetColumnSpan(_txtSearchName, 2);
+        var hintScan = new Label { Text = "Enter để thêm nhanh vào giỏ", AutoSize = true, ForeColor = Color.DimGray, Anchor = AnchorStyles.Left };
+        scanLayout.Controls.Add(hintScan, 1, 1);
+        scanLayout.SetColumnSpan(hintScan, 3);
+        scanLayout.Controls.Add(btnRefresh, 5, 1);
+
         _grid = new DataGridView
         {
-            Location = new Point(20, 60),
-            Width = 940,
-            Height = 420,
+            Dock = DockStyle.Fill,
             ReadOnly = true,
             AllowUserToAddRows = false,
-            AutoGenerateColumns = false
+            AutoGenerateColumns = false,
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+            MultiSelect = false
         };
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.Barcode), HeaderText = "Mã vạch", Width = 140 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.ProductName), HeaderText = "Tên sản phẩm", Width = 320 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.ProductName), HeaderText = "Tên sản phẩm", Width = 340 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.Quantity), HeaderText = "SL", Width = 80 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.UnitPrice), HeaderText = "Đơn giá", Width = 140 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.LineTotal), HeaderText = "Thành tiền", Width = 160 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.UnitPrice), HeaderText = "Đơn giá", Width = 150 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.LineTotal), HeaderText = "Thành tiền", Width = 170 });
         _grid.DataSource = _cartItems;
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _grid.ColumnHeadersHeight = 36;
+        _grid.RowTemplate.Height = 34;
+        _grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+        leftPanel.Controls.Add(_grid, 0, 1);
 
-        var lblCustomer = new Label
+        var quickActions = new FlowLayoutPanel
         {
-            Text = "Khách hàng:",
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            Padding = new Padding(6),
+            WrapContents = false
+        };
+        _btnIncreaseQty = new Button { Text = "Tăng SL (+1)", Width = 140, Height = 42, BackColor = Color.FromArgb(46, 204, 113), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnIncreaseQty.Click += (_, _) => AdjustSelectedItemQuantity(1);
+        _btnDecreaseQty = new Button { Text = "Giảm SL (-1)", Width = 140, Height = 42, BackColor = Color.FromArgb(243, 156, 18), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnDecreaseQty.Click += (_, _) => AdjustSelectedItemQuantity(-1);
+        _btnRemoveLine = new Button { Text = "Xóa dòng", Width = 120, Height = 42, BackColor = Color.FromArgb(192, 57, 43), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnRemoveLine.Click += (_, _) => RemoveSelectedItem();
+        _lblItemCount = new Label
+        {
+            Text = "Số món: 0",
             AutoSize = true,
-            Location = new Point(20, 505)
+            Font = new Font("Segoe UI", 11, FontStyle.Bold),
+            Padding = new Padding(18, 10, 0, 0)
         };
-        _txtCustomer = new TextBox
-        {
-            Width = 220,
-            Location = new Point(100, 501)
-        };
+        quickActions.Controls.Add(_btnIncreaseQty);
+        quickActions.Controls.Add(_btnDecreaseQty);
+        quickActions.Controls.Add(_btnRemoveLine);
+        quickActions.Controls.Add(_lblItemCount);
+        leftPanel.Controls.Add(quickActions, 0, 2);
 
+        var rightPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(8, 14, 14, 14)
+        };
+        rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 180f));
+        rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 120f));
+        rightPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 140f));
+        mainSplit.Panel2.Controls.Add(rightPanel);
+
+        var customerGroup = new GroupBox
+        {
+            Text = "Thông tin thanh toán",
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+        };
+        rightPanel.Controls.Add(customerGroup, 0, 0);
+        var customerLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 3,
+            Padding = new Padding(10)
+        };
+        customerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90f));
+        customerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        customerGroup.Controls.Add(customerLayout);
+        customerLayout.Controls.Add(new Label { Text = "Khách hàng:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
+        _txtCustomer = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
+        customerLayout.Controls.Add(_txtCustomer, 1, 0);
         _chkDebt = new CheckBox
         {
             Text = "Ghi nợ",
-            AutoSize = true,
-            Location = new Point(340, 503)
+            AutoSize = true
         };
-
-        var lblPaper = new Label
-        {
-            Text = "Khổ in:",
-            AutoSize = true,
-            Location = new Point(430, 505)
-        };
+        customerLayout.Controls.Add(new Label { Text = "Loại hóa đơn:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
+        customerLayout.Controls.Add(_chkDebt, 1, 1);
+        customerLayout.Controls.Add(new Label { Text = "Khổ in:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
         _cmbPaperWidth = new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Location = new Point(485, 501),
-            Width = 85
+            Width = 85,
+            Dock = DockStyle.Left
         };
         _cmbPaperWidth.Items.AddRange(["58", "80"]);
         var defaultPaperWidth = _services.AppConfigService.DefaultPaperWidth;
         _cmbPaperWidth.SelectedItem = defaultPaperWidth.ToString();
+        customerLayout.Controls.Add(_cmbPaperWidth, 1, 2);
 
+        var totalPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(236, 240, 241) };
         _lblTotal = new Label
         {
             Text = "TỔNG TIỀN: 0 VND",
-            Font = new Font("Segoe UI", 16, FontStyle.Bold),
+            Font = new Font("Segoe UI", 24, FontStyle.Bold),
             ForeColor = Color.DarkRed,
             AutoSize = true,
-            Location = new Point(540, 495)
+            Location = new Point(18, 34)
         };
+        totalPanel.Controls.Add(_lblTotal);
+        rightPanel.Controls.Add(totalPanel, 0, 1);
 
+        rightPanel.Controls.Add(new Panel { Dock = DockStyle.Fill }, 0, 2);
+
+        var payPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Padding = new Padding(0)
+        };
+        payPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
+        payPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
         _btnPay = new Button
         {
             Text = "F2 - Thanh toán",
-            Width = 180,
-            Height = 45,
-            Location = new Point(780, 545)
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 14, FontStyle.Bold),
+            BackColor = Color.FromArgb(39, 174, 96),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         _btnPay.Click += (_, _) => PayAndPrint();
 
         _btnReprintLast = new Button
         {
             Text = "In lại HĐ gần nhất",
-            Width = 180,
-            Height = 45,
-            Location = new Point(590, 545),
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            BackColor = Color.FromArgb(52, 152, 219),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
             Enabled = false
         };
         _btnReprintLast.Click += (_, _) => ReprintLastSale();
-
-        var info = new Label
-        {
-            Text = "Phím tắt: F2 lưu+in | F3 focus tìm tên | Esc đóng cửa sổ",
-            AutoSize = true,
-            Location = new Point(20, 560)
-        };
-
-        Controls.Add(lblBarcode);
-        Controls.Add(_txtBarcode);
-        Controls.Add(lblSearch);
-        Controls.Add(_txtSearchName);
-        Controls.Add(btnRefresh);
-        Controls.Add(_grid);
-        Controls.Add(lblCustomer);
-        Controls.Add(_txtCustomer);
-        Controls.Add(_chkDebt);
-        Controls.Add(lblPaper);
-        Controls.Add(_cmbPaperWidth);
-        Controls.Add(_lblTotal);
-        Controls.Add(_btnReprintLast);
-        Controls.Add(_btnPay);
-        Controls.Add(info);
+        payPanel.Controls.Add(_btnPay, 0, 0);
+        payPanel.Controls.Add(_btnReprintLast, 0, 1);
+        rightPanel.Controls.Add(payPanel, 0, 3);
 
         KeyDown += SalesForm_KeyDown;
+        UpdateTotalLabel();
     }
 
     private void TxtBarcode_KeyDown(object? sender, KeyEventArgs e)
@@ -294,6 +403,7 @@ public class SalesForm : Form
             _cartItems.Clear();
             _txtCustomer.Clear();
             _chkDebt.Checked = false;
+            _txtSearchName.Clear();
             UpdateTotalLabel();
             BindGrid(_cartItems.ToList());
         }
@@ -398,7 +508,13 @@ public class SalesForm : Form
 
     private void RebindCart()
     {
-        BindGrid(_cartItems.ToList());
+        if (string.IsNullOrWhiteSpace(_txtSearchName.Text))
+        {
+            BindGrid(_cartItems.ToList());
+            return;
+        }
+
+        ApplyNameFilter();
     }
 
     private void AddProductToCart(Product product)
@@ -427,5 +543,34 @@ public class SalesForm : Form
     {
         _grid.DataSource = null;
         _grid.DataSource = new BindingList<CartItem>(items);
+    }
+
+    private void AdjustSelectedItemQuantity(int delta)
+    {
+        if (_grid.CurrentRow?.DataBoundItem is not CartItem item)
+        {
+            return;
+        }
+
+        item.Quantity += delta;
+        if (item.Quantity <= 0)
+        {
+            _cartItems.Remove(item);
+        }
+
+        RebindCart();
+        UpdateTotalLabel();
+    }
+
+    private void RemoveSelectedItem()
+    {
+        if (_grid.CurrentRow?.DataBoundItem is not CartItem item)
+        {
+            return;
+        }
+
+        _cartItems.Remove(item);
+        RebindCart();
+        UpdateTotalLabel();
     }
 }
