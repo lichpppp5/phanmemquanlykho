@@ -6,6 +6,7 @@ public static class UiStyle
 {
     private const int ButtonMinHeight = 40;
     private const int ButtonMinWidth = 96;
+    private const float FhdCompactScale = 0.90f;
     public static bool FullScreenEnabled { get; set; }
 
     public static Color Background => Color.WhiteSmoke;
@@ -115,7 +116,77 @@ public static class UiStyle
             return;
         }
 
+        ApplyCompactForFhd(form);
         NormalizeButtonsRecursive(form);
+    }
+
+    private static void ApplyCompactForFhd(Control parent)
+    {
+        var screenWidth = Screen.PrimaryScreen?.WorkingArea.Width ?? 0;
+        if (screenWidth < 1920)
+        {
+            return;
+        }
+
+        CompactControlsRecursive(parent);
+    }
+
+    private static void CompactControlsRecursive(Control parent)
+    {
+        if (parent is TableLayoutPanel table)
+        {
+            foreach (RowStyle row in table.RowStyles)
+            {
+                if (row.SizeType == SizeType.Absolute && row.Height >= 60f)
+                {
+                    row.Height = (float)Math.Round(row.Height * FhdCompactScale, 1);
+                }
+            }
+
+            foreach (ColumnStyle col in table.ColumnStyles)
+            {
+                if (col.SizeType == SizeType.Absolute && col.Width >= 120f)
+                {
+                    col.Width = (float)Math.Round(col.Width * FhdCompactScale, 1);
+                }
+            }
+        }
+
+        foreach (Control child in parent.Controls)
+        {
+            if (child is Label label && label.Font.Size > 11.5f)
+            {
+                label.Font = new Font(label.Font.FontFamily, Math.Max(10f, label.Font.Size * FhdCompactScale), label.Font.Style);
+            }
+            else if (child is TextBox or ComboBox or NumericUpDown or DateTimePicker)
+            {
+                if (child.Font.Size > 11.5f)
+                {
+                    child.Font = new Font(child.Font.FontFamily, Math.Max(10f, child.Font.Size * FhdCompactScale), child.Font.Style);
+                }
+                if (child.MinimumSize.Height > 36)
+                {
+                    child.MinimumSize = new Size(child.MinimumSize.Width, 34);
+                }
+            }
+            else if (child is DataGridView grid)
+            {
+                if (grid.ColumnHeadersHeight > 40)
+                {
+                    grid.ColumnHeadersHeight = 38;
+                }
+
+                if (grid.RowTemplate.Height > 36)
+                {
+                    grid.RowTemplate.Height = 34;
+                }
+            }
+
+            if (child.HasChildren)
+            {
+                CompactControlsRecursive(child);
+            }
+        }
     }
 
     private static void NormalizeButtonsRecursive(Control parent)
