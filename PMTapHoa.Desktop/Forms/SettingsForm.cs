@@ -7,6 +7,7 @@ public class SettingsForm : Form
     private readonly AppServices _services;
     private readonly ComboBox _cmbPrinters;
     private readonly ComboBox _cmbPaperWidth;
+    private readonly ComboBox _cmbDisplayMode;
     private readonly CheckBox _chkLowStockReminder;
     private readonly CheckBox _chkQrEnabled;
     private readonly TextBox _txtQrBankBin;
@@ -26,6 +27,7 @@ public class SettingsForm : Form
         FormBorderStyle = FormBorderStyle.Sizable;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+        UiStyle.ApplyWindowMode(this);
 
         var root = new TableLayoutPanel
         {
@@ -51,7 +53,7 @@ public class SettingsForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 3,
+            RowCount = 4,
             Padding = new Padding(12, 10, 12, 10)
         };
         basicLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160f));
@@ -88,13 +90,29 @@ public class SettingsForm : Form
         _cmbPaperWidth.Items.AddRange(["58", "80"]);
         basicLayout.Controls.Add(_cmbPaperWidth, 1, 1);
 
+        basicLayout.Controls.Add(new Label
+        {
+            Text = "Chế độ hiển thị:",
+            AutoSize = true,
+            Anchor = AnchorStyles.Left
+        }, 0, 2);
+        _cmbDisplayMode = new ComboBox
+        {
+            Dock = DockStyle.Left,
+            Width = 240,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+        };
+        _cmbDisplayMode.Items.AddRange(["Giao diện chuẩn", "Toàn màn hình"]);
+        basicLayout.Controls.Add(_cmbDisplayMode, 1, 2);
+
         _chkLowStockReminder = new CheckBox
         {
             Text = "Bật cảnh báo tự động hàng sắp hết khi mở màn hình Kho",
             AutoSize = true,
             Anchor = AnchorStyles.Left
         };
-        basicLayout.Controls.Add(_chkLowStockReminder, 1, 2);
+        basicLayout.Controls.Add(_chkLowStockReminder, 1, 3);
 
         var qrBox = new GroupBox
         {
@@ -205,6 +223,7 @@ public class SettingsForm : Form
 
         var defaultWidth = _services.AppConfigService.DefaultPaperWidth;
         _cmbPaperWidth.SelectedItem = defaultWidth.ToString();
+        _cmbDisplayMode.SelectedIndex = _services.AppConfigService.DisplayFullScreen ? 1 : 0;
         _chkLowStockReminder.Checked = _services.AppConfigService.LowStockReminderEnabled;
         _chkQrEnabled.Checked = _services.AppConfigService.QrPaymentEnabled;
         _txtQrBankBin.Text = _services.AppConfigService.QrBankBin;
@@ -220,6 +239,8 @@ public class SettingsForm : Form
 
         _services.AppConfigService.DefaultPrinter = selectedPrinter;
         _services.AppConfigService.DefaultPaperWidth = width;
+        _services.AppConfigService.DisplayFullScreen = _cmbDisplayMode.SelectedIndex == 1;
+        UiStyle.FullScreenEnabled = _services.AppConfigService.DisplayFullScreen;
         _services.AppConfigService.LowStockReminderEnabled = _chkLowStockReminder.Checked;
         _services.AppConfigService.QrPaymentEnabled = _chkQrEnabled.Checked;
         _services.AppConfigService.QrBankBin = _txtQrBankBin.Text.Trim();
@@ -229,7 +250,7 @@ public class SettingsForm : Form
         _services.AuditService.Log(
             _services.Session.CurrentUser?.Username,
             "UPDATE_SETTINGS",
-            $"Printer={selectedPrinter ?? "none"}, Width={width}, LowStockReminder={_chkLowStockReminder.Checked}, QREnabled={_chkQrEnabled.Checked}");
+            $"Printer={selectedPrinter ?? "none"}, Width={width}, DisplayMode={_services.AppConfigService.DisplayMode}, LowStockReminder={_chkLowStockReminder.Checked}, QREnabled={_chkQrEnabled.Checked}");
         MessageBox.Show("Đã lưu cấu hình.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
         Close();
     }

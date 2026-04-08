@@ -19,10 +19,11 @@ public class CategoryForm : Form
         Height = 700;
         MinimumSize = new Size(860, 620);
         StartPosition = FormStartPosition.CenterParent;
-        WindowState = FormWindowState.Maximized;
-        AutoScaleMode = AutoScaleMode.Dpi;
+        WindowState = FormWindowState.Normal;
+        AutoScaleMode = AutoScaleMode.Font;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+        UiStyle.ApplyWindowMode(this);
 
         var root = new TableLayoutPanel
         {

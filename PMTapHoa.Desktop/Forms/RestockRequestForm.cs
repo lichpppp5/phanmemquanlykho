@@ -34,11 +34,12 @@ public class RestockRequestForm : Form
         Height = 840;
         MinimumSize = new Size(1180, 760);
         StartPosition = FormStartPosition.CenterParent;
-        WindowState = FormWindowState.Maximized;
-        AutoScroll = true;
-        AutoScaleMode = AutoScaleMode.Dpi;
+        WindowState = FormWindowState.Normal;
+        AutoScroll = false;
+        AutoScaleMode = AutoScaleMode.Font;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+        UiStyle.ApplyWindowMode(this);
 
         var root = new TableLayoutPanel
         {

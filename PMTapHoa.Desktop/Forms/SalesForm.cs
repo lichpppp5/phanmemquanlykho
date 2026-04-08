@@ -35,10 +35,11 @@ public class SalesForm : Form
         Height = 820;
         MinimumSize = new Size(1240, 740);
         StartPosition = FormStartPosition.CenterParent;
-        WindowState = FormWindowState.Maximized;
-        AutoScaleMode = AutoScaleMode.Dpi;
+        WindowState = FormWindowState.Normal;
+        AutoScaleMode = AutoScaleMode.Font;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+        UiStyle.ApplyWindowMode(this);
 
         var topHeader = new Panel
         {

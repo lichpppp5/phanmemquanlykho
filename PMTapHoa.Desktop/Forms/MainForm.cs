@@ -17,7 +17,6 @@ public class MainForm : Form
     private readonly Button _btnDashboard;
     private readonly Button _btnBackupRestore;
     private readonly Button _btnSettings;
-    private readonly Button _btnSeedDemo;
     private readonly Button _btnHealthCheck;
     private readonly Button _btnRestockRequests;
     private readonly Button _btnLogout;
@@ -32,10 +31,11 @@ public class MainForm : Form
         Height = 820;
         MinimumSize = new Size(1160, 740);
         StartPosition = FormStartPosition.CenterScreen;
-        WindowState = FormWindowState.Maximized;
-        AutoScaleMode = AutoScaleMode.Dpi;
+        WindowState = FormWindowState.Normal;
+        AutoScaleMode = AutoScaleMode.Font;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+        UiStyle.ApplyWindowMode(this);
 
         var title = new Label
         {
@@ -103,9 +103,6 @@ public class MainForm : Form
         _btnSettings = CreateMenuButton("Cấu hình hệ thống", UiStyle.HeaderDark, Color.White);
         _btnSettings.Click += (_, _) => new SettingsForm(_services).ShowDialog(this);
 
-        _btnSeedDemo = CreateMenuButton("Nạp dữ liệu demo", UiStyle.Neutral, Color.Black);
-        _btnSeedDemo.Click += (_, _) => SeedDemoData();
-
         _btnHealthCheck = CreateMenuButton("Kiểm tra hệ thống", UiStyle.AccentTeal, Color.White);
         _btnHealthCheck.Click += (_, _) => new HealthCheckForm(_services).ShowDialog(this);
 
@@ -137,8 +134,7 @@ public class MainForm : Form
         menuGrid.Controls.Add(_btnAuditLogs, 1, 3);
         menuGrid.Controls.Add(_btnBackupRestore, 2, 3);
         menuGrid.Controls.Add(_btnSettings, 0, 4);
-        menuGrid.Controls.Add(_btnSeedDemo, 1, 4);
-        menuGrid.Controls.Add(_btnHealthCheck, 2, 4);
+        menuGrid.Controls.Add(_btnHealthCheck, 1, 4);
 
         var root = new TableLayoutPanel
         {
@@ -183,7 +179,6 @@ public class MainForm : Form
         _btnAuditLogs.Enabled = isAdmin;
         _btnBackupRestore.Enabled = isAdmin;
         _btnSettings.Enabled = isAdmin;
-        _btnSeedDemo.Enabled = isAdmin;
         _btnHealthCheck.Enabled = isAdmin;
         _btnDashboard.Enabled = isAdmin;
 
@@ -209,7 +204,6 @@ public class MainForm : Form
             _btnAuditLogs,
             _btnBackupRestore,
             _btnSettings,
-            _btnSeedDemo,
             _btnHealthCheck
         };
 
@@ -252,36 +246,6 @@ public class MainForm : Form
         _services.Session.Clear();
         RequestLogout = true;
         Close();
-    }
-
-    private void SeedDemoData()
-    {
-        try
-        {
-            var confirm = MessageBox.Show(
-                "Chỉ nạp demo khi kho dữ liệu trống. Tiếp tục?",
-                "Xác nhận",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes)
-            {
-                return;
-            }
-
-            var created = _services.DemoDataService.SeedIfEmpty();
-            if (!created)
-            {
-                MessageBox.Show("Dữ liệu sản phẩm đã tồn tại, bỏ qua nạp demo.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            _services.AuditService.Log(_services.Session.CurrentUser?.Username, "SEED_DEMO_DATA", "Đã nạp dữ liệu demo mẫu.");
-            MessageBox.Show("Nạp dữ liệu demo thành công.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Nạp dữ liệu demo thất bại: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
     }
 
     private static Button CreateMenuButton(string text, Color backColor, Color foreColor)

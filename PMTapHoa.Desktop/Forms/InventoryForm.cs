@@ -35,11 +35,12 @@ public class InventoryForm : Form
         Height = 860;
         MinimumSize = new Size(1220, 780);
         StartPosition = FormStartPosition.CenterParent;
-        WindowState = FormWindowState.Maximized;
-        AutoScroll = true;
-        AutoScaleMode = AutoScaleMode.Dpi;
+        WindowState = FormWindowState.Normal;
+        AutoScroll = false;
+        AutoScaleMode = AutoScaleMode.Font;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+        UiStyle.ApplyWindowMode(this);
 
         var root = new TableLayoutPanel
         {

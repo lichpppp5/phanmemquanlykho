@@ -105,4 +105,24 @@ public class AppConfigService
         get => Get("qr_transfer_prefix") ?? "HD";
         set => Set("qr_transfer_prefix", value);
     }
+
+    public string DisplayMode
+    {
+        get
+        {
+            var value = Get("display_mode");
+            return string.Equals(value, "fullscreen", StringComparison.OrdinalIgnoreCase)
+                ? "fullscreen"
+                : "standard";
+        }
+        set => Set(
+            "display_mode",
+            string.Equals(value, "fullscreen", StringComparison.OrdinalIgnoreCase) ? "fullscreen" : "standard");
+    }
+
+    public bool DisplayFullScreen
+    {
+        get => string.Equals(DisplayMode, "fullscreen", StringComparison.OrdinalIgnoreCase);
+        set => DisplayMode = value ? "fullscreen" : "standard";
+    }
 }

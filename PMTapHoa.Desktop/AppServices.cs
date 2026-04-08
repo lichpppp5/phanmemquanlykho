@@ -19,7 +19,6 @@ public class AppServices
     public AuditService AuditService { get; }
     public AppConfigService AppConfigService { get; }
     public BackupService BackupService { get; }
-    public DemoDataService DemoDataService { get; }
     public HealthCheckService HealthCheckService { get; }
     public RestockService RestockService { get; }
     public QrPaymentService QrPaymentService { get; }
@@ -45,7 +44,6 @@ public class AppServices
         AuditService = new AuditService(DatabaseContext);
         AppConfigService = new AppConfigService(DatabaseContext);
         BackupService = new BackupService(DatabaseContext);
-        DemoDataService = new DemoDataService(DatabaseContext);
         HealthCheckService = new HealthCheckService(DatabaseContext, AppConfigService);
         RestockService = new RestockService(DatabaseContext);
         QrPaymentService = new QrPaymentService(AppConfigService);

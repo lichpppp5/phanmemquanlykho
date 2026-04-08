@@ -1,7 +1,11 @@
+using PMTapHoa.Desktop.Services;
+
 namespace PMTapHoa.Desktop.Forms;
 
 public static class UiStyle
 {
+    public static bool FullScreenEnabled { get; set; }
+
     public static Color Background => Color.WhiteSmoke;
     public static Color HeaderDark => Color.FromArgb(44, 62, 80);
     public static Color GridAltRow => Color.FromArgb(248, 249, 250);
@@ -25,9 +29,10 @@ public static class UiStyle
     {
         form.Text = title;
         form.MinimumSize = minSize;
-        form.StartPosition = FormStartPosition.CenterParent;
-        form.WindowState = FormWindowState.Maximized;
-        form.AutoScaleMode = AutoScaleMode.Dpi;
+        form.StartPosition = FormStartPosition.CenterScreen;
+        form.WindowState = FullScreenEnabled ? FormWindowState.Maximized : FormWindowState.Normal;
+        form.AutoScaleMode = AutoScaleMode.Font;
+        form.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
         form.KeyPreview = true;
         form.BackColor = Background;
     }
@@ -40,9 +45,15 @@ public static class UiStyle
         form.FormBorderStyle = sizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
         form.MaximizeBox = sizable;
         form.MinimizeBox = false;
-        form.AutoScaleMode = AutoScaleMode.Dpi;
+        form.AutoScaleMode = AutoScaleMode.Font;
+        form.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
         form.KeyPreview = true;
         form.BackColor = Background;
+    }
+
+    public static void ApplyWindowMode(Form form)
+    {
+        form.WindowState = FullScreenEnabled ? FormWindowState.Maximized : FormWindowState.Normal;
     }
 
     public static void StyleGrid(DataGridView grid, bool fillLastColumn = false)

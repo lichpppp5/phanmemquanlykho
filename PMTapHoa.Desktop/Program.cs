@@ -14,6 +14,7 @@ internal static class Program
             "PMTapHoa");
         var sqlScriptPath = Path.Combine(AppContext.BaseDirectory, "database.sql");
         var services = new AppServices(appDataDir, sqlScriptPath);
+        UiStyle.FullScreenEnabled = services.AppConfigService.DisplayFullScreen;
 
         while (true)
         {
