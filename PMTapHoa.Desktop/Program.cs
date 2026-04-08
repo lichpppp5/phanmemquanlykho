@@ -1,4 +1,6 @@
 using PMTapHoa.Desktop.Forms;
+using System.Windows.Forms;
+
 namespace PMTapHoa.Desktop;
 
 internal static class Program
@@ -13,8 +15,9 @@ internal static class Program
             "PMTapHoa");
         var sqlScriptPath = Path.Combine(AppContext.BaseDirectory, "database.sql");
         var services = new AppServices(appDataDir, sqlScriptPath);
-        UiStyle.FullScreenEnabled = services.AppConfigService.DisplayFullScreen;
-        UiStyle.ConfigureDisplay(services.AppConfigService);
+        var primaryScreen = Screen.PrimaryScreen?.WorkingArea;
+        var forceFullHdMode = primaryScreen.HasValue && primaryScreen.Value.Width >= 1920;
+        UiStyle.FullScreenEnabled = forceFullHdMode || services.AppConfigService.DisplayFullScreen;
 
         while (true)
         {
