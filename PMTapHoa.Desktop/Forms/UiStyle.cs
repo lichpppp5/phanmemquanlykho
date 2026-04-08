@@ -4,9 +4,11 @@ namespace PMTapHoa.Desktop.Forms;
 
 public static class UiStyle
 {
-    private const int ButtonMinHeight = 40;
-    private const int ButtonMinWidth = 96;
+    private const int BaseButtonMinHeight = 40;
+    private const int BaseButtonMinWidth = 96;
+    private const float BaseFontSize = 10.5F;
     public static bool FullScreenEnabled { get; set; }
+    public static float UiScaleFactor { get; private set; } = 1.0f;
 
     public static Color Background => Color.WhiteSmoke;
     public static Color HeaderDark => Color.FromArgb(44, 62, 80);
@@ -27,6 +29,27 @@ public static class UiStyle
     public static Color AccentSlate => Color.FromArgb(52, 73, 94);
     public static Color AccentYellow => Color.FromArgb(241, 196, 15);
 
+    public static void ConfigureDisplay(AppConfigService configService)
+    {
+        var primary = Screen.PrimaryScreen?.WorkingArea;
+        var autoScale = 1.0f;
+        if (primary.HasValue)
+        {
+            // Keep UI balanced on common displays (HD/FHD/QHD).
+            autoScale = primary.Value.Width switch
+            {
+                <= 1366 => 1.15f,
+                <= 1600 => 1.10f,
+                <= 1920 => 1.05f,
+                _ => 1.00f
+            };
+        }
+
+        UiScaleFactor = configService.UiScalePercent > 0
+            ? Math.Clamp(configService.UiScalePercent / 100f, 0.90f, 1.40f)
+            : autoScale;
+    }
+
     public static void ApplyMainFormStyle(Form form, string title, Size minSize)
     {
         form.Text = title;
@@ -34,10 +57,10 @@ public static class UiStyle
         form.StartPosition = FormStartPosition.CenterScreen;
         form.WindowState = FullScreenEnabled ? FormWindowState.Maximized : FormWindowState.Normal;
         form.AutoScaleMode = AutoScaleMode.Font;
-        form.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+        form.Font = new Font("Segoe UI", BaseFontSize * UiScaleFactor, FontStyle.Regular, GraphicsUnit.Point);
         form.KeyPreview = true;
         form.BackColor = Background;
-        EnsureConsistentButtons(form);
+        EnsureConsistentLayout(form);
     }
 
     public static void ApplyDialogStyle(Form form, string title, Size size, bool sizable = false)
@@ -49,16 +72,16 @@ public static class UiStyle
         form.MaximizeBox = sizable;
         form.MinimizeBox = false;
         form.AutoScaleMode = AutoScaleMode.Font;
-        form.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+        form.Font = new Font("Segoe UI", BaseFontSize * UiScaleFactor, FontStyle.Regular, GraphicsUnit.Point);
         form.KeyPreview = true;
         form.BackColor = Background;
-        EnsureConsistentButtons(form);
+        EnsureConsistentLayout(form);
     }
 
     public static void ApplyWindowMode(Form form)
     {
         form.WindowState = FullScreenEnabled ? FormWindowState.Maximized : FormWindowState.Normal;
-        EnsureConsistentButtons(form);
+        EnsureConsistentLayout(form);
     }
 
     public static void StyleGrid(DataGridView grid, bool fillLastColumn = false)
@@ -86,15 +109,18 @@ public static class UiStyle
         button.ForeColor = foreColor ?? Color.White;
         button.FlatStyle = FlatStyle.Flat;
         button.FlatAppearance.BorderSize = 0;
-        if (button.MinimumSize.Height < ButtonMinHeight)
+        var minHeight = (int)Math.Round(BaseButtonMinHeight * UiScaleFactor);
+        var minWidth = (int)Math.Round(BaseButtonMinWidth * UiScaleFactor);
+        if (button.MinimumSize.Height < minHeight)
         {
             button.MinimumSize = new Size(
-                Math.Max(button.MinimumSize.Width, ButtonMinWidth),
-                ButtonMinHeight);
+                Math.Max(button.MinimumSize.Width, minWidth),
+                minHeight);
         }
-        if (button.Font.Size < 10F)
+        var minFont = 10f * UiScaleFactor;
+        if (button.Font.Size < minFont)
         {
-            button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            button.Font = new Font("Segoe UI", minFont, FontStyle.Bold);
         }
         if (button.Padding == Padding.Empty)
         {
@@ -102,43 +128,46 @@ public static class UiStyle
         }
     }
 
-    private static void EnsureConsistentButtons(Form form)
+    private static void EnsureConsistentLayout(Form form)
     {
-        form.Shown -= Form_ShownNormalizeButtons;
-        form.Shown += Form_ShownNormalizeButtons;
+        form.Shown -= Form_ShownNormalizeControls;
+        form.Shown += Form_ShownNormalizeControls;
     }
 
-    private static void Form_ShownNormalizeButtons(object? sender, EventArgs e)
+    private static void Form_ShownNormalizeControls(object? sender, EventArgs e)
     {
         if (sender is not Form form)
         {
             return;
         }
 
-        NormalizeButtonsRecursive(form);
+        NormalizeControlsRecursive(form);
     }
 
-    private static void NormalizeButtonsRecursive(Control parent)
+    private static void NormalizeControlsRecursive(Control parent)
     {
         foreach (Control child in parent.Controls)
         {
             if (child is Button button)
             {
-                if (button.MinimumSize.Height < ButtonMinHeight)
+                var minHeight = (int)Math.Round(BaseButtonMinHeight * UiScaleFactor);
+                var minWidth = (int)Math.Round(BaseButtonMinWidth * UiScaleFactor);
+                if (button.MinimumSize.Height < minHeight)
                 {
                     button.MinimumSize = new Size(
-                        Math.Max(button.MinimumSize.Width, ButtonMinWidth),
-                        ButtonMinHeight);
+                        Math.Max(button.MinimumSize.Width, minWidth),
+                        minHeight);
                 }
 
-                if (button.Height < ButtonMinHeight && button.Dock == DockStyle.None)
+                if (button.Height < minHeight && button.Dock == DockStyle.None)
                 {
-                    button.Height = ButtonMinHeight;
+                    button.Height = minHeight;
                 }
 
-                if (button.Font.Size < 10F)
+                var minFont = 10f * UiScaleFactor;
+                if (button.Font.Size < minFont)
                 {
-                    button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+                    button.Font = new Font("Segoe UI", minFont, FontStyle.Bold);
                 }
 
                 if (button.Padding == Padding.Empty)
@@ -146,11 +175,47 @@ public static class UiStyle
                     button.Padding = new Padding(10, 0, 10, 0);
                 }
             }
+            else if (child is TextBox or ComboBox or NumericUpDown or DateTimePicker)
+            {
+                var minFieldHeight = (int)Math.Round(34 * UiScaleFactor);
+                if (child.MinimumSize.Height < minFieldHeight)
+                {
+                    child.MinimumSize = new Size(child.MinimumSize.Width, minFieldHeight);
+                }
+                var minFont = 10.5f * UiScaleFactor;
+                if (child.Font.Size < minFont)
+                {
+                    child.Font = new Font("Segoe UI", minFont, child.Font.Style);
+                }
+            }
+            else if (child is Label label)
+            {
+                var minFont = 10.5f * UiScaleFactor;
+                if (label.Font.Size < minFont)
+                {
+                    label.Font = new Font("Segoe UI", minFont, label.Font.Style);
+                }
+            }
+            else if (child is DataGridView grid)
+            {
+                grid.ColumnHeadersHeight = Math.Max(grid.ColumnHeadersHeight, (int)Math.Round(38 * UiScaleFactor));
+                grid.RowTemplate.Height = Math.Max(grid.RowTemplate.Height, (int)Math.Round(34 * UiScaleFactor));
+                var cellFont = 10.5f * UiScaleFactor;
+                if (grid.DefaultCellStyle.Font == null || grid.DefaultCellStyle.Font.Size < cellFont)
+                {
+                    grid.DefaultCellStyle.Font = new Font("Segoe UI", cellFont, FontStyle.Regular);
+                }
+                if (grid.ColumnHeadersDefaultCellStyle.Font == null || grid.ColumnHeadersDefaultCellStyle.Font.Size < cellFont)
+                {
+                    grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", cellFont, FontStyle.Bold);
+                }
+            }
 
             if (child.HasChildren)
             {
-                NormalizeButtonsRecursive(child);
+                NormalizeControlsRecursive(child);
             }
         }
     }
+
 }

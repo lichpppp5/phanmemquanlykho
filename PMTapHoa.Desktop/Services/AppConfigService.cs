@@ -125,4 +125,19 @@ public class AppConfigService
         get => string.Equals(DisplayMode, "fullscreen", StringComparison.OrdinalIgnoreCase);
         set => DisplayMode = value ? "fullscreen" : "standard";
     }
+
+    public int UiScalePercent
+    {
+        get
+        {
+            var value = Get("ui_scale_percent");
+            if (int.TryParse(value, out var parsed))
+            {
+                return Math.Clamp(parsed, 90, 140);
+            }
+
+            return 0; // 0 means Auto
+        }
+        set => Set("ui_scale_percent", value <= 0 ? "0" : Math.Clamp(value, 90, 140).ToString());
+    }
 }
