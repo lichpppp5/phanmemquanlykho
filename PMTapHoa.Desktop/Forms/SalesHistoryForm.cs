@@ -17,44 +17,103 @@ public class SalesHistoryForm : Form
         _services = services;
 
         Text = "Lịch sử hóa đơn & in lại";
-        Width = 1150;
-        Height = 720;
+        Width = 1280;
+        Height = 820;
+        MinimumSize = new Size(1160, 720);
         StartPosition = FormStartPosition.CenterParent;
+        WindowState = FormWindowState.Maximized;
         KeyPreview = true;
+        BackColor = Color.WhiteSmoke;
 
-        var lblKeyword = new Label { Text = "Tìm HĐ/khách:", AutoSize = true, Location = new Point(20, 20) };
-        _txtKeyword = new TextBox { Width = 180, Location = new Point(110, 16) };
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(14)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 52f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 48f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58f));
+        Controls.Add(root);
 
-        var lblFrom = new Label { Text = "Từ:", AutoSize = true, Location = new Point(310, 20) };
-        _dtFrom = new DateTimePicker { Location = new Point(340, 16), Width = 130, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
+        var filterPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(4, 10, 4, 4)
+        };
+        root.Controls.Add(filterPanel, 0, 0);
 
-        var lblTo = new Label { Text = "Đến:", AutoSize = true, Location = new Point(490, 20) };
-        _dtTo = new DateTimePicker { Location = new Point(530, 16), Width = 130, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
+        var lblKeyword = new Label { Text = "Tìm HĐ/khách:", AutoSize = true, Margin = new Padding(0, 8, 8, 0) };
+        _txtKeyword = new TextBox { Width = 220, Margin = new Padding(0, 4, 18, 0), Font = new Font("Segoe UI", 10, FontStyle.Regular) };
 
-        var btnFilter = new Button { Text = "Lọc", Width = 90, Location = new Point(680, 15) };
+        var lblFrom = new Label { Text = "Từ:", AutoSize = true, Margin = new Padding(0, 8, 6, 0) };
+        _dtFrom = new DateTimePicker
+        {
+            Width = 140,
+            Margin = new Padding(0, 4, 16, 0),
+            Format = DateTimePickerFormat.Short,
+            ShowCheckBox = true,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+        };
+
+        var lblTo = new Label { Text = "Đến:", AutoSize = true, Margin = new Padding(0, 8, 6, 0) };
+        _dtTo = new DateTimePicker
+        {
+            Width = 140,
+            Margin = new Padding(0, 4, 16, 0),
+            Format = DateTimePickerFormat.Short,
+            ShowCheckBox = true,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+        };
+
+        var btnFilter = new Button
+        {
+            Text = "Lọc",
+            Width = 100,
+            Height = 34,
+            BackColor = UiStyle.Primary,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 2, 0, 0)
+        };
         btnFilter.Click += (_, _) => LoadSales();
+        filterPanel.Controls.Add(lblKeyword);
+        filterPanel.Controls.Add(_txtKeyword);
+        filterPanel.Controls.Add(lblFrom);
+        filterPanel.Controls.Add(_dtFrom);
+        filterPanel.Controls.Add(lblTo);
+        filterPanel.Controls.Add(_dtTo);
+        filterPanel.Controls.Add(btnFilter);
 
         _gridSales = new DataGridView
         {
-            Location = new Point(20, 55),
-            Width = 1090,
-            Height = 300,
+            Dock = DockStyle.Fill,
             ReadOnly = true,
             AllowUserToAddRows = false,
-            AutoGenerateColumns = false
+            AutoGenerateColumns = false,
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+            MultiSelect = false
         };
         _gridSales.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(SaleHistoryItem.SaleID), HeaderText = "Hóa đơn", Width = 90 });
         _gridSales.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(SaleHistoryItem.SaleDate), HeaderText = "Ngày bán", Width = 180 });
         _gridSales.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(SaleHistoryItem.CustomerName), HeaderText = "Khách hàng", Width = 300 });
         _gridSales.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(SaleHistoryItem.TotalAmount), HeaderText = "Tổng tiền", Width = 160 });
         _gridSales.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(SaleHistoryItem.IsDebt), HeaderText = "Ghi nợ", Width = 90 });
+        _gridSales.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _gridSales.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _gridSales.ColumnHeadersHeight = 36;
+        _gridSales.RowTemplate.Height = 32;
+        _gridSales.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _gridSales.SelectionChanged += (_, _) => LoadSaleDetails();
+        root.Controls.Add(_gridSales, 0, 1);
 
         _gridDetails = new DataGridView
         {
-            Location = new Point(20, 375),
-            Width = 1090,
-            Height = 220,
+            Dock = DockStyle.Fill,
             ReadOnly = true,
             AllowUserToAddRows = false,
             AutoGenerateColumns = false
@@ -64,27 +123,47 @@ public class SalesHistoryForm : Form
         _gridDetails.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.Quantity), HeaderText = "SL", Width = 100 });
         _gridDetails.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.UnitPrice), HeaderText = "Đơn giá", Width = 180 });
         _gridDetails.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.LineTotal), HeaderText = "Thành tiền", Width = 180 });
+        _gridDetails.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _gridDetails.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _gridDetails.ColumnHeadersHeight = 36;
+        _gridDetails.RowTemplate.Height = 32;
+        _gridDetails.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
+        root.Controls.Add(_gridDetails, 0, 2);
 
-        var lblPaper = new Label { Text = "Khổ in:", AutoSize = true, Location = new Point(20, 620) };
-        _cmbPaperWidth = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80, Location = new Point(70, 616) };
+        var actionPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(4, 10, 4, 4)
+        };
+        root.Controls.Add(actionPanel, 0, 3);
+
+        var lblPaper = new Label { Text = "Khổ in:", AutoSize = true, Margin = new Padding(0, 8, 8, 0) };
+        _cmbPaperWidth = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 90,
+            Margin = new Padding(0, 4, 16, 0),
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+        };
         _cmbPaperWidth.Items.AddRange(["58", "80"]);
         _cmbPaperWidth.SelectedItem = _services.AppConfigService.DefaultPaperWidth.ToString();
 
-        var btnReprint = new Button { Text = "In lại hóa đơn", Width = 150, Location = new Point(170, 614) };
+        var btnReprint = new Button
+        {
+            Text = "In lại hóa đơn",
+            Width = 160,
+            Height = 36,
+            BackColor = UiStyle.Primary,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 2, 0, 0)
+        };
         btnReprint.Click += (_, _) => ReprintSelectedSale();
-
-        Controls.Add(lblKeyword);
-        Controls.Add(_txtKeyword);
-        Controls.Add(lblFrom);
-        Controls.Add(_dtFrom);
-        Controls.Add(lblTo);
-        Controls.Add(_dtTo);
-        Controls.Add(btnFilter);
-        Controls.Add(_gridSales);
-        Controls.Add(_gridDetails);
-        Controls.Add(lblPaper);
-        Controls.Add(_cmbPaperWidth);
-        Controls.Add(btnReprint);
+        actionPanel.Controls.Add(lblPaper);
+        actionPanel.Controls.Add(_cmbPaperWidth);
+        actionPanel.Controls.Add(btnReprint);
 
         Load += (_, _) => LoadSales();
         KeyDown += (_, e) =>

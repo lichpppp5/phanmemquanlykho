@@ -36,14 +36,14 @@ public class AuthService
                     Username = "admin",
                     PasswordHash = HashPassword("admin123"),
                     FullName = "Quản lý hệ thống",
-                    Role = "Manager"
+                    Role = "Admin"
                 },
                 new
                 {
                     Username = "staff",
                     PasswordHash = HashPassword("staff123"),
                     FullName = "Nhân viên bán hàng",
-                    Role = "Staff"
+                    Role = "User"
                 }
             });
     }

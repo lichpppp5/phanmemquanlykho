@@ -11,6 +11,7 @@
     <PackageReference Include="Dapper" Version="*" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="*" />
     <PackageReference Include="ClosedXML" Version="*" />
+    <PackageReference Include="QRCoder" Version="*" />
   </ItemGroup>
 
   <ItemGroup>

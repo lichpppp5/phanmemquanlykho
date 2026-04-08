@@ -11,35 +11,50 @@ public class HealthCheckForm : Form
     {
         _services = services;
 
-        Text = "Kiểm tra sức khỏe hệ thống";
-        Width = 860;
-        Height = 520;
-        StartPosition = FormStartPosition.CenterParent;
-        KeyPreview = true;
+        UiStyle.ApplyMainFormStyle(this, "Kiểm tra sức khỏe hệ thống", new Size(900, 600));
+        Width = 1080;
+        Height = 720;
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Padding = new Padding(14)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        Controls.Add(root);
+
+        var topPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(4, 10, 4, 4)
+        };
+        root.Controls.Add(topPanel, 0, 0);
 
         var btnRun = new Button
         {
             Text = "Chạy kiểm tra",
-            Width = 120,
-            Location = new Point(20, 20)
+            Width = 130,
+            Height = 34
         };
+        UiStyle.StyleButton(btnRun, UiStyle.Primary);
         btnRun.Click += (_, _) => RunCheck();
-        Controls.Add(btnRun);
+        topPanel.Controls.Add(btnRun);
 
         _grid = new DataGridView
         {
-            Location = new Point(20, 60),
-            Width = 800,
-            Height = 390,
-            ReadOnly = true,
-            AllowUserToAddRows = false,
-            AutoGenerateColumns = false
+            Dock = DockStyle.Fill
         };
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(HealthCheckItem.CheckName), HeaderText = "Hạng mục", Width = 200 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(HealthCheckItem.Status), HeaderText = "Trạng thái", Width = 100 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(HealthCheckItem.Message), HeaderText = "Thông điệp", Width = 470 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(HealthCheckItem.Message), HeaderText = "Thông điệp" });
+        UiStyle.StyleGrid(_grid, fillLastColumn: true);
         _grid.RowPrePaint += Grid_RowPrePaint;
-        Controls.Add(_grid);
+        root.Controls.Add(_grid, 0, 1);
 
         Load += (_, _) => RunCheck();
         KeyDown += (_, e) =>

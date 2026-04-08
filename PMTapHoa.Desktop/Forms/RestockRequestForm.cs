@@ -24,12 +24,18 @@ public class RestockRequestForm : Form
     {
         _services = services;
         _defaultProductId = defaultProductId;
+        if (!_services.Session.IsAdmin)
+        {
+            throw new InvalidOperationException("Chỉ Admin mới được truy cập màn hình mối nhập hàng.");
+        }
 
         Text = "Mối nhập hàng / Yêu cầu nhập hàng";
         Width = 1260;
         Height = 840;
         MinimumSize = new Size(1180, 760);
         StartPosition = FormStartPosition.CenterParent;
+        WindowState = FormWindowState.Maximized;
+        AutoScroll = true;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -99,7 +105,7 @@ public class RestockRequestForm : Form
             Width = 130,
             Height = 34,
             Location = new Point(860, 115),
-            BackColor = Color.FromArgb(39, 174, 96),
+            BackColor = UiStyle.Success,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
@@ -122,7 +128,7 @@ public class RestockRequestForm : Form
             Text = "Tải gợi ý",
             Width = 100,
             Location = new Point(20, 30),
-            BackColor = Color.FromArgb(52, 152, 219),
+            BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
@@ -134,7 +140,7 @@ public class RestockRequestForm : Form
             Text = "Tạo yêu cầu đã chọn",
             Width = 160,
             Location = new Point(130, 30),
-            BackColor = Color.FromArgb(230, 126, 34),
+            BackColor = UiStyle.AccentOrange,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
@@ -192,7 +198,7 @@ public class RestockRequestForm : Form
             Text = "Làm mới",
             Width = 100,
             Location = new Point(265, 410),
-            BackColor = Color.FromArgb(127, 140, 141),
+            BackColor = UiStyle.Neutral,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
@@ -220,7 +226,7 @@ public class RestockRequestForm : Form
         _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
         _grid.ColumnHeadersHeight = 34;
         _grid.RowTemplate.Height = 32;
-        _grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+        _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _grid.CellDoubleClick += Grid_CellDoubleClick;
         Controls.Add(_grid);
 
@@ -365,7 +371,7 @@ public class RestockRequestForm : Form
 
     private void Grid_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
     {
-        if (!_services.Session.IsManager)
+        if (!_services.Session.IsAdmin)
         {
             return;
         }

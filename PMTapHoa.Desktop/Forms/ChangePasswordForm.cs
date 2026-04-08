@@ -11,30 +11,55 @@ public class ChangePasswordForm : Form
     {
         _services = services;
 
-        Text = "Đổi mật khẩu";
-        Width = 430;
-        Height = 290;
-        StartPosition = FormStartPosition.CenterParent;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        MaximizeBox = false;
-        MinimizeBox = false;
-        KeyPreview = true;
+        UiStyle.ApplyDialogStyle(this, "Đổi mật khẩu", new Size(520, 340), sizable: false);
 
-        Controls.Add(new Label { Text = "Mật khẩu hiện tại:", AutoSize = true, Location = new Point(30, 40) });
-        _txtCurrent = new TextBox { Location = new Point(165, 36), Width = 210, PasswordChar = '*' };
-        Controls.Add(_txtCurrent);
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Padding = new Padding(16)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58f));
+        Controls.Add(root);
 
-        Controls.Add(new Label { Text = "Mật khẩu mới:", AutoSize = true, Location = new Point(30, 85) });
-        _txtNew = new TextBox { Location = new Point(165, 81), Width = 210, PasswordChar = '*' };
-        Controls.Add(_txtNew);
+        var formLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 3,
+            Padding = new Padding(8, 12, 8, 8)
+        };
+        formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170f));
+        formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        root.Controls.Add(formLayout, 0, 0);
 
-        Controls.Add(new Label { Text = "Xác nhận mật khẩu:", AutoSize = true, Location = new Point(30, 130) });
-        _txtConfirm = new TextBox { Location = new Point(165, 126), Width = 210, PasswordChar = '*' };
-        Controls.Add(_txtConfirm);
+        formLayout.Controls.Add(new Label { Text = "Mật khẩu hiện tại:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
+        _txtCurrent = new TextBox { Dock = DockStyle.Fill, PasswordChar = '*', Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+        formLayout.Controls.Add(_txtCurrent, 1, 0);
 
-        var btnSave = new Button { Text = "Lưu", Width = 100, Height = 36, Location = new Point(165, 180) };
+        formLayout.Controls.Add(new Label { Text = "Mật khẩu mới:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
+        _txtNew = new TextBox { Dock = DockStyle.Fill, PasswordChar = '*', Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+        formLayout.Controls.Add(_txtNew, 1, 1);
+
+        formLayout.Controls.Add(new Label { Text = "Xác nhận mật khẩu:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
+        _txtConfirm = new TextBox { Dock = DockStyle.Fill, PasswordChar = '*', Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+        formLayout.Controls.Add(_txtConfirm, 1, 2);
+
+        var actionPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(8, 8, 8, 4)
+        };
+        root.Controls.Add(actionPanel, 0, 1);
+
+        var btnSave = new Button { Text = "Lưu", Width = 120, Height = 36 };
+        UiStyle.StyleButton(btnSave, UiStyle.Success);
         btnSave.Click += (_, _) => SaveChange();
-        Controls.Add(btnSave);
+        actionPanel.Controls.Add(btnSave);
 
         KeyDown += (_, e) =>
         {

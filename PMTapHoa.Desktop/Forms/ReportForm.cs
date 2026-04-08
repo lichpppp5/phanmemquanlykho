@@ -17,6 +17,8 @@ public class ReportForm : Form
         Height = 560;
         MinimumSize = new Size(900, 500);
         StartPosition = FormStartPosition.CenterParent;
+        WindowState = FormWindowState.Maximized;
+        AutoScroll = true;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -33,7 +35,7 @@ public class ReportForm : Form
         {
             Location = new Point(35, 80),
             Size = new Size(430, 110),
-            BackColor = Color.FromArgb(39, 174, 96)
+            BackColor = UiStyle.Success
         };
         _lblRevenueToday = new Label
         {
@@ -50,7 +52,7 @@ public class ReportForm : Form
         {
             Location = new Point(495, 80),
             Size = new Size(430, 110),
-            BackColor = Color.FromArgb(211, 84, 0)
+            BackColor = UiStyle.AccentOrange
         };
         _lblOutstandingDebt = new Label
         {
@@ -106,7 +108,7 @@ public class ReportForm : Form
             Width = 120,
             Height = 36,
             Location = new Point(470, 36),
-            BackColor = Color.FromArgb(52, 152, 219),
+            BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
@@ -118,7 +120,7 @@ public class ReportForm : Form
             Width = 170,
             Height = 36,
             Location = new Point(560, 36),
-            BackColor = Color.FromArgb(39, 174, 96),
+            BackColor = UiStyle.Success,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
@@ -130,7 +132,7 @@ public class ReportForm : Form
             Width = 130,
             Height = 36,
             Location = new Point(740, 36),
-            BackColor = Color.FromArgb(230, 126, 34),
+            BackColor = UiStyle.AccentOrange,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };

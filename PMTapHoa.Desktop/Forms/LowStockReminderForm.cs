@@ -10,86 +10,98 @@ public class LowStockReminderForm : Form
 
     public LowStockReminderForm(List<Product> lowStockProducts)
     {
-        Text = "Cảnh báo hàng sắp hết";
-        Width = 760;
-        Height = 500;
-        StartPosition = FormStartPosition.CenterParent;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        MaximizeBox = false;
-        MinimizeBox = false;
-        KeyPreview = true;
+        UiStyle.ApplyDialogStyle(this, "Cảnh báo hàng sắp hết", new Size(900, 620), sizable: true);
+        MinimumSize = new Size(820, 560);
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(14)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 34f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
+        Controls.Add(root);
 
         var title = new Label
         {
             Text = $"Có {lowStockProducts.Count} mặt hàng đang dưới mức tồn tối thiểu.",
-            AutoSize = true,
+            Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 11, FontStyle.Bold),
-            Location = new Point(20, 18)
+            TextAlign = ContentAlignment.MiddleLeft
         };
-        Controls.Add(title);
+        root.Controls.Add(title, 0, 0);
 
         var hint = new Label
         {
             Text = "Bạn có muốn mở màn hình Mối nhập hàng để tạo yêu cầu nhập ngay?",
-            AutoSize = true,
-            Location = new Point(20, 46)
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft
         };
-        Controls.Add(hint);
+        root.Controls.Add(hint, 0, 1);
 
         var grid = new DataGridView
         {
-            Location = new Point(20, 75),
-            Width = 700,
-            Height = 310,
-            ReadOnly = true,
-            AllowUserToAddRows = false,
-            AutoGenerateColumns = false
+            Dock = DockStyle.Fill
         };
         grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductName), HeaderText = "Sản phẩm", Width = 300 });
         grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Barcode), HeaderText = "Mã vạch", Width = 150 });
         grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.StockQuantity), HeaderText = "Tồn", Width = 90 });
         grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.MinStock), HeaderText = "Min", Width = 90 });
+        UiStyle.StyleGrid(grid);
         grid.DataSource = lowStockProducts
             .OrderBy(p => p.StockQuantity - p.MinStock)
             .Take(50)
             .ToList();
-        Controls.Add(grid);
+        root.Controls.Add(grid, 0, 2);
+
+        var actionPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(4, 10, 4, 4)
+        };
+        root.Controls.Add(actionPanel, 0, 3);
 
         _chkDontRemindToday = new CheckBox
         {
             Text = "Không nhắc lại hôm nay",
             AutoSize = true,
-            Location = new Point(20, 398)
+            Margin = new Padding(0, 8, 20, 0)
         };
-        Controls.Add(_chkDontRemindToday);
+        actionPanel.Controls.Add(_chkDontRemindToday);
 
         var btnOpen = new Button
         {
             Text = "Mở Mối nhập hàng",
             Width = 160,
-            Height = 36,
-            Location = new Point(390, 420)
+            Height = 36
         };
+        UiStyle.StyleButton(btnOpen, UiStyle.Primary);
         btnOpen.Click += (_, _) =>
         {
             DialogResult = DialogResult.OK;
             Close();
         };
-        Controls.Add(btnOpen);
+        actionPanel.Controls.Add(btnOpen);
 
         var btnClose = new Button
         {
             Text = "Đóng",
             Width = 100,
-            Height = 36,
-            Location = new Point(565, 420)
+            Height = 36
         };
+        UiStyle.StyleButton(btnClose, UiStyle.Neutral);
         btnClose.Click += (_, _) =>
         {
             DialogResult = DialogResult.Cancel;
             Close();
         };
-        Controls.Add(btnClose);
+        actionPanel.Controls.Add(btnClose);
 
         KeyDown += (_, e) =>
         {

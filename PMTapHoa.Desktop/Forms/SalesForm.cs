@@ -1,6 +1,7 @@
 using PMTapHoa.Desktop.Models;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 
 namespace PMTapHoa.Desktop.Forms;
 
@@ -14,7 +15,8 @@ public class SalesForm : Form
     private readonly CheckBox _chkDebt;
     private readonly DataGridView _grid;
     private readonly Label _lblTotal;
-    private readonly Button _btnPay;
+    private readonly Button _btnPayCash;
+    private readonly Button _btnPayQr;
     private readonly Button _btnReprintLast;
     private readonly ComboBox _cmbPaperWidth;
     private readonly Label _lblItemCount;
@@ -32,6 +34,7 @@ public class SalesForm : Form
         Height = 820;
         MinimumSize = new Size(1240, 740);
         StartPosition = FormStartPosition.CenterParent;
+        WindowState = FormWindowState.Maximized;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -39,7 +42,7 @@ public class SalesForm : Form
         {
             Dock = DockStyle.Top,
             Height = 66,
-            BackColor = Color.FromArgb(44, 62, 80)
+            BackColor = UiStyle.HeaderDark
         };
         var lblTitle = new Label
         {
@@ -51,11 +54,11 @@ public class SalesForm : Form
         };
         var lblShortcut = new Label
         {
-            Text = "Phím tắt: F2 Thanh toán | F3 Tìm nhanh | Esc Đóng",
+            Text = "Phím tắt: F2 Tiền mặt | F4 QR | F3 Tìm nhanh | Esc Đóng",
             ForeColor = Color.Gainsboro,
             Font = new Font("Segoe UI", 10, FontStyle.Regular),
             AutoSize = true,
-            Location = new Point(980, 24)
+            Location = new Point(860, 24)
         };
         topHeader.Controls.Add(lblTitle);
         topHeader.Controls.Add(lblShortcut);
@@ -150,7 +153,7 @@ public class SalesForm : Form
         _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
         _grid.ColumnHeadersHeight = 36;
         _grid.RowTemplate.Height = 34;
-        _grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+        _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         leftPanel.Controls.Add(_grid, 0, 1);
 
         var quickActions = new FlowLayoutPanel
@@ -160,11 +163,11 @@ public class SalesForm : Form
             Padding = new Padding(6),
             WrapContents = false
         };
-        _btnIncreaseQty = new Button { Text = "Tăng SL (+1)", Width = 140, Height = 42, BackColor = Color.FromArgb(46, 204, 113), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnIncreaseQty = new Button { Text = "Tăng SL (+1)", Width = 140, Height = 42, BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
         _btnIncreaseQty.Click += (_, _) => AdjustSelectedItemQuantity(1);
-        _btnDecreaseQty = new Button { Text = "Giảm SL (-1)", Width = 140, Height = 42, BackColor = Color.FromArgb(243, 156, 18), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnDecreaseQty = new Button { Text = "Giảm SL (-1)", Width = 140, Height = 42, BackColor = UiStyle.Warning, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
         _btnDecreaseQty.Click += (_, _) => AdjustSelectedItemQuantity(-1);
-        _btnRemoveLine = new Button { Text = "Xóa dòng", Width = 120, Height = 42, BackColor = Color.FromArgb(192, 57, 43), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnRemoveLine = new Button { Text = "Xóa dòng", Width = 120, Height = 42, BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
         _btnRemoveLine.Click += (_, _) => RemoveSelectedItem();
         _lblItemCount = new Label
         {
@@ -217,6 +220,7 @@ public class SalesForm : Form
             Text = "Ghi nợ",
             AutoSize = true
         };
+        _chkDebt.CheckedChanged += (_, _) => UpdateQrButtonState();
         customerLayout.Controls.Add(new Label { Text = "Loại hóa đơn:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
         customerLayout.Controls.Add(_chkDebt, 1, 1);
         customerLayout.Controls.Add(new Label { Text = "Khổ in:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
@@ -231,7 +235,7 @@ public class SalesForm : Form
         _cmbPaperWidth.SelectedItem = defaultPaperWidth.ToString();
         customerLayout.Controls.Add(_cmbPaperWidth, 1, 2);
 
-        var totalPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(236, 240, 241) };
+        var totalPanel = new Panel { Dock = DockStyle.Fill, BackColor = UiStyle.PanelSoft };
         _lblTotal = new Label
         {
             Text = "TỔNG TIỀN: 0 VND",
@@ -249,39 +253,53 @@ public class SalesForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 3,
             Padding = new Padding(0)
         };
-        payPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
-        payPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
-        _btnPay = new Button
+        payPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 34f));
+        payPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33f));
+        payPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33f));
+        _btnPayCash = new Button
         {
-            Text = "F2 - Thanh toán",
+            Text = "F2 - Thanh toán tiền mặt",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 14, FontStyle.Bold),
-            BackColor = Color.FromArgb(39, 174, 96),
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            BackColor = UiStyle.Success,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
-        _btnPay.Click += (_, _) => PayAndPrint();
+        _btnPayCash.Click += (_, _) => ProcessPayment(useQrFlow: false);
+
+        _btnPayQr = new Button
+        {
+            Text = "F4 - Thanh toán QR",
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            BackColor = UiStyle.AccentPurple,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
+        };
+        _btnPayQr.Click += (_, _) => ProcessPayment(useQrFlow: true);
 
         _btnReprintLast = new Button
         {
             Text = "In lại HĐ gần nhất",
             Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 12, FontStyle.Bold),
-            BackColor = Color.FromArgb(52, 152, 219),
+            BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
             Enabled = false
         };
         _btnReprintLast.Click += (_, _) => ReprintLastSale();
-        payPanel.Controls.Add(_btnPay, 0, 0);
-        payPanel.Controls.Add(_btnReprintLast, 0, 1);
+        payPanel.Controls.Add(_btnPayCash, 0, 0);
+        payPanel.Controls.Add(_btnPayQr, 0, 1);
+        payPanel.Controls.Add(_btnReprintLast, 0, 2);
         rightPanel.Controls.Add(payPanel, 0, 3);
 
         KeyDown += SalesForm_KeyDown;
         UpdateTotalLabel();
+        UpdateQrButtonState();
     }
 
     private void TxtBarcode_KeyDown(object? sender, KeyEventArgs e)
@@ -358,7 +376,7 @@ public class SalesForm : Form
         }
     }
 
-    private void PayAndPrint()
+    private void ProcessPayment(bool useQrFlow)
     {
         try
         {
@@ -368,8 +386,13 @@ public class SalesForm : Form
                 return;
             }
 
-            var saleId = _services.SalesService.SaveSale(_cartItems.ToList(), _txtCustomer.Text.Trim(), _chkDebt.Checked);
             var total = _cartItems.Sum(i => i.LineTotal);
+            if (useQrFlow && !_chkDebt.Checked && !ShowQrAndConfirmPayment(total))
+            {
+                return;
+            }
+
+            var saleId = _services.SalesService.SaveSale(_cartItems.ToList(), _txtCustomer.Text.Trim(), _chkDebt.Checked);
             var receiptPath = _services.ReceiptService.GenerateTempReceiptFile(
                 saleId,
                 _cartItems.ToList(),
@@ -406,11 +429,35 @@ public class SalesForm : Form
             _txtSearchName.Clear();
             UpdateTotalLabel();
             BindGrid(_cartItems.ToList());
+            UpdateQrButtonState();
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Thanh toán thất bại: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    private bool ShowQrAndConfirmPayment(decimal total)
+    {
+        if (!_services.QrPaymentService.IsConfigured(out _))
+        {
+            return true;
+        }
+
+        var transferContent = _services.QrPaymentService.BuildTransferContent();
+        using var qrImage = _services.QrPaymentService.GenerateVietQrImage(total, transferContent);
+        using var qrForm = new QrDisplayForm(qrImage, total, transferContent);
+        qrForm.ShowOnBestScreen();
+
+        var confirmation = MessageBox.Show(
+            this,
+            "Đã nhận thanh toán QR từ khách chưa?",
+            "Xác nhận thanh toán QR",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        qrForm.Close();
+        return confirmation == DialogResult.Yes;
     }
 
     private void ReprintLastSale()
@@ -470,7 +517,12 @@ public class SalesForm : Form
     {
         if (e.KeyCode == Keys.F2)
         {
-            PayAndPrint();
+            ProcessPayment(useQrFlow: false);
+            e.Handled = true;
+        }
+        else if (e.KeyCode == Keys.F4)
+        {
+            ProcessPayment(useQrFlow: true);
             e.Handled = true;
         }
         else if (e.KeyCode == Keys.F3)
@@ -572,5 +624,12 @@ public class SalesForm : Form
         _cartItems.Remove(item);
         RebindCart();
         UpdateTotalLabel();
+    }
+
+    private void UpdateQrButtonState()
+    {
+        var isDebt = _chkDebt.Checked;
+        _btnPayQr.Enabled = !isDebt;
+        _btnPayQr.Text = isDebt ? "F4 - QR (không áp dụng cho ghi nợ)" : "F4 - Thanh toán QR";
     }
 }

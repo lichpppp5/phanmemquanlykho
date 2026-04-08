@@ -7,40 +7,64 @@ public class BackupRestoreForm : Form
     public BackupRestoreForm(AppServices services)
     {
         _services = services;
-        if (!_services.Session.IsManager)
+        if (!_services.Session.IsAdmin)
         {
-            throw new InvalidOperationException("Chỉ quản lý mới được sao lưu/khôi phục dữ liệu.");
+            throw new InvalidOperationException("Chỉ Admin mới được sao lưu/khôi phục dữ liệu.");
         }
 
-        Text = "Sao lưu / Khôi phục dữ liệu";
-        Width = 520;
-        Height = 250;
-        StartPosition = FormStartPosition.CenterParent;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        MaximizeBox = false;
-        MinimizeBox = false;
-        KeyPreview = true;
+        UiStyle.ApplyDialogStyle(this, "Sao lưu / Khôi phục dữ liệu", new Size(620, 320), sizable: false);
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Padding = new Padding(16)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 70f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58f));
+        Controls.Add(root);
+
+        var lblHint = new Label
+        {
+            Text = "Thực hiện sao lưu định kỳ để đảm bảo an toàn dữ liệu. Khôi phục sẽ ghi đè dữ liệu hiện tại.",
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+        };
+        root.Controls.Add(lblHint, 0, 0);
+
+        var buttonPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1
+        };
+        buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        root.Controls.Add(buttonPanel, 0, 1);
 
         var btnBackup = new Button
         {
             Text = "Sao lưu database",
-            Width = 180,
-            Height = 50,
-            Location = new Point(40, 70)
+            Dock = DockStyle.Fill,
+            Height = 52,
+            Margin = new Padding(0, 0, 10, 0)
         };
+        UiStyle.StyleButton(btnBackup, UiStyle.Success);
         btnBackup.Click += (_, _) => DoBackup();
 
         var btnRestore = new Button
         {
             Text = "Khôi phục từ file backup",
-            Width = 220,
-            Height = 50,
-            Location = new Point(250, 70)
+            Dock = DockStyle.Fill,
+            Height = 52,
+            Margin = new Padding(10, 0, 0, 0)
         };
+        UiStyle.StyleButton(btnRestore, UiStyle.Danger);
         btnRestore.Click += (_, _) => DoRestore();
-
-        Controls.Add(btnBackup);
-        Controls.Add(btnRestore);
+        buttonPanel.Controls.Add(btnBackup, 0, 0);
+        buttonPanel.Controls.Add(btnRestore, 1, 0);
 
         KeyDown += (_, e) =>
         {

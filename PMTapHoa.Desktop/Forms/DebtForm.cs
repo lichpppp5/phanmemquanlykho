@@ -17,32 +17,60 @@ public class DebtForm : Form
         _services = services;
 
         Text = "Quản lý công nợ khách hàng";
-        Width = 1100;
-        Height = 700;
+        Width = 1280;
+        Height = 820;
+        MinimumSize = new Size(1160, 720);
         StartPosition = FormStartPosition.CenterParent;
+        WindowState = FormWindowState.Maximized;
         KeyPreview = true;
+        BackColor = Color.WhiteSmoke;
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(14)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 54f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 130f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 46f));
+        Controls.Add(root);
+
+        var searchPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(4, 10, 4, 4)
+        };
+        root.Controls.Add(searchPanel, 0, 0);
 
         var lblSearch = new Label
         {
             Text = "Tìm khách / mã HĐ:",
             AutoSize = true,
-            Location = new Point(20, 20)
+            Margin = new Padding(0, 8, 8, 0)
         };
         _txtSearch = new TextBox
         {
-            Width = 250,
-            Location = new Point(140, 16)
+            Width = 280,
+            Margin = new Padding(0, 4, 0, 0),
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
         };
         _txtSearch.TextChanged += (_, _) => LoadDebts();
+        searchPanel.Controls.Add(lblSearch);
+        searchPanel.Controls.Add(_txtSearch);
 
         _gridDebts = new DataGridView
         {
-            Location = new Point(20, 55),
-            Width = 1040,
-            Height = 280,
+            Dock = DockStyle.Fill,
             ReadOnly = true,
             AllowUserToAddRows = false,
-            AutoGenerateColumns = false
+            AutoGenerateColumns = false,
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+            MultiSelect = false
         };
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.SaleID), HeaderText = "Hóa đơn", Width = 90 });
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.SaleDate), HeaderText = "Ngày bán", Width = 170 });
@@ -50,52 +78,73 @@ public class DebtForm : Form
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.TotalAmount), HeaderText = "Tổng tiền", Width = 150 });
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.PaidAmount), HeaderText = "Đã trả", Width = 150 });
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.OutstandingAmount), HeaderText = "Còn nợ", Width = 150 });
+        _gridDebts.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _gridDebts.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _gridDebts.ColumnHeadersHeight = 36;
+        _gridDebts.RowTemplate.Height = 32;
+        _gridDebts.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _gridDebts.SelectionChanged += (_, _) => LoadSelectedPaymentHistory();
+        root.Controls.Add(_gridDebts, 0, 1);
 
         var paymentPanel = new GroupBox
         {
             Text = "Thu nợ từng phần",
-            Location = new Point(20, 350),
-            Width = 1040,
-            Height = 120
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
+        root.Controls.Add(paymentPanel, 0, 2);
 
-        var lblAmount = new Label { Text = "Số tiền thu:", AutoSize = true, Location = new Point(20, 38) };
+        var paymentLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 6,
+            RowCount = 1,
+            Padding = new Padding(12, 14, 12, 12)
+        };
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 10f));
+        paymentPanel.Controls.Add(paymentLayout);
+
+        var lblAmount = new Label { Text = "Số tiền thu:", AutoSize = true, Anchor = AnchorStyles.Left };
         _numPaymentAmount = new NumericUpDown
         {
-            Location = new Point(90, 34),
-            Width = 160,
+            Dock = DockStyle.Fill,
             DecimalPlaces = 2,
             Maximum = 1000000000
         };
 
-        var lblNote = new Label { Text = "Ghi chú:", AutoSize = true, Location = new Point(270, 38) };
-        _txtNote = new TextBox { Location = new Point(325, 34), Width = 360 };
+        var lblNote = new Label { Text = "Ghi chú:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _txtNote = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
 
         var btnCollect = new Button
         {
             Text = "Thu nợ",
-            Width = 120,
-            Location = new Point(710, 32)
+            Dock = DockStyle.Fill,
+            Height = 38,
+            BackColor = UiStyle.SuccessBright,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnCollect.Click += (_, _) => CollectDebt();
 
-        if (!_services.Session.IsManager)
+        if (!_services.Session.IsAdmin)
         {
             btnCollect.Enabled = false;
         }
 
-        paymentPanel.Controls.Add(lblAmount);
-        paymentPanel.Controls.Add(_numPaymentAmount);
-        paymentPanel.Controls.Add(lblNote);
-        paymentPanel.Controls.Add(_txtNote);
-        paymentPanel.Controls.Add(btnCollect);
+        paymentLayout.Controls.Add(lblAmount, 0, 0);
+        paymentLayout.Controls.Add(_numPaymentAmount, 1, 0);
+        paymentLayout.Controls.Add(lblNote, 2, 0);
+        paymentLayout.Controls.Add(_txtNote, 3, 0);
+        paymentLayout.Controls.Add(btnCollect, 4, 0);
 
         _gridPayments = new DataGridView
         {
-            Location = new Point(20, 490),
-            Width = 1040,
-            Height = 150,
+            Dock = DockStyle.Fill,
             ReadOnly = true,
             AllowUserToAddRows = false,
             AutoGenerateColumns = false
@@ -103,12 +152,12 @@ public class DebtForm : Form
         _gridPayments.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtPayment.PaymentDate), HeaderText = "Ngày thu", Width = 200 });
         _gridPayments.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtPayment.Amount), HeaderText = "Số tiền", Width = 180 });
         _gridPayments.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtPayment.Note), HeaderText = "Ghi chú", Width = 620 });
-
-        Controls.Add(lblSearch);
-        Controls.Add(_txtSearch);
-        Controls.Add(_gridDebts);
-        Controls.Add(paymentPanel);
-        Controls.Add(_gridPayments);
+        _gridPayments.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _gridPayments.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _gridPayments.ColumnHeadersHeight = 36;
+        _gridPayments.RowTemplate.Height = 32;
+        _gridPayments.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
+        root.Controls.Add(_gridPayments, 0, 3);
 
         Load += (_, _) => LoadDebts();
         KeyDown += (_, e) =>

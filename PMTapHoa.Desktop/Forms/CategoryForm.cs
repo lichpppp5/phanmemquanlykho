@@ -15,41 +15,71 @@ public class CategoryForm : Form
         _services = services;
 
         Text = "Quản lý danh mục";
-        Width = 650;
-        Height = 520;
+        Width = 980;
+        Height = 700;
+        MinimumSize = new Size(860, 620);
         StartPosition = FormStartPosition.CenterParent;
+        WindowState = FormWindowState.Maximized;
         KeyPreview = true;
+        BackColor = Color.WhiteSmoke;
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Padding = new Padding(14)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 82f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        Controls.Add(root);
 
         _grid = new DataGridView
         {
-            Location = new Point(20, 20),
-            Width = 590,
-            Height = 300,
+            Dock = DockStyle.Fill,
             ReadOnly = true,
             AllowUserToAddRows = false,
-            AutoGenerateColumns = false
+            AutoGenerateColumns = false,
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+            MultiSelect = false
         };
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Category.CategoryID), HeaderText = "ID", Width = 80 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Category.CategoryName), HeaderText = "Tên danh mục", Width = 460 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Category.CategoryName), HeaderText = "Tên danh mục", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        _grid.ColumnHeadersHeight = 36;
+        _grid.RowTemplate.Height = 32;
+        _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _grid.SelectionChanged += (_, _) => LoadSelected();
+        root.Controls.Add(_grid, 0, 0);
 
-        var lbl = new Label
+        var editorPanel = new FlowLayoutPanel
         {
-            Text = "Tên danh mục:",
-            AutoSize = true,
-            Location = new Point(20, 350)
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(4, 16, 4, 4)
         };
+        root.Controls.Add(editorPanel, 0, 1);
+        var lbl = new Label { Text = "Tên danh mục:", AutoSize = true, Margin = new Padding(0, 9, 8, 0) };
         _txtCategoryName = new TextBox
         {
-            Width = 320,
-            Location = new Point(115, 346)
+            Width = 420,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Margin = new Padding(0, 4, 0, 0)
         };
+        editorPanel.Controls.Add(lbl);
+        editorPanel.Controls.Add(_txtCategoryName);
 
         var btnAdd = new Button
         {
             Text = "Thêm",
             Width = 100,
-            Location = new Point(20, 395)
+            Height = 36,
+            BackColor = UiStyle.SuccessBright,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnAdd.Click += (_, _) => Create();
 
@@ -57,7 +87,10 @@ public class CategoryForm : Form
         {
             Text = "Sửa",
             Width = 100,
-            Location = new Point(130, 395)
+            Height = 36,
+            BackColor = UiStyle.Primary,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnUpdate.Click += (_, _) => UpdateCategory();
 
@@ -65,7 +98,10 @@ public class CategoryForm : Form
         {
             Text = "Xóa",
             Width = 100,
-            Location = new Point(240, 395)
+            Height = 36,
+            BackColor = UiStyle.Danger,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnDelete.Click += (_, _) => DeleteCategory();
 
@@ -73,11 +109,14 @@ public class CategoryForm : Form
         {
             Text = "Làm mới",
             Width = 100,
-            Location = new Point(350, 395)
+            Height = 36,
+            BackColor = UiStyle.Neutral,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
         };
         btnClear.Click += (_, _) => ResetEditor();
 
-        if (!_services.Session.IsManager)
+        if (!_services.Session.IsAdmin)
         {
             btnAdd.Enabled = false;
             btnUpdate.Enabled = false;
@@ -85,13 +124,18 @@ public class CategoryForm : Form
             _txtCategoryName.ReadOnly = true;
         }
 
-        Controls.Add(_grid);
-        Controls.Add(lbl);
-        Controls.Add(_txtCategoryName);
-        Controls.Add(btnAdd);
-        Controls.Add(btnUpdate);
-        Controls.Add(btnDelete);
-        Controls.Add(btnClear);
+        var actionPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(4, 8, 4, 4)
+        };
+        actionPanel.Controls.Add(btnAdd);
+        actionPanel.Controls.Add(btnUpdate);
+        actionPanel.Controls.Add(btnDelete);
+        actionPanel.Controls.Add(btnClear);
+        root.Controls.Add(actionPanel, 0, 2);
 
         Load += (_, _) => LoadGrid();
         KeyDown += (_, e) =>

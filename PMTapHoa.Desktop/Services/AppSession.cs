@@ -6,7 +6,9 @@ public class AppSession
 {
     public UserAccount? CurrentUser { get; private set; }
 
-    public bool IsManager => string.Equals(CurrentUser?.Role, "Manager", StringComparison.OrdinalIgnoreCase);
+    public bool IsAdmin =>
+        string.Equals(CurrentUser?.Role, "Admin", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(CurrentUser?.Role, "Manager", StringComparison.OrdinalIgnoreCase);
 
     public void SetUser(UserAccount user)
     {

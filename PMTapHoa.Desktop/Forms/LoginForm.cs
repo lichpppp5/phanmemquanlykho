@@ -10,63 +10,99 @@ public class LoginForm : Form
     {
         _services = services;
 
-        Text = "Đăng nhập hệ thống";
-        Width = 420;
-        Height = 260;
+        UiStyle.ApplyDialogStyle(this, "Đăng nhập hệ thống", new Size(520, 340), sizable: false);
         StartPosition = FormStartPosition.CenterScreen;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        MaximizeBox = false;
-        MinimizeBox = false;
-        KeyPreview = true;
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(16)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 50f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        Controls.Add(root);
+
+        var lblTitle = new Label
+        {
+            Text = "ĐĂNG NHẬP HỆ THỐNG",
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 14, FontStyle.Bold),
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+        root.Controls.Add(lblTitle, 0, 0);
+
+        var formLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 2,
+            Padding = new Padding(8, 8, 8, 0)
+        };
+        formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
+        formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        root.Controls.Add(formLayout, 0, 1);
 
         var lblUsername = new Label
         {
             Text = "Tài khoản:",
             AutoSize = true,
-            Location = new Point(35, 40)
+            Anchor = AnchorStyles.Left
         };
         _txtUsername = new TextBox
         {
-            Width = 220,
-            Location = new Point(120, 36)
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular)
         };
 
         var lblPassword = new Label
         {
             Text = "Mật khẩu:",
             AutoSize = true,
-            Location = new Point(35, 85)
+            Anchor = AnchorStyles.Left
         };
         _txtPassword = new TextBox
         {
-            Width = 220,
-            Location = new Point(120, 81),
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 10, FontStyle.Regular),
             PasswordChar = '*'
         };
+
+        formLayout.Controls.Add(lblUsername, 0, 0);
+        formLayout.Controls.Add(_txtUsername, 1, 0);
+        formLayout.Controls.Add(lblPassword, 0, 1);
+        formLayout.Controls.Add(_txtPassword, 1, 1);
 
         var btnLogin = new Button
         {
             Text = "Đăng nhập",
-            Width = 110,
-            Height = 36,
-            Location = new Point(120, 135)
+            Width = 130,
+            Height = 36
         };
+        UiStyle.StyleButton(btnLogin, UiStyle.Success);
         btnLogin.Click += (_, _) => HandleLogin();
+        var actionPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(8, 4, 8, 0)
+        };
+        actionPanel.Controls.Add(btnLogin);
+        root.Controls.Add(actionPanel, 0, 2);
 
         var lblHint = new Label
         {
             Text = "Mặc định: admin/admin123 hoặc staff/staff123",
-            AutoSize = true,
+            Dock = DockStyle.Fill,
             ForeColor = Color.DimGray,
-            Location = new Point(35, 182)
+            Font = new Font("Segoe UI", 9, FontStyle.Regular),
+            TextAlign = ContentAlignment.TopLeft
         };
-
-        Controls.Add(lblUsername);
-        Controls.Add(_txtUsername);
-        Controls.Add(lblPassword);
-        Controls.Add(_txtPassword);
-        Controls.Add(btnLogin);
-        Controls.Add(lblHint);
+        root.Controls.Add(lblHint, 0, 3);
 
         Shown += (_, _) => _txtUsername.Focus();
         KeyDown += LoginForm_KeyDown;

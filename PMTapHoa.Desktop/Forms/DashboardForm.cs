@@ -19,6 +19,8 @@ public class DashboardForm : Form
         Height = 620;
         MinimumSize = new Size(900, 560);
         StartPosition = FormStartPosition.CenterParent;
+        WindowState = FormWindowState.Maximized;
+        AutoScroll = true;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -46,12 +48,12 @@ public class DashboardForm : Form
         }
         Controls.Add(grid);
 
-        var cardTodayRevenue = CreateCard(Color.FromArgb(39, 174, 96), out _lblTodayRevenue);
-        var cardMonthRevenue = CreateCard(Color.FromArgb(41, 128, 185), out _lblMonthRevenue);
-        var cardTodayOrders = CreateCard(Color.FromArgb(52, 73, 94), out _lblTodayOrders);
-        var cardDebt = CreateCard(Color.FromArgb(211, 84, 0), out _lblDebtOutstanding);
-        var cardLowStock = CreateCard(Color.FromArgb(241, 196, 15), out _lblLowStock, darkText: true);
-        var cardNearExpiry = CreateCard(Color.FromArgb(142, 68, 173), out _lblNearExpiry);
+        var cardTodayRevenue = CreateCard(UiStyle.Success, out _lblTodayRevenue);
+        var cardMonthRevenue = CreateCard(UiStyle.AccentBlueDark, out _lblMonthRevenue);
+        var cardTodayOrders = CreateCard(UiStyle.AccentSlate, out _lblTodayOrders);
+        var cardDebt = CreateCard(UiStyle.AccentOrange, out _lblDebtOutstanding);
+        var cardLowStock = CreateCard(UiStyle.AccentYellow, out _lblLowStock, darkText: true);
+        var cardNearExpiry = CreateCard(UiStyle.AccentPurple, out _lblNearExpiry);
 
         grid.Controls.Add(cardTodayRevenue, 0, 0);
         grid.Controls.Add(cardMonthRevenue, 1, 0);
@@ -66,7 +68,7 @@ public class DashboardForm : Form
             Width = 140,
             Height = 40,
             Location = new Point(24, 510),
-            BackColor = Color.FromArgb(52, 152, 219),
+            BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };

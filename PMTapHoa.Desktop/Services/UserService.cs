@@ -103,8 +103,10 @@ public class UserService
 
     private static string NormalizeRole(string role)
     {
-        return string.Equals((role ?? string.Empty).Trim(), "Manager", StringComparison.OrdinalIgnoreCase)
-            ? "Manager"
-            : "Staff";
+        var normalized = (role ?? string.Empty).Trim();
+        return string.Equals(normalized, "Admin", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalized, "Manager", StringComparison.OrdinalIgnoreCase)
+            ? "Admin"
+            : "User";
     }
 }

@@ -71,4 +71,38 @@ public class AppConfigService
         }
         set => Set("low_stock_reminder_enabled", value ? "1" : "0");
     }
+
+    public bool QrPaymentEnabled
+    {
+        get
+        {
+            var value = Get("qr_payment_enabled");
+            return !string.Equals(value, "0", StringComparison.OrdinalIgnoreCase);
+        }
+        set => Set("qr_payment_enabled", value ? "1" : "0");
+    }
+
+    public string QrBankBin
+    {
+        get => Get("qr_bank_bin") ?? "970436";
+        set => Set("qr_bank_bin", value);
+    }
+
+    public string QrAccountNo
+    {
+        get => Get("qr_account_no") ?? string.Empty;
+        set => Set("qr_account_no", value);
+    }
+
+    public string QrAccountName
+    {
+        get => Get("qr_account_name") ?? "CUA HANG TAP HOA";
+        set => Set("qr_account_name", value);
+    }
+
+    public string QrTransferPrefix
+    {
+        get => Get("qr_transfer_prefix") ?? "HD";
+        set => Set("qr_transfer_prefix", value);
+    }
 }

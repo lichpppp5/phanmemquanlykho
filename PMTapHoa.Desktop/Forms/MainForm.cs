@@ -3,6 +3,7 @@ namespace PMTapHoa.Desktop.Forms;
 public class MainForm : Form
 {
     private readonly AppServices _services;
+    private readonly ToolTip _permissionToolTip = new();
     private readonly Button _btnSales;
     private readonly Button _btnInventory;
     private readonly Button _btnReport;
@@ -29,6 +30,7 @@ public class MainForm : Form
         Height = 820;
         MinimumSize = new Size(1160, 740);
         StartPosition = FormStartPosition.CenterScreen;
+        WindowState = FormWindowState.Maximized;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -48,49 +50,49 @@ public class MainForm : Form
             Location = new Point(35, 100)
         };
 
-        _btnDashboard = CreateMenuButton("Dashboard tổng quan", Color.FromArgb(52, 152, 219), Color.White);
+        _btnDashboard = CreateMenuButton("Dashboard tổng quan", UiStyle.Primary, Color.White);
         _btnDashboard.Click += (_, _) => new DashboardForm(_services).ShowDialog(this);
 
-        _btnSales = CreateMenuButton("F1 - Bán hàng (POS)", Color.FromArgb(46, 204, 113), Color.White);
+        _btnSales = CreateMenuButton("F1 - Bán hàng", UiStyle.SuccessBright, Color.White);
         _btnSales.Click += (_, _) => OpenSalesForm();
 
-        _btnInventory = CreateMenuButton("Kho hàng", Color.FromArgb(241, 196, 15), Color.Black);
+        _btnInventory = CreateMenuButton("Kho hàng", UiStyle.AccentYellow, Color.Black);
         _btnInventory.Click += (_, _) => new InventoryForm(_services).ShowDialog(this);
 
-        _btnReport = CreateMenuButton("Báo cáo doanh thu", Color.FromArgb(155, 89, 182), Color.White);
+        _btnReport = CreateMenuButton("Báo cáo doanh thu", UiStyle.AccentPurple, Color.White);
         _btnReport.Click += (_, _) => new ReportForm(_services).ShowDialog(this);
 
-        _btnDebt = CreateMenuButton("Quản lý công nợ", Color.FromArgb(230, 126, 34), Color.White);
+        _btnDebt = CreateMenuButton("Quản lý công nợ", UiStyle.AccentOrange, Color.White);
         _btnDebt.Click += (_, _) => new DebtForm(_services).ShowDialog(this);
 
-        _btnSalesHistory = CreateMenuButton("Lịch sử & in lại hóa đơn", Color.FromArgb(26, 188, 156), Color.White);
+        _btnSalesHistory = CreateMenuButton("Lịch sử & in lại hóa đơn", UiStyle.AccentTeal, Color.White);
         _btnSalesHistory.Click += (_, _) => new SalesHistoryForm(_services).ShowDialog(this);
 
-        _btnRestockRequests = CreateMenuButton("Mối nhập hàng", Color.FromArgb(243, 156, 18), Color.Black);
+        _btnRestockRequests = CreateMenuButton("Mối nhập hàng", UiStyle.Warning, Color.Black);
         _btnRestockRequests.Click += (_, _) => new RestockRequestForm(_services).ShowDialog(this);
 
-        _btnCategory = CreateMenuButton("Quản lý danh mục", Color.FromArgb(52, 73, 94), Color.White);
+        _btnCategory = CreateMenuButton("Quản lý danh mục", UiStyle.AccentSlate, Color.White);
         _btnCategory.Click += (_, _) => new CategoryForm(_services).ShowDialog(this);
 
-        _btnChangePassword = CreateMenuButton("Đổi mật khẩu", Color.FromArgb(127, 140, 141), Color.White);
+        _btnChangePassword = CreateMenuButton("Đổi mật khẩu", UiStyle.Neutral, Color.White);
         _btnChangePassword.Click += (_, _) => new ChangePasswordForm(_services).ShowDialog(this);
 
-        _btnUserManagement = CreateMenuButton("Quản lý người dùng", Color.FromArgb(192, 57, 43), Color.White);
+        _btnUserManagement = CreateMenuButton("Quản lý người dùng", UiStyle.Danger, Color.White);
         _btnUserManagement.Click += (_, _) => new UserManagementForm(_services).ShowDialog(this);
 
-        _btnAuditLogs = CreateMenuButton("Nhật ký thao tác", Color.FromArgb(41, 128, 185), Color.White);
+        _btnAuditLogs = CreateMenuButton("Nhật ký thao tác", UiStyle.AccentBlueDark, Color.White);
         _btnAuditLogs.Click += (_, _) => new AuditLogForm(_services).ShowDialog(this);
 
-        _btnBackupRestore = CreateMenuButton("Sao lưu / Khôi phục", Color.FromArgb(142, 68, 173), Color.White);
+        _btnBackupRestore = CreateMenuButton("Sao lưu / Khôi phục", UiStyle.AccentPurple, Color.White);
         _btnBackupRestore.Click += (_, _) => new BackupRestoreForm(_services).ShowDialog(this);
 
-        _btnSettings = CreateMenuButton("Cấu hình hệ thống", Color.FromArgb(44, 62, 80), Color.White);
+        _btnSettings = CreateMenuButton("Cấu hình hệ thống", UiStyle.HeaderDark, Color.White);
         _btnSettings.Click += (_, _) => new SettingsForm(_services).ShowDialog(this);
 
-        _btnSeedDemo = CreateMenuButton("Nạp dữ liệu demo", Color.FromArgb(149, 165, 166), Color.Black);
+        _btnSeedDemo = CreateMenuButton("Nạp dữ liệu demo", UiStyle.Neutral, Color.Black);
         _btnSeedDemo.Click += (_, _) => SeedDemoData();
 
-        _btnHealthCheck = CreateMenuButton("Kiểm tra hệ thống", Color.FromArgb(22, 160, 133), Color.White);
+        _btnHealthCheck = CreateMenuButton("Kiểm tra hệ thống", UiStyle.AccentTeal, Color.White);
         _btnHealthCheck.Click += (_, _) => new HealthCheckForm(_services).ShowDialog(this);
 
         var menuGrid = new TableLayoutPanel
@@ -135,14 +137,50 @@ public class MainForm : Form
 
     private void ApplyRolePermissions()
     {
-        var isManager = _services.Session.IsManager;
-        _btnReport.Enabled = isManager;
-        _btnDebt.Enabled = isManager;
-        _btnCategory.Enabled = isManager;
-        _btnUserManagement.Enabled = isManager;
-        _btnAuditLogs.Enabled = isManager;
-        _btnBackupRestore.Enabled = isManager;
-        _btnSeedDemo.Enabled = isManager;
+        var isAdmin = _services.Session.IsAdmin;
+        _btnReport.Enabled = isAdmin;
+        _btnDebt.Enabled = isAdmin;
+        _btnSalesHistory.Enabled = isAdmin;
+        _btnRestockRequests.Enabled = isAdmin;
+        _btnCategory.Enabled = isAdmin;
+        _btnUserManagement.Enabled = isAdmin;
+        _btnAuditLogs.Enabled = isAdmin;
+        _btnBackupRestore.Enabled = isAdmin;
+        _btnSettings.Enabled = isAdmin;
+        _btnSeedDemo.Enabled = isAdmin;
+        _btnHealthCheck.Enabled = isAdmin;
+        _btnDashboard.Enabled = isAdmin;
+
+        // User thường: chỉ bán hàng + thêm/nhập hàng trong kho (và đổi mật khẩu).
+        _btnSales.Enabled = true;
+        _btnInventory.Enabled = true;
+        _btnChangePassword.Enabled = true;
+
+        ApplyAdminOnlyTooltips(isAdmin);
+    }
+
+    private void ApplyAdminOnlyTooltips(bool isAdmin)
+    {
+        var adminOnlyButtons = new[]
+        {
+            _btnDashboard,
+            _btnReport,
+            _btnDebt,
+            _btnSalesHistory,
+            _btnRestockRequests,
+            _btnCategory,
+            _btnUserManagement,
+            _btnAuditLogs,
+            _btnBackupRestore,
+            _btnSettings,
+            _btnSeedDemo,
+            _btnHealthCheck
+        };
+
+        foreach (var button in adminOnlyButtons)
+        {
+            _permissionToolTip.SetToolTip(button, isAdmin ? string.Empty : "Chỉ Admin");
+        }
     }
 
     private void MainForm_KeyDown(object? sender, KeyEventArgs e)
@@ -207,7 +245,7 @@ public class MainForm : Form
             UseVisualStyleBackColor = false
         };
 
-        button.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+        button.FlatAppearance.BorderColor = UiStyle.BorderMuted;
         button.FlatAppearance.BorderSize = 1;
         button.FlatAppearance.MouseDownBackColor = ControlPaint.Dark(backColor);
         button.FlatAppearance.MouseOverBackColor = ControlPaint.Light(backColor);

@@ -17,6 +17,8 @@ public class InventoryForm : Form
     private readonly NumericUpDown _numPrice;
     private readonly NumericUpDown _numStock;
     private readonly NumericUpDown _numMinStock;
+    private readonly NumericUpDown _numScanQty;
+    private readonly Label _lblScanStatus;
     private readonly DateTimePicker _dtExpiry;
     private readonly Button _btnAdd;
     private readonly Button _btnUpdate;
@@ -33,6 +35,8 @@ public class InventoryForm : Form
         Height = 860;
         MinimumSize = new Size(1220, 780);
         StartPosition = FormStartPosition.CenterParent;
+        WindowState = FormWindowState.Maximized;
+        AutoScroll = true;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -74,7 +78,7 @@ public class InventoryForm : Form
         _grid.ColumnHeadersHeight = 38;
         _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
         _grid.RowTemplate.Height = 34;
-        _grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+        _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _grid.RowPrePaint += Grid_RowPrePaint;
         _grid.SelectionChanged += (_, _) => LoadSelectedProductToEditor();
 
@@ -89,8 +93,10 @@ public class InventoryForm : Form
 
         var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Location = new Point(18, 36) };
         _txtBarcode = new TextBox { Location = new Point(85, 32), Width = 150 };
+        _txtBarcode.KeyDown += TxtBarcode_KeyDown;
         var lblName = new Label { Text = "Tên:", AutoSize = true, Location = new Point(255, 36) };
         _txtName = new TextBox { Location = new Point(295, 32), Width = 250 };
+        _txtName.KeyDown += TxtName_KeyDown;
         var lblCategory = new Label { Text = "Danh mục:", AutoSize = true, Location = new Point(565, 36) };
         _txtCategory = new TextBox { Location = new Point(635, 32), Width = 160 };
         var lblUnit = new Label { Text = "ĐVT:", AutoSize = true, Location = new Point(820, 36) };
@@ -107,10 +113,30 @@ public class InventoryForm : Form
         var lblExpiry = new Label { Text = "HSD:", AutoSize = true, Location = new Point(785, 82) };
         _dtExpiry = new DateTimePicker { Location = new Point(825, 78), Width = 170, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
 
-        _btnAdd = new Button { Text = "Thêm", Width = 100, Location = new Point(295, 130), BackColor = Color.FromArgb(46, 204, 113), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        _btnUpdate = new Button { Text = "Sửa", Width = 100, Location = new Point(410, 130), BackColor = Color.FromArgb(52, 152, 219), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        _btnDelete = new Button { Text = "Xóa", Width = 100, Location = new Point(525, 130), BackColor = Color.FromArgb(192, 57, 43), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        var btnClear = new Button { Text = "Làm mới form", Width = 120, Location = new Point(640, 130), BackColor = Color.FromArgb(127, 140, 141), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        var lblScanQty = new Label { Text = "SL quét:", AutoSize = true, Location = new Point(18, 134) };
+        _numScanQty = new NumericUpDown
+        {
+            Location = new Point(85, 130),
+            Width = 90,
+            DecimalPlaces = 2,
+            Maximum = 100000,
+            Minimum = 1,
+            Value = 1
+        };
+        _numScanQty.KeyDown += NumScanQty_KeyDown;
+
+        _lblScanStatus = new Label
+        {
+            Text = "Quét mã -> Enter, nhập tên (nếu mới), nhập SL -> Enter để lưu nhanh.",
+            AutoSize = true,
+            ForeColor = Color.DimGray,
+            Location = new Point(18, 162)
+        };
+
+        _btnAdd = new Button { Text = "Thêm", Width = 100, Location = new Point(295, 130), BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnUpdate = new Button { Text = "Sửa", Width = 100, Location = new Point(410, 130), BackColor = UiStyle.Primary, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnDelete = new Button { Text = "Xóa", Width = 100, Location = new Point(525, 130), BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        var btnClear = new Button { Text = "Làm mới form", Width = 120, Location = new Point(640, 130), BackColor = UiStyle.Neutral, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
 
         _btnAdd.Click += (_, _) => CreateProduct();
         _btnUpdate.Click += (_, _) => UpdateProduct();
@@ -135,6 +161,9 @@ public class InventoryForm : Form
         editorPanel.Controls.Add(_numMinStock);
         editorPanel.Controls.Add(lblExpiry);
         editorPanel.Controls.Add(_dtExpiry);
+        editorPanel.Controls.Add(lblScanQty);
+        editorPanel.Controls.Add(_numScanQty);
+        editorPanel.Controls.Add(_lblScanStatus);
         editorPanel.Controls.Add(_btnAdd);
         editorPanel.Controls.Add(_btnUpdate);
         editorPanel.Controls.Add(_btnDelete);
@@ -180,7 +209,7 @@ public class InventoryForm : Form
             Text = "Cập nhật nhập hàng",
             Width = 170,
             Location = new Point(600, 32),
-            BackColor = Color.FromArgb(41, 128, 185),
+            BackColor = UiStyle.AccentBlueDark,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
@@ -191,15 +220,17 @@ public class InventoryForm : Form
             Text = "Ghi mối nhập hàng",
             Width = 160,
             Location = new Point(785, 32),
-            BackColor = Color.FromArgb(243, 156, 18),
+            BackColor = UiStyle.Warning,
             ForeColor = Color.Black,
             FlatStyle = FlatStyle.Flat
         };
         btnRestock.Click += (_, _) => OpenRestockForSelectedProduct();
 
-        if (!_services.Session.IsManager)
+        if (!_services.Session.IsAdmin)
         {
+            _btnUpdate.Enabled = false;
             _btnDelete.Enabled = false;
+            btnRestock.Enabled = false;
         }
 
         importPanel.Controls.Add(lblQty);
@@ -420,7 +451,9 @@ public class InventoryForm : Form
         _numPrice.Value = 0;
         _numStock.Value = 0;
         _numMinStock.Value = 5;
+        _numScanQty.Value = 1;
         _dtExpiry.Checked = false;
+        _lblScanStatus.Text = "Quét mã -> Enter, nhập tên (nếu mới), nhập SL -> Enter để lưu nhanh.";
     }
 
     private static decimal SafeDecimalToUpDown(decimal value, decimal max)
@@ -444,6 +477,182 @@ public class InventoryForm : Form
         {
             Close();
         }
+    }
+
+    private void TxtBarcode_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode != Keys.Enter)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        e.SuppressKeyPress = true;
+        PrepareScanFlowByBarcode();
+    }
+
+    private void TxtName_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode != Keys.Enter)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        e.SuppressKeyPress = true;
+        _numScanQty.Focus();
+        _numScanQty.Select(0, _numScanQty.Text.Length);
+    }
+
+    private void NumScanQty_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode != Keys.Enter)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        e.SuppressKeyPress = true;
+        SaveByScanFlow();
+    }
+
+    private void PrepareScanFlowByBarcode()
+    {
+        try
+        {
+            var barcode = _txtBarcode.Text.Trim();
+            if (string.IsNullOrWhiteSpace(barcode))
+            {
+                return;
+            }
+
+            var existing = _services.ProductService.GetByBarcode(barcode);
+            if (existing != null)
+            {
+                _selectedProductId = existing.ProductID;
+                _txtName.Text = existing.ProductName;
+                _txtCategory.Text = existing.CategoryName ?? string.Empty;
+                _txtUnit.Text = existing.Unit ?? string.Empty;
+                _lblScanStatus.Text = $"Mã đã tồn tại: {existing.ProductName}. Nhập SL rồi Enter để cộng tồn.";
+            }
+            else
+            {
+                using var popup = new QuickNewProductPopupForm(barcode);
+                if (popup.ShowDialog(this) != DialogResult.OK)
+                {
+                    _lblScanStatus.Text = "Đã hủy thêm mã mới. Quét mã khác để tiếp tục.";
+                    _txtBarcode.SelectAll();
+                    _txtBarcode.Focus();
+                    return;
+                }
+
+                var product = new Product
+                {
+                    Barcode = barcode,
+                    ProductName = popup.ProductName,
+                    Unit = "Cái",
+                    CostPrice = 0,
+                    SellingPrice = 0,
+                    StockQuantity = popup.Quantity,
+                    MinStock = (int)_numMinStock.Value,
+                    ExpiryDate = null
+                };
+
+                var newId = _services.ProductService.CreateProduct(product, _txtCategory.Text);
+                _services.AuditService.Log(
+                    _services.Session.CurrentUser?.Username,
+                    "SCAN_CREATE_PRODUCT",
+                    $"ProductID={newId}, Barcode={barcode}, Qty={popup.Quantity}");
+
+                _lblScanStatus.Text = $"Đã tạo mới {popup.ProductName} (SL {popup.Quantity}). Sẵn sàng quét mã tiếp theo.";
+                LoadGrid();
+                ResetAfterScanSaved();
+                return;
+            }
+
+            _numScanQty.Focus();
+            _numScanQty.Select(0, _numScanQty.Text.Length);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Lỗi khi đọc mã quét: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void SaveByScanFlow()
+    {
+        try
+        {
+            var barcode = _txtBarcode.Text.Trim();
+            if (string.IsNullOrWhiteSpace(barcode))
+            {
+                MessageBox.Show("Vui lòng quét/nhập mã vạch trước.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _txtBarcode.Focus();
+                return;
+            }
+
+            var qty = (double)_numScanQty.Value;
+            if (qty <= 0)
+            {
+                MessageBox.Show("Số lượng phải lớn hơn 0.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var existing = _services.ProductService.GetByBarcode(barcode);
+            if (existing != null)
+            {
+                _services.ProductService.QuickImportStock(existing.ProductID, qty, null);
+                _services.AuditService.Log(
+                    _services.Session.CurrentUser?.Username,
+                    "SCAN_IMPORT_EXISTING",
+                    $"ProductID={existing.ProductID}, Barcode={barcode}, Qty={qty}");
+                _lblScanStatus.Text = $"Đã cộng tồn {qty} cho {existing.ProductName}. Sẵn sàng quét mã tiếp theo.";
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(_txtName.Text))
+                {
+                    MessageBox.Show("Vui lòng nhập tên hàng cho mã mới.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    _txtName.Focus();
+                    return;
+                }
+
+                var product = new Product
+                {
+                    Barcode = barcode,
+                    ProductName = _txtName.Text.Trim(),
+                    Unit = string.IsNullOrWhiteSpace(_txtUnit.Text) ? "Cái" : _txtUnit.Text.Trim(),
+                    CostPrice = _numCost.Value,
+                    SellingPrice = _numPrice.Value,
+                    StockQuantity = qty,
+                    MinStock = (int)_numMinStock.Value,
+                    ExpiryDate = _dtExpiry.Checked ? _dtExpiry.Value.Date : null
+                };
+
+                var newId = _services.ProductService.CreateProduct(product, _txtCategory.Text);
+                _services.AuditService.Log(
+                    _services.Session.CurrentUser?.Username,
+                    "SCAN_CREATE_PRODUCT",
+                    $"ProductID={newId}, Barcode={barcode}, Qty={qty}");
+                _lblScanStatus.Text = $"Đã tạo mới {product.ProductName} (SL {qty}). Sẵn sàng quét mã tiếp theo.";
+            }
+
+            LoadGrid();
+            ResetAfterScanSaved();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Lưu theo mã quét thất bại: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void ResetAfterScanSaved()
+    {
+        _selectedProductId = null;
+        _txtBarcode.Clear();
+        _txtName.Clear();
+        _numScanQty.Value = 1;
+        _txtBarcode.Focus();
     }
 
     private void OpenRestockForSelectedProduct()
