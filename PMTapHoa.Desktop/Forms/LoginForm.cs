@@ -10,8 +10,9 @@ public class LoginForm : Form
     {
         _services = services;
 
-        UiStyle.ApplyDialogStyle(this, "Đăng nhập hệ thống", new Size(640, 420), sizable: false);
+        UiStyle.ApplyDialogStyle(this, "Đăng nhập hệ thống", new Size(760, 500), sizable: true);
         StartPosition = FormStartPosition.CenterScreen;
+        MinimumSize = new Size(700, 460);
 
         var root = new TableLayoutPanel
         {
@@ -30,7 +31,7 @@ public class LoginForm : Form
         {
             Text = "ĐĂNG NHẬP HỆ THỐNG",
             AutoSize = true,
-            Font = new Font("Segoe UI", 20, FontStyle.Bold),
+            Font = new Font("Segoe UI", 22, FontStyle.Bold),
             Margin = new Padding(0, 4, 0, 10)
         };
         root.Controls.Add(lblTitle, 0, 0);
@@ -42,10 +43,10 @@ public class LoginForm : Form
             RowCount = 2,
             Padding = new Padding(8, 8, 8, 0)
         };
-        formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
+        formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140f));
         formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
-        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
+        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
         root.Controls.Add(formLayout, 0, 1);
 
         var lblUsername = new Label
@@ -57,7 +58,7 @@ public class LoginForm : Form
         _txtUsername = new TextBox
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            Font = new Font("Segoe UI", 12, FontStyle.Regular)
         };
 
         var lblPassword = new Label
@@ -69,7 +70,7 @@ public class LoginForm : Form
         _txtPassword = new TextBox
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Font = new Font("Segoe UI", 12, FontStyle.Regular),
             PasswordChar = '*'
         };
 
@@ -103,7 +104,7 @@ public class LoginForm : Form
         {
             Text = "Mặc định: admin/admin123 hoặc staff/staff123",
             AutoSize = true,
-            MaximumSize = new Size(560, 0),
+            MaximumSize = new Size(680, 0),
             ForeColor = Color.DimGray,
             Font = new Font("Segoe UI", 10, FontStyle.Regular),
             Margin = new Padding(8, 0, 8, 0)

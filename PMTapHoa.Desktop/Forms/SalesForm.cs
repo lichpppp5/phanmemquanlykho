@@ -302,7 +302,7 @@ public class SalesForm : Form
         rightPanel.Controls.Add(payPanel, 0, 3);
 
         KeyDown += SalesForm_KeyDown;
-        Shown += (_, _) => AdjustSplitLayout();
+        Shown += (_, _) => BeginInvoke(AdjustSplitLayout);
         Resize += (_, _) => AdjustSplitLayout();
         UpdateTotalLabel();
         UpdateQrButtonState();
@@ -641,21 +641,42 @@ public class SalesForm : Form
 
     private void AdjustSplitLayout()
     {
-        if (_mainSplit.Width <= 0)
+        if (!IsHandleCreated || _mainSplit.IsDisposed)
         {
             return;
         }
 
-        var minLeft = _mainSplit.Panel1MinSize;
-        var minRight = _mainSplit.Panel2MinSize;
-        var available = _mainSplit.Width - _mainSplit.SplitterWidth;
-        if (available <= minLeft + minRight)
+        var containerWidth = _mainSplit.ClientSize.Width;
+        if (containerWidth <= 0)
         {
             return;
         }
 
-        var desiredRight = Math.Max(minRight, Math.Min(430, (int)(available * 0.34)));
-        var desiredLeft = Math.Max(minLeft, available - desiredRight);
-        _mainSplit.SplitterDistance = desiredLeft;
+        var minLeft = Math.Max(0, _mainSplit.Panel1MinSize);
+        var minRight = Math.Max(0, _mainSplit.Panel2MinSize);
+        var splitterWidth = Math.Max(0, _mainSplit.SplitterWidth);
+
+        var maxLeft = containerWidth - splitterWidth - minRight;
+        if (maxLeft < minLeft)
+        {
+            return;
+        }
+
+        var desiredLeft = (int)(containerWidth * 0.66);
+        desiredLeft = Math.Max(minLeft, Math.Min(maxLeft, desiredLeft));
+
+        if (_mainSplit.SplitterDistance == desiredLeft)
+        {
+            return;
+        }
+
+        try
+        {
+            _mainSplit.SplitterDistance = desiredLeft;
+        }
+        catch (ArgumentException)
+        {
+            // Ignore transient resize states where WinForms updates bounds asynchronously.
+        }
     }
 }

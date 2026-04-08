@@ -40,9 +40,9 @@ public class MainForm : Form
         var title = new Label
         {
             Text = "PHẦN MỀM QUẢN LÝ KHO & BÁN HÀNG",
-            Font = new Font("Segoe UI", 20, FontStyle.Bold),
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft
+            Font = new Font("Segoe UI", 18, FontStyle.Bold),
+            AutoSize = true,
+            Margin = new Padding(0, 0, 0, 4)
         };
         _lblUser = new Label
         {
@@ -255,7 +255,7 @@ public class MainForm : Form
             Text = text,
             Dock = DockStyle.Fill,
             Margin = new Padding(12),
-            Font = new Font("Segoe UI", 14, FontStyle.Regular),
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
             FlatStyle = FlatStyle.Flat,
             BackColor = backColor,
             ForeColor = foreColor,
