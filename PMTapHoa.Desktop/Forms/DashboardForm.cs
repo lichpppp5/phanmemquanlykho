@@ -15,9 +15,9 @@ public class DashboardForm : Form
         _services = services;
 
         Text = "Dashboard tổng quan";
-        Width = 980;
-        Height = 620;
-        MinimumSize = new Size(900, 560);
+        Width = 1200;
+        Height = 760;
+        MinimumSize = new Size(1080, 700);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Normal;
         AutoScaleMode = AutoScaleMode.Font;
@@ -32,7 +32,7 @@ public class DashboardForm : Form
             RowCount = 3,
             Padding = new Padding(24, 18, 24, 18)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 54f));
         Controls.Add(root);
@@ -40,9 +40,9 @@ public class DashboardForm : Form
         var title = new Label
         {
             Text = "DASHBOARD TỔNG QUAN",
-            Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 20, FontStyle.Bold),
-            TextAlign = ContentAlignment.MiddleLeft
+            AutoSize = true,
+            Font = new Font("Segoe UI", 24, FontStyle.Bold),
+            Margin = new Padding(0, 0, 0, 8)
         };
         root.Controls.Add(title, 0, 0);
 
@@ -119,6 +119,7 @@ public class DashboardForm : Form
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleCenter,
             Font = new Font("Segoe UI", 16, FontStyle.Bold),
+            Padding = new Padding(10, 0, 10, 0),
             ForeColor = darkText ? Color.Black : Color.White
         };
         panel.Controls.Add(label);

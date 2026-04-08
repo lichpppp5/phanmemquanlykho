@@ -7,6 +7,8 @@ namespace PMTapHoa.Desktop.Forms;
 
 public class SalesForm : Form
 {
+    private const int PreferredLeftMin = 620;
+    private const int PreferredRightMin = 320;
     private readonly AppServices _services;
     private readonly BindingList<CartItem> _cartItems = [];
     private readonly TextBox _txtBarcode;
@@ -72,8 +74,9 @@ public class SalesForm : Form
             Dock = DockStyle.Fill,
             BackColor = Color.WhiteSmoke
         };
-        _mainSplit.Panel1MinSize = 620;
-        _mainSplit.Panel2MinSize = 320;
+        // Avoid setting PanelMinSize too early (can throw before real size is calculated).
+        _mainSplit.Panel1MinSize = 0;
+        _mainSplit.Panel2MinSize = 0;
         Controls.Add(_mainSplit);
 
         var leftPanel = new TableLayoutPanel
@@ -652,9 +655,9 @@ public class SalesForm : Form
             return;
         }
 
-        var minLeft = Math.Max(0, _mainSplit.Panel1MinSize);
-        var minRight = Math.Max(0, _mainSplit.Panel2MinSize);
         var splitterWidth = Math.Max(0, _mainSplit.SplitterWidth);
+        var minLeft = Math.Min(PreferredLeftMin, Math.Max(160, (containerWidth - splitterWidth) / 2));
+        var minRight = Math.Min(PreferredRightMin, Math.Max(220, (containerWidth - splitterWidth) / 3));
 
         var maxLeft = containerWidth - splitterWidth - minRight;
         if (maxLeft < minLeft)

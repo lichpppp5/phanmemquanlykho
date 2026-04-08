@@ -113,7 +113,7 @@ public class AppConfigService
             var value = Get("display_mode");
             return string.Equals(value, "fullscreen", StringComparison.OrdinalIgnoreCase)
                 ? "fullscreen"
-                : "standard";
+                : "fullscreen";
         }
         set => Set(
             "display_mode",

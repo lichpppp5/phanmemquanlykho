@@ -224,6 +224,10 @@ public class SettingsForm : Form
         var defaultWidth = _services.AppConfigService.DefaultPaperWidth;
         _cmbPaperWidth.SelectedItem = defaultWidth.ToString();
         _cmbDisplayMode.SelectedIndex = _services.AppConfigService.DisplayFullScreen ? 1 : 0;
+        if (_cmbDisplayMode.SelectedIndex < 0)
+        {
+            _cmbDisplayMode.SelectedIndex = 1;
+        }
         _chkLowStockReminder.Checked = _services.AppConfigService.LowStockReminderEnabled;
         _chkQrEnabled.Checked = _services.AppConfigService.QrPaymentEnabled;
         _txtQrBankBin.Text = _services.AppConfigService.QrBankBin;

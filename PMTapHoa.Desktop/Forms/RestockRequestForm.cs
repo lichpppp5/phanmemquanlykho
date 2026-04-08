@@ -58,72 +58,90 @@ public class RestockRequestForm : Form
         {
             Text = "Tạo yêu cầu nhập hàng",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         };
+        var requestLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 6,
+            RowCount = 3,
+            Padding = new Padding(12, 10, 12, 10)
+        };
+        requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+        requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34f));
+        requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+        requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33f));
+        requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
+        requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33f));
+        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
+        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
+        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
+        panel.Controls.Add(requestLayout);
 
-        panel.Controls.Add(new Label { Text = "Sản phẩm:", AutoSize = true, Location = new Point(20, 35) });
+        requestLayout.Controls.Add(new Label { Text = "Sản phẩm:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
         _cmbProducts = new ComboBox
         {
-            Location = new Point(85, 31),
-            Width = 280,
+            Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            Font = new Font("Segoe UI", 11, FontStyle.Regular)
         };
-        panel.Controls.Add(_cmbProducts);
+        requestLayout.Controls.Add(_cmbProducts, 1, 0);
 
-        panel.Controls.Add(new Label { Text = "Mối nhập:", AutoSize = true, Location = new Point(390, 35) });
-        _txtSupplierName = new TextBox { Location = new Point(455, 31), Width = 220 };
-        panel.Controls.Add(_txtSupplierName);
+        requestLayout.Controls.Add(new Label { Text = "Mối nhập:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 0);
+        _txtSupplierName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
+        requestLayout.Controls.Add(_txtSupplierName, 3, 0);
 
-        panel.Controls.Add(new Label { Text = "Người liên hệ:", AutoSize = true, Location = new Point(700, 35) });
-        _txtContactName = new TextBox { Location = new Point(790, 31), Width = 240 };
-        panel.Controls.Add(_txtContactName);
+        requestLayout.Controls.Add(new Label { Text = "Người liên hệ:", AutoSize = true, Anchor = AnchorStyles.Left }, 4, 0);
+        _txtContactName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
+        requestLayout.Controls.Add(_txtContactName, 5, 0);
 
-        panel.Controls.Add(new Label { Text = "SĐT:", AutoSize = true, Location = new Point(20, 78) });
-        _txtPhone = new TextBox { Location = new Point(85, 74), Width = 180 };
-        panel.Controls.Add(_txtPhone);
+        requestLayout.Controls.Add(new Label { Text = "SĐT:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
+        _txtPhone = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
+        requestLayout.Controls.Add(_txtPhone, 1, 1);
 
-        panel.Controls.Add(new Label { Text = "Địa chỉ:", AutoSize = true, Location = new Point(290, 78) });
-        _txtAddress = new TextBox { Location = new Point(340, 74), Width = 335 };
-        panel.Controls.Add(_txtAddress);
+        requestLayout.Controls.Add(new Label { Text = "Địa chỉ:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 1);
+        _txtAddress = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
+        requestLayout.Controls.Add(_txtAddress, 3, 1);
 
-        panel.Controls.Add(new Label { Text = "SL cần nhập:", AutoSize = true, Location = new Point(700, 78) });
+        requestLayout.Controls.Add(new Label { Text = "SL cần nhập:", AutoSize = true, Anchor = AnchorStyles.Left }, 4, 1);
         _numQty = new NumericUpDown
         {
-            Location = new Point(790, 74),
-            Width = 100,
+            Dock = DockStyle.Left,
+            Width = 120,
             DecimalPlaces = 2,
             Maximum = 1000000,
-            Value = 1
+            Value = 1,
+            Font = new Font("Segoe UI", 11, FontStyle.Regular)
         };
-        panel.Controls.Add(_numQty);
+        requestLayout.Controls.Add(_numQty, 5, 1);
 
-        panel.Controls.Add(new Label { Text = "Giá nhập dự kiến:", AutoSize = true, Location = new Point(20, 122) });
+        requestLayout.Controls.Add(new Label { Text = "Giá nhập dự kiến:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
         _numExpectedCost = new NumericUpDown
         {
-            Location = new Point(120, 118),
-            Width = 145,
+            Dock = DockStyle.Left,
+            Width = 150,
             DecimalPlaces = 2,
-            Maximum = 1000000000
+            Maximum = 1000000000,
+            Font = new Font("Segoe UI", 11, FontStyle.Regular)
         };
-        panel.Controls.Add(_numExpectedCost);
+        requestLayout.Controls.Add(_numExpectedCost, 1, 2);
 
-        panel.Controls.Add(new Label { Text = "Ghi chú:", AutoSize = true, Location = new Point(290, 122) });
-        _txtNote = new TextBox { Location = new Point(340, 118), Width = 500 };
-        panel.Controls.Add(_txtNote);
+        requestLayout.Controls.Add(new Label { Text = "Ghi chú:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 2);
+        _txtNote = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
+        requestLayout.Controls.Add(_txtNote, 3, 2);
 
         var btnSave = new Button
         {
             Text = "Lưu yêu cầu",
-            Width = 130,
-            Height = 34,
-            Location = new Point(860, 115),
+            Width = 140,
+            Height = 36,
+            Anchor = AnchorStyles.Left,
             BackColor = UiStyle.Success,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
         btnSave.Click += (_, _) => SaveRequest();
-        panel.Controls.Add(btnSave);
+        requestLayout.Controls.Add(btnSave, 5, 2);
 
         root.Controls.Add(panel, 0, 0);
 
@@ -196,10 +214,10 @@ public class RestockRequestForm : Form
         _gridSuggestions.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(LowStockSuggestionItem.MinStock), HeaderText = "Min", Width = 80, ReadOnly = true });
         _gridSuggestions.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(LowStockSuggestionItem.SuggestedQty), HeaderText = "SL gợi ý", Width = 100 });
         _gridSuggestions.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(LowStockSuggestionItem.HasOpenRequest), HeaderText = "Đang có YC mở", Width = 120, ReadOnly = true });
-        _gridSuggestions.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        _gridSuggestions.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-        _gridSuggestions.ColumnHeadersHeight = 34;
-        _gridSuggestions.RowTemplate.Height = 32;
+        _gridSuggestions.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _gridSuggestions.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _gridSuggestions.ColumnHeadersHeight = 38;
+        _gridSuggestions.RowTemplate.Height = 34;
         _gridSuggestions.RowPrePaint += GridSuggestions_RowPrePaint;
         suggestLayout.Controls.Add(_gridSuggestions, 0, 1);
 
@@ -252,10 +270,10 @@ public class RestockRequestForm : Form
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(RestockRequestItem.ExpectedCostPrice), HeaderText = "Giá dự kiến", Width = 120 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(RestockRequestItem.Status), HeaderText = "Trạng thái", Width = 100 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(RestockRequestItem.Note), HeaderText = "Ghi chú", Width = 130 });
-        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-        _grid.ColumnHeadersHeight = 34;
-        _grid.RowTemplate.Height = 32;
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _grid.ColumnHeadersHeight = 38;
+        _grid.RowTemplate.Height = 34;
         _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _grid.CellDoubleClick += Grid_CellDoubleClick;
         root.Controls.Add(_grid, 0, 3);
