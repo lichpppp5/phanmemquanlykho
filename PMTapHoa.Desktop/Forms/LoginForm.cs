@@ -10,7 +10,7 @@ public class LoginForm : Form
     {
         _services = services;
 
-        UiStyle.ApplyDialogStyle(this, "Đăng nhập hệ thống", new Size(520, 340), sizable: false);
+        UiStyle.ApplyDialogStyle(this, "Đăng nhập hệ thống", new Size(640, 420), sizable: false);
         StartPosition = FormStartPosition.CenterScreen;
 
         var root = new TableLayoutPanel
@@ -18,20 +18,20 @@ public class LoginForm : Form
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 4,
-            Padding = new Padding(16)
+            Padding = new Padding(22, 18, 22, 16)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 50f));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(root);
 
         var lblTitle = new Label
         {
             Text = "ĐĂNG NHẬP HỆ THỐNG",
-            Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 14, FontStyle.Bold),
-            TextAlign = ContentAlignment.MiddleLeft
+            AutoSize = true,
+            Font = new Font("Segoe UI", 20, FontStyle.Bold),
+            Margin = new Padding(0, 4, 0, 10)
         };
         root.Controls.Add(lblTitle, 0, 0);
 
@@ -44,6 +44,8 @@ public class LoginForm : Form
         };
         formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
         formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
         root.Controls.Add(formLayout, 0, 1);
 
         var lblUsername = new Label
@@ -79,8 +81,10 @@ public class LoginForm : Form
         var btnLogin = new Button
         {
             Text = "Đăng nhập",
-            Width = 130,
-            Height = 36
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(160, 42),
+            Padding = new Padding(14, 0, 14, 0)
         };
         UiStyle.StyleButton(btnLogin, UiStyle.Success);
         btnLogin.Click += (_, _) => HandleLogin();
@@ -88,8 +92,9 @@ public class LoginForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
-            Padding = new Padding(8, 4, 8, 0)
+            WrapContents = true,
+            Padding = new Padding(8, 2, 8, 4),
+            Margin = new Padding(0, 6, 0, 0)
         };
         actionPanel.Controls.Add(btnLogin);
         root.Controls.Add(actionPanel, 0, 2);
@@ -97,10 +102,11 @@ public class LoginForm : Form
         var lblHint = new Label
         {
             Text = "Mặc định: admin/admin123 hoặc staff/staff123",
-            Dock = DockStyle.Fill,
+            AutoSize = true,
+            MaximumSize = new Size(560, 0),
             ForeColor = Color.DimGray,
-            Font = new Font("Segoe UI", 9, FontStyle.Regular),
-            TextAlign = ContentAlignment.TopLeft
+            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Margin = new Padding(8, 0, 8, 0)
         };
         root.Controls.Add(lblHint, 0, 3);
 

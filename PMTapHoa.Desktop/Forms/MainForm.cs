@@ -4,6 +4,7 @@ public class MainForm : Form
 {
     private readonly AppServices _services;
     private readonly ToolTip _permissionToolTip = new();
+    public bool RequestLogout { get; private set; }
     private readonly Button _btnSales;
     private readonly Button _btnInventory;
     private readonly Button _btnReport;
@@ -19,6 +20,7 @@ public class MainForm : Form
     private readonly Button _btnSeedDemo;
     private readonly Button _btnHealthCheck;
     private readonly Button _btnRestockRequests;
+    private readonly Button _btnLogout;
     private readonly Label _lblUser;
 
     public MainForm(AppServices services)
@@ -38,7 +40,7 @@ public class MainForm : Form
         var title = new Label
         {
             Text = "PHẦN MỀM QUẢN LÝ KHO & BÁN HÀNG",
-            Font = new Font("Segoe UI", 24, FontStyle.Bold),
+            Font = new Font("Segoe UI", 20, FontStyle.Bold),
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft
         };
@@ -50,6 +52,17 @@ public class MainForm : Form
             Font = new Font("Segoe UI", 12, FontStyle.Regular),
             TextAlign = ContentAlignment.MiddleLeft
         };
+        _btnLogout = new Button
+        {
+            Text = "Đăng xuất",
+            Width = 120,
+            Height = 34,
+            BackColor = UiStyle.Neutral,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Anchor = AnchorStyles.Right
+        };
+        _btnLogout.Click += (_, _) => Logout();
 
         _btnDashboard = CreateMenuButton("Dashboard tổng quan", UiStyle.Primary, Color.White);
         _btnDashboard.Click += (_, _) => new DashboardForm(_services).ShowDialog(this);
@@ -134,11 +147,23 @@ public class MainForm : Form
             RowCount = 3,
             Padding = new Padding(28, 20, 28, 24)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         root.Controls.Add(title, 0, 0);
-        root.Controls.Add(_lblUser, 0, 1);
+
+        var userBar = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0, 0, 0, 6)
+        };
+        userBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        userBar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        userBar.Controls.Add(_lblUser, 0, 0);
+        userBar.Controls.Add(_btnLogout, 1, 0);
+        root.Controls.Add(userBar, 0, 1);
         root.Controls.Add(menuGrid, 0, 2);
         Controls.Add(root);
 
@@ -210,6 +235,23 @@ public class MainForm : Form
     private void OpenSalesForm()
     {
         new SalesForm(_services).ShowDialog(this);
+    }
+
+    private void Logout()
+    {
+        var confirm = MessageBox.Show(
+            "Bạn muốn đăng xuất để chuyển tài khoản?",
+            "Đăng xuất",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+        if (confirm != DialogResult.Yes)
+        {
+            return;
+        }
+
+        _services.Session.Clear();
+        RequestLogout = true;
+        Close();
     }
 
     private void SeedDemoData()

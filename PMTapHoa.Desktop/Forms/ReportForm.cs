@@ -29,17 +29,18 @@ public class ReportForm : Form
             RowCount = 3,
             Padding = new Padding(28, 20, 28, 20)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 190f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 110f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 210f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 120f));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         Controls.Add(root);
 
         var title = new Label
         {
             Text = "BÁO CÁO DOANH THU",
-            Dock = DockStyle.Top,
+            Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 20, FontStyle.Bold),
-            Height = 42
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleLeft
         };
         var metricsWrap = new TableLayoutPanel
         {
@@ -49,7 +50,7 @@ public class ReportForm : Form
         };
         metricsWrap.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
         metricsWrap.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-        metricsWrap.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
+        metricsWrap.RowStyles.Add(new RowStyle(SizeType.Absolute, 64f));
         metricsWrap.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         metricsWrap.Controls.Add(title, 0, 0);
         metricsWrap.SetColumnSpan(title, 2);
@@ -65,9 +66,11 @@ public class ReportForm : Form
         {
             Text = "Doanh thu hôm nay: 0 VND",
             Font = new Font("Segoe UI", 16, FontStyle.Bold),
-            AutoSize = true,
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            Padding = new Padding(16, 0, 16, 0),
+            TextAlign = ContentAlignment.MiddleLeft,
             ForeColor = Color.White,
-            Location = new Point(16, 36)
         };
         pnlRevenue.Controls.Add(_lblRevenueToday);
         metricsWrap.Controls.Add(pnlRevenue, 0, 1);
@@ -82,9 +85,11 @@ public class ReportForm : Form
         {
             Text = "Tổng công nợ còn lại: 0 VND",
             Font = new Font("Segoe UI", 16, FontStyle.Bold),
-            AutoSize = true,
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            Padding = new Padding(16, 0, 16, 0),
+            TextAlign = ContentAlignment.MiddleLeft,
             ForeColor = Color.White,
-            Location = new Point(16, 36)
         };
         pnlDebt.Controls.Add(_lblOutstandingDebt);
         metricsWrap.Controls.Add(pnlDebt, 1, 1);
@@ -101,7 +106,7 @@ public class ReportForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(10, 12, 10, 8)
         };
         filterGroup.Controls.Add(filterLayout);
@@ -114,7 +119,7 @@ public class ReportForm : Form
         };
         _dtFrom = new DateTimePicker
         {
-            Width = 130,
+            Width = 150,
             Format = DateTimePickerFormat.Short,
             ShowCheckBox = true,
             Margin = new Padding(0, 4, 14, 0)
@@ -128,7 +133,7 @@ public class ReportForm : Form
         };
         _dtTo = new DateTimePicker
         {
-            Width = 130,
+            Width = 150,
             Format = DateTimePickerFormat.Short,
             ShowCheckBox = true,
             Margin = new Padding(0, 4, 14, 0)
@@ -137,8 +142,11 @@ public class ReportForm : Form
         var btnRefresh = new Button
         {
             Text = "Làm mới",
-            Width = 120,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(120, 38),
             Height = 36,
+            Padding = new Padding(12, 0, 12, 0),
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
@@ -149,8 +157,11 @@ public class ReportForm : Form
         var btnExportSales = new Button
         {
             Text = "Xuất DS hóa đơn (Excel)",
-            Width = 170,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(220, 38),
             Height = 36,
+            Padding = new Padding(12, 0, 12, 0),
             BackColor = UiStyle.Success,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
@@ -161,8 +172,11 @@ public class ReportForm : Form
         var btnExportDebt = new Button
         {
             Text = "Xuất công nợ (Excel)",
-            Width = 130,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(190, 38),
             Height = 36,
+            Padding = new Padding(12, 0, 12, 0),
             BackColor = UiStyle.AccentOrange,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,

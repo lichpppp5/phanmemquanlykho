@@ -22,6 +22,7 @@ public class SalesHistoryForm : Form
         MinimumSize = new Size(1160, 720);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -42,7 +43,7 @@ public class SalesHistoryForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(4, 10, 4, 4)
         };
         root.Controls.Add(filterPanel, 0, 0);
@@ -134,7 +135,7 @@ public class SalesHistoryForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(4, 10, 4, 4)
         };
         root.Controls.Add(actionPanel, 0, 3);

@@ -20,6 +20,7 @@ public class CategoryForm : Form
         MinimumSize = new Size(860, 620);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -58,7 +59,7 @@ public class CategoryForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(4, 16, 4, 4)
         };
         root.Controls.Add(editorPanel, 0, 1);
@@ -128,7 +129,7 @@ public class CategoryForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(4, 8, 4, 4)
         };
         actionPanel.Controls.Add(btnAdd);

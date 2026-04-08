@@ -23,6 +23,7 @@ public class SalesForm : Form
     private readonly Button _btnIncreaseQty;
     private readonly Button _btnDecreaseQty;
     private readonly Button _btnRemoveLine;
+    private readonly SplitContainer _mainSplit;
     private int? _lastSaleId;
 
     public SalesForm(AppServices services)
@@ -65,13 +66,14 @@ public class SalesForm : Form
         topHeader.Controls.Add(lblShortcut);
         Controls.Add(topHeader);
 
-        var mainSplit = new SplitContainer
+        _mainSplit = new SplitContainer
         {
             Dock = DockStyle.Fill,
-            SplitterDistance = 930,
             BackColor = Color.WhiteSmoke
         };
-        Controls.Add(mainSplit);
+        _mainSplit.Panel1MinSize = 620;
+        _mainSplit.Panel2MinSize = 320;
+        Controls.Add(_mainSplit);
 
         var leftPanel = new TableLayoutPanel
         {
@@ -83,7 +85,7 @@ public class SalesForm : Form
         leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 104f));
         leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
-        mainSplit.Panel1.Controls.Add(leftPanel);
+        _mainSplit.Panel1.Controls.Add(leftPanel);
 
         var scanGroup = new GroupBox
         {
@@ -194,7 +196,7 @@ public class SalesForm : Form
         rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 120f));
         rightPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 140f));
-        mainSplit.Panel2.Controls.Add(rightPanel);
+        _mainSplit.Panel2.Controls.Add(rightPanel);
 
         var customerGroup = new GroupBox
         {
@@ -299,6 +301,8 @@ public class SalesForm : Form
         rightPanel.Controls.Add(payPanel, 0, 3);
 
         KeyDown += SalesForm_KeyDown;
+        Shown += (_, _) => AdjustSplitLayout();
+        Resize += (_, _) => AdjustSplitLayout();
         UpdateTotalLabel();
         UpdateQrButtonState();
     }
@@ -632,5 +636,25 @@ public class SalesForm : Form
         var isDebt = _chkDebt.Checked;
         _btnPayQr.Enabled = !isDebt;
         _btnPayQr.Text = isDebt ? "F4 - QR (không áp dụng cho ghi nợ)" : "F4 - Thanh toán QR";
+    }
+
+    private void AdjustSplitLayout()
+    {
+        if (_mainSplit.Width <= 0)
+        {
+            return;
+        }
+
+        var minLeft = _mainSplit.Panel1MinSize;
+        var minRight = _mainSplit.Panel2MinSize;
+        var available = _mainSplit.Width - _mainSplit.SplitterWidth;
+        if (available <= minLeft + minRight)
+        {
+            return;
+        }
+
+        var desiredRight = Math.Max(minRight, Math.Min(430, (int)(available * 0.34)));
+        var desiredLeft = Math.Max(minLeft, available - desiredRight);
+        _mainSplit.SplitterDistance = desiredLeft;
     }
 }

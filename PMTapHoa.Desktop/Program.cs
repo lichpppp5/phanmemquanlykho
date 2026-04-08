@@ -15,12 +15,20 @@ internal static class Program
         var sqlScriptPath = Path.Combine(AppContext.BaseDirectory, "database.sql");
         var services = new AppServices(appDataDir, sqlScriptPath);
 
-        using var loginForm = new LoginForm(services);
-        if (loginForm.ShowDialog() != DialogResult.OK || services.Session.CurrentUser == null)
+        while (true)
         {
-            return;
-        }
+            using var loginForm = new LoginForm(services);
+            if (loginForm.ShowDialog() != DialogResult.OK || services.Session.CurrentUser == null)
+            {
+                return;
+            }
 
-        Application.Run(new MainForm(services));
+            using var mainForm = new MainForm(services);
+            Application.Run(mainForm);
+            if (!mainForm.RequestLogout)
+            {
+                break;
+            }
+        }
     }
 }

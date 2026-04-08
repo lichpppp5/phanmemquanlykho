@@ -41,33 +41,47 @@ public class InventoryForm : Form
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
-        var lblSearch = new Label
+        var root = new TableLayoutPanel
         {
-            Text = "Tìm nhanh (tên/mã vạch):",
-            AutoSize = true,
-            Location = new Point(20, 20)
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(14)
         };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 54f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 230f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 120f));
+        Controls.Add(root);
 
+        var searchPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(4, 10, 4, 4)
+        };
+        searchPanel.Controls.Add(new Label { Text = "Tìm nhanh (tên/mã vạch):", AutoSize = true, Margin = new Padding(0, 8, 10, 0) });
         _txtSearch = new TextBox
         {
-            Width = 300,
-            Location = new Point(180, 16),
-            Font = new Font("Segoe UI", 11, FontStyle.Regular)
+            Width = 360,
+            Font = new Font("Segoe UI", 11, FontStyle.Regular),
+            Margin = new Padding(0, 4, 0, 0)
         };
         _txtSearch.TextChanged += (_, _) => LoadGrid();
+        searchPanel.Controls.Add(_txtSearch);
+        root.Controls.Add(searchPanel, 0, 0);
 
         _grid = new DataGridView
         {
-            Location = new Point(20, 55),
-            Width = 1090,
-            Height = 340,
+            Dock = DockStyle.Fill,
             ReadOnly = true,
             AllowUserToAddRows = false,
             AutoGenerateColumns = false
         };
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductID), HeaderText = "ID", Width = 55 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Barcode), HeaderText = "Mã vạch", Width = 140 });
-        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductName), HeaderText = "Tên sản phẩm", Width = 260 });
+        _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductName), HeaderText = "Tên sản phẩm", Width = 280 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.CategoryName), HeaderText = "Danh mục", Width = 130 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Unit), HeaderText = "ĐVT", Width = 70 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.StockQuantity), HeaderText = "Tồn", Width = 90 });
@@ -82,43 +96,66 @@ public class InventoryForm : Form
         _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _grid.RowPrePaint += Grid_RowPrePaint;
         _grid.SelectionChanged += (_, _) => LoadSelectedProductToEditor();
+        root.Controls.Add(_grid, 0, 1);
 
         var editorPanel = new GroupBox
         {
             Text = "CRUD sản phẩm",
-            Location = new Point(20, 410),
-            Width = 1090,
-            Height = 190,
+            Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
+        root.Controls.Add(editorPanel, 0, 2);
 
-        var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Location = new Point(18, 36) };
-        _txtBarcode = new TextBox { Location = new Point(85, 32), Width = 150 };
+        var editorLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 10,
+            RowCount = 4,
+            Padding = new Padding(10, 12, 10, 8)
+        };
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 72f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 72f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        editorPanel.Controls.Add(editorLayout);
+
+        var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _txtBarcode = new TextBox { Dock = DockStyle.Fill };
         _txtBarcode.KeyDown += TxtBarcode_KeyDown;
-        var lblName = new Label { Text = "Tên:", AutoSize = true, Location = new Point(255, 36) };
-        _txtName = new TextBox { Location = new Point(295, 32), Width = 250 };
+        var lblName = new Label { Text = "Tên:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _txtName = new TextBox { Dock = DockStyle.Fill };
         _txtName.KeyDown += TxtName_KeyDown;
-        var lblCategory = new Label { Text = "Danh mục:", AutoSize = true, Location = new Point(565, 36) };
-        _txtCategory = new TextBox { Location = new Point(635, 32), Width = 160 };
-        var lblUnit = new Label { Text = "ĐVT:", AutoSize = true, Location = new Point(820, 36) };
-        _txtUnit = new TextBox { Location = new Point(855, 32), Width = 80 };
+        var lblCategory = new Label { Text = "Danh mục:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _txtCategory = new TextBox { Dock = DockStyle.Fill };
+        var lblUnit = new Label { Text = "ĐVT:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _txtUnit = new TextBox { Dock = DockStyle.Fill };
 
-        var lblCostValue = new Label { Text = "Giá nhập:", AutoSize = true, Location = new Point(18, 82) };
-        _numCost = new NumericUpDown { Location = new Point(85, 78), Width = 150, DecimalPlaces = 2, Maximum = 1000000000 };
-        var lblPrice = new Label { Text = "Giá bán:", AutoSize = true, Location = new Point(255, 82) };
-        _numPrice = new NumericUpDown { Location = new Point(295, 78), Width = 150, DecimalPlaces = 2, Maximum = 1000000000 };
-        var lblStock = new Label { Text = "Tồn kho:", AutoSize = true, Location = new Point(470, 82) };
-        _numStock = new NumericUpDown { Location = new Point(525, 78), Width = 90, DecimalPlaces = 2, Maximum = 1000000 };
-        var lblMin = new Label { Text = "Min:", AutoSize = true, Location = new Point(635, 82) };
-        _numMinStock = new NumericUpDown { Location = new Point(670, 78), Width = 90, Maximum = 1000000, Value = 5 };
-        var lblExpiry = new Label { Text = "HSD:", AutoSize = true, Location = new Point(785, 82) };
-        _dtExpiry = new DateTimePicker { Location = new Point(825, 78), Width = 170, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
+        var lblCostValue = new Label { Text = "Giá nhập:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _numCost = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000000 };
+        var lblPrice = new Label { Text = "Giá bán:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _numPrice = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000000 };
+        var lblStock = new Label { Text = "Tồn kho:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _numStock = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000 };
+        var lblMin = new Label { Text = "Min:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _numMinStock = new NumericUpDown { Dock = DockStyle.Fill, Maximum = 1000000, Value = 5 };
+        var lblExpiry = new Label { Text = "HSD:", AutoSize = true, Anchor = AnchorStyles.Left };
+        _dtExpiry = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
 
-        var lblScanQty = new Label { Text = "SL quét:", AutoSize = true, Location = new Point(18, 134) };
+        var lblScanQty = new Label { Text = "SL quét:", AutoSize = true, Anchor = AnchorStyles.Left };
         _numScanQty = new NumericUpDown
         {
-            Location = new Point(85, 130),
-            Width = 90,
+            Dock = DockStyle.Left,
+            Width = 120,
             DecimalPlaces = 2,
             Maximum = 100000,
             Minimum = 1,
@@ -131,88 +168,112 @@ public class InventoryForm : Form
             Text = "Quét mã -> Enter, nhập tên (nếu mới), nhập SL -> Enter để lưu nhanh.",
             AutoSize = true,
             ForeColor = Color.DimGray,
-            Location = new Point(18, 162)
+            Anchor = AnchorStyles.Left
         };
 
-        _btnAdd = new Button { Text = "Thêm", Width = 100, Location = new Point(295, 130), BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        _btnUpdate = new Button { Text = "Sửa", Width = 100, Location = new Point(410, 130), BackColor = UiStyle.Primary, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        _btnDelete = new Button { Text = "Xóa", Width = 100, Location = new Point(525, 130), BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        var btnClear = new Button { Text = "Làm mới form", Width = 120, Location = new Point(640, 130), BackColor = UiStyle.Neutral, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnAdd = new Button { Text = "Thêm", Width = 110, Height = 34, BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnUpdate = new Button { Text = "Sửa", Width = 110, Height = 34, BackColor = UiStyle.Primary, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnDelete = new Button { Text = "Xóa", Width = 110, Height = 34, BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        var btnClear = new Button { Text = "Làm mới form", Width = 130, Height = 34, BackColor = UiStyle.Neutral, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
 
         _btnAdd.Click += (_, _) => CreateProduct();
         _btnUpdate.Click += (_, _) => UpdateProduct();
         _btnDelete.Click += (_, _) => DeleteProduct();
         btnClear.Click += (_, _) => ResetEditor();
 
-        editorPanel.Controls.Add(lblBarcode);
-        editorPanel.Controls.Add(_txtBarcode);
-        editorPanel.Controls.Add(lblName);
-        editorPanel.Controls.Add(_txtName);
-        editorPanel.Controls.Add(lblCategory);
-        editorPanel.Controls.Add(_txtCategory);
-        editorPanel.Controls.Add(lblUnit);
-        editorPanel.Controls.Add(_txtUnit);
-        editorPanel.Controls.Add(lblCostValue);
-        editorPanel.Controls.Add(_numCost);
-        editorPanel.Controls.Add(lblPrice);
-        editorPanel.Controls.Add(_numPrice);
-        editorPanel.Controls.Add(lblStock);
-        editorPanel.Controls.Add(_numStock);
-        editorPanel.Controls.Add(lblMin);
-        editorPanel.Controls.Add(_numMinStock);
-        editorPanel.Controls.Add(lblExpiry);
-        editorPanel.Controls.Add(_dtExpiry);
-        editorPanel.Controls.Add(lblScanQty);
-        editorPanel.Controls.Add(_numScanQty);
-        editorPanel.Controls.Add(_lblScanStatus);
-        editorPanel.Controls.Add(_btnAdd);
-        editorPanel.Controls.Add(_btnUpdate);
-        editorPanel.Controls.Add(_btnDelete);
-        editorPanel.Controls.Add(btnClear);
+        editorLayout.Controls.Add(lblBarcode, 0, 0);
+        editorLayout.Controls.Add(_txtBarcode, 1, 0);
+        editorLayout.Controls.Add(lblName, 2, 0);
+        editorLayout.Controls.Add(_txtName, 3, 0);
+        editorLayout.SetColumnSpan(_txtName, 3);
+        editorLayout.Controls.Add(lblCategory, 6, 0);
+        editorLayout.Controls.Add(_txtCategory, 7, 0);
+        editorLayout.SetColumnSpan(_txtCategory, 3);
+
+        editorLayout.Controls.Add(lblCostValue, 0, 1);
+        editorLayout.Controls.Add(_numCost, 1, 1);
+        editorLayout.Controls.Add(lblPrice, 2, 1);
+        editorLayout.Controls.Add(_numPrice, 3, 1);
+        editorLayout.Controls.Add(lblStock, 4, 1);
+        editorLayout.Controls.Add(_numStock, 5, 1);
+        editorLayout.Controls.Add(lblMin, 6, 1);
+        editorLayout.Controls.Add(_numMinStock, 7, 1);
+        editorLayout.Controls.Add(lblExpiry, 8, 1);
+        editorLayout.Controls.Add(_dtExpiry, 9, 1);
+
+        editorLayout.Controls.Add(lblUnit, 0, 2);
+        editorLayout.Controls.Add(_txtUnit, 1, 2);
+        editorLayout.Controls.Add(lblScanQty, 2, 2);
+        editorLayout.Controls.Add(_numScanQty, 3, 2);
+        editorLayout.Controls.Add(_lblScanStatus, 4, 2);
+        editorLayout.SetColumnSpan(_lblScanStatus, 6);
+
+        var editorButtonPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = new Padding(0, 0, 0, 0)
+        };
+        editorButtonPanel.Controls.Add(_btnAdd);
+        editorButtonPanel.Controls.Add(_btnUpdate);
+        editorButtonPanel.Controls.Add(_btnDelete);
+        editorButtonPanel.Controls.Add(btnClear);
+        editorLayout.Controls.Add(editorButtonPanel, 0, 3);
+        editorLayout.SetColumnSpan(editorButtonPanel, 10);
 
         var importPanel = new GroupBox
         {
             Text = "Nhập hàng nhanh",
-            Location = new Point(20, 615),
-            Width = 1090,
-            Height = 90,
+            Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
+        root.Controls.Add(importPanel, 0, 3);
+
+        var importLayout = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(10, 10, 10, 8)
+        };
+        importPanel.Controls.Add(importLayout);
 
         var lblQty = new Label
         {
             Text = "Số lượng cộng thêm:",
             AutoSize = true,
-            Location = new Point(20, 38)
+            Margin = new Padding(0, 10, 8, 0)
         };
         _numImportQty = new NumericUpDown
         {
-            Location = new Point(150, 34),
             Width = 90,
             DecimalPlaces = 2,
-            Maximum = 100000
+            Maximum = 100000,
+            Margin = new Padding(0, 4, 12, 0)
         };
 
         var lblCost = new Label
         {
             Text = "Giá nhập mới (tuỳ chọn):",
             AutoSize = true,
-            Location = new Point(270, 38)
+            Margin = new Padding(0, 10, 8, 0)
         };
         _txtCostPrice = new TextBox
         {
             Width = 140,
-            Location = new Point(430, 34)
+            Margin = new Padding(0, 4, 12, 0)
         };
 
         var btnImport = new Button
         {
             Text = "Cập nhật nhập hàng",
             Width = 170,
-            Location = new Point(600, 32),
             BackColor = UiStyle.AccentBlueDark,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Height = 34,
+            Margin = new Padding(0, 4, 10, 0)
         };
         btnImport.Click += (_, _) => QuickImportSelectedProduct();
 
@@ -220,10 +281,11 @@ public class InventoryForm : Form
         {
             Text = "Ghi mối nhập hàng",
             Width = 160,
-            Location = new Point(785, 32),
             BackColor = UiStyle.Warning,
             ForeColor = Color.Black,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Height = 34,
+            Margin = new Padding(0, 4, 0, 0)
         };
         btnRestock.Click += (_, _) => OpenRestockForSelectedProduct();
 
@@ -234,18 +296,12 @@ public class InventoryForm : Form
             btnRestock.Enabled = false;
         }
 
-        importPanel.Controls.Add(lblQty);
-        importPanel.Controls.Add(_numImportQty);
-        importPanel.Controls.Add(lblCost);
-        importPanel.Controls.Add(_txtCostPrice);
-        importPanel.Controls.Add(btnImport);
-        importPanel.Controls.Add(btnRestock);
-
-        Controls.Add(lblSearch);
-        Controls.Add(_txtSearch);
-        Controls.Add(_grid);
-        Controls.Add(editorPanel);
-        Controls.Add(importPanel);
+        importLayout.Controls.Add(lblQty);
+        importLayout.Controls.Add(_numImportQty);
+        importLayout.Controls.Add(lblCost);
+        importLayout.Controls.Add(_txtCostPrice);
+        importLayout.Controls.Add(btnImport);
+        importLayout.Controls.Add(btnRestock);
 
         Load += InventoryForm_Load;
         KeyDown += InventoryForm_KeyDown;

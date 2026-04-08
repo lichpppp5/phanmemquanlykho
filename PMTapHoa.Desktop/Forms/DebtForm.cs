@@ -22,6 +22,7 @@ public class DebtForm : Form
         MinimumSize = new Size(1160, 720);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -42,7 +43,7 @@ public class DebtForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(4, 10, 4, 4)
         };
         root.Controls.Add(searchPanel, 0, 0);
@@ -101,12 +102,12 @@ public class DebtForm : Form
             RowCount = 1,
             Padding = new Padding(12, 14, 12, 12)
         };
-        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90f));
-        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170f));
-        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70f));
-        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130f));
-        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 10f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 11f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 16f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 2f));
         paymentPanel.Controls.Add(paymentLayout);
 
         var lblAmount = new Label { Text = "Số tiền thu:", AutoSize = true, Anchor = AnchorStyles.Left };

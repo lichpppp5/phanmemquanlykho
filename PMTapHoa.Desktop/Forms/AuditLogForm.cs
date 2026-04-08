@@ -22,6 +22,7 @@ public class AuditLogForm : Form
         MinimumSize = new Size(980, 620);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -40,7 +41,7 @@ public class AuditLogForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(4, 10, 4, 4)
         };
         root.Controls.Add(topPanel, 0, 0);

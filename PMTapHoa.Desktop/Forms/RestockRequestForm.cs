@@ -148,7 +148,7 @@ public class RestockRequestForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false
+            WrapContents = true
         };
         suggestLayout.Controls.Add(suggestTop, 0, 0);
 
@@ -208,7 +208,7 @@ public class RestockRequestForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false
+            WrapContents = true
         };
         root.Controls.Add(filterPanel, 0, 2);
         filterPanel.Controls.Add(new Label { Text = "Lọc trạng thái:", AutoSize = true, Margin = new Padding(0, 10, 8, 0) });
