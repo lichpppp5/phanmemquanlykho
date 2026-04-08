@@ -37,6 +37,7 @@ public class InventoryForm : Form
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
         AutoScroll = true;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 

@@ -20,23 +20,34 @@ public class DashboardForm : Form
         MinimumSize = new Size(900, 560);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
-        AutoScroll = true;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Padding = new Padding(24, 18, 24, 18)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 54f));
+        Controls.Add(root);
 
         var title = new Label
         {
             Text = "DASHBOARD TỔNG QUAN",
-            AutoSize = true,
+            Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 20, FontStyle.Bold),
-            Location = new Point(26, 18)
+            TextAlign = ContentAlignment.MiddleLeft
         };
-        Controls.Add(title);
+        root.Controls.Add(title, 0, 0);
 
         var grid = new TableLayoutPanel
         {
-            Location = new Point(24, 72),
-            Size = new Size(920, 420),
+            Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 3
         };
@@ -46,7 +57,7 @@ public class DashboardForm : Form
         {
             grid.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33f));
         }
-        Controls.Add(grid);
+        root.Controls.Add(grid, 0, 1);
 
         var cardTodayRevenue = CreateCard(UiStyle.Success, out _lblTodayRevenue);
         var cardMonthRevenue = CreateCard(UiStyle.AccentBlueDark, out _lblMonthRevenue);
@@ -67,13 +78,20 @@ public class DashboardForm : Form
             Text = "Làm mới",
             Width = 140,
             Height = 40,
-            Location = new Point(24, 510),
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
         btnRefresh.Click += (_, _) => LoadData();
-        Controls.Add(btnRefresh);
+        var actionPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(0, 8, 0, 0)
+        };
+        actionPanel.Controls.Add(btnRefresh);
+        root.Controls.Add(actionPanel, 0, 2);
 
         Load += (_, _) => LoadData();
         KeyDown += (_, e) =>

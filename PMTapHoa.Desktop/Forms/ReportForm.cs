@@ -18,23 +18,47 @@ public class ReportForm : Form
         MinimumSize = new Size(900, 500);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
-        AutoScroll = true;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Padding = new Padding(28, 20, 28, 20)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 190f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 110f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        Controls.Add(root);
 
         var title = new Label
         {
             Text = "BÁO CÁO DOANH THU",
-            AutoSize = true,
+            Dock = DockStyle.Top,
             Font = new Font("Segoe UI", 20, FontStyle.Bold),
-            Location = new Point(28, 20)
+            Height = 42
         };
-        Controls.Add(title);
+        var metricsWrap = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 2
+        };
+        metricsWrap.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        metricsWrap.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        metricsWrap.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
+        metricsWrap.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        metricsWrap.Controls.Add(title, 0, 0);
+        metricsWrap.SetColumnSpan(title, 2);
+        root.Controls.Add(metricsWrap, 0, 0);
 
         var pnlRevenue = new Panel
         {
-            Location = new Point(35, 80),
-            Size = new Size(430, 110),
+            Dock = DockStyle.Fill,
+            Margin = new Padding(6),
             BackColor = UiStyle.Success
         };
         _lblRevenueToday = new Label
@@ -46,12 +70,12 @@ public class ReportForm : Form
             Location = new Point(16, 36)
         };
         pnlRevenue.Controls.Add(_lblRevenueToday);
-        Controls.Add(pnlRevenue);
+        metricsWrap.Controls.Add(pnlRevenue, 0, 1);
 
         var pnlDebt = new Panel
         {
-            Location = new Point(495, 80),
-            Size = new Size(430, 110),
+            Dock = DockStyle.Fill,
+            Margin = new Padding(6),
             BackColor = UiStyle.AccentOrange
         };
         _lblOutstandingDebt = new Label
@@ -63,43 +87,51 @@ public class ReportForm : Form
             Location = new Point(16, 36)
         };
         pnlDebt.Controls.Add(_lblOutstandingDebt);
-        Controls.Add(pnlDebt);
+        metricsWrap.Controls.Add(pnlDebt, 1, 1);
 
         var filterGroup = new GroupBox
         {
             Text = "Bộ lọc thời gian xuất báo cáo",
-            Location = new Point(35, 215),
-            Size = new Size(890, 90),
+            Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
-        Controls.Add(filterGroup);
+        root.Controls.Add(filterGroup, 0, 1);
+
+        var filterLayout = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(10, 12, 10, 8)
+        };
+        filterGroup.Controls.Add(filterLayout);
 
         var lblFrom = new Label
         {
             Text = "Từ ngày:",
             AutoSize = true,
-            Location = new Point(20, 42)
+            Margin = new Padding(0, 10, 8, 0)
         };
         _dtFrom = new DateTimePicker
         {
-            Location = new Point(80, 38),
             Width = 130,
             Format = DateTimePickerFormat.Short,
-            ShowCheckBox = true
+            ShowCheckBox = true,
+            Margin = new Padding(0, 4, 14, 0)
         };
 
         var lblTo = new Label
         {
             Text = "Đến ngày:",
             AutoSize = true,
-            Location = new Point(240, 42)
+            Margin = new Padding(0, 10, 8, 0)
         };
         _dtTo = new DateTimePicker
         {
-            Location = new Point(305, 38),
             Width = 130,
             Format = DateTimePickerFormat.Short,
-            ShowCheckBox = true
+            ShowCheckBox = true,
+            Margin = new Padding(0, 4, 14, 0)
         };
 
         var btnRefresh = new Button
@@ -107,10 +139,10 @@ public class ReportForm : Form
             Text = "Làm mới",
             Width = 120,
             Height = 36,
-            Location = new Point(470, 36),
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 2, 10, 0)
         };
         btnRefresh.Click += (_, _) => LoadRevenue();
 
@@ -119,10 +151,10 @@ public class ReportForm : Form
             Text = "Xuất DS hóa đơn (Excel)",
             Width = 170,
             Height = 36,
-            Location = new Point(560, 36),
             BackColor = UiStyle.Success,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 2, 10, 0)
         };
         btnExportSales.Click += (_, _) => ExportSales();
 
@@ -131,20 +163,20 @@ public class ReportForm : Form
             Text = "Xuất công nợ (Excel)",
             Width = 130,
             Height = 36,
-            Location = new Point(740, 36),
             BackColor = UiStyle.AccentOrange,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 2, 0, 0)
         };
         btnExportDebt.Click += (_, _) => ExportDebts();
 
-        filterGroup.Controls.Add(lblFrom);
-        filterGroup.Controls.Add(_dtFrom);
-        filterGroup.Controls.Add(lblTo);
-        filterGroup.Controls.Add(_dtTo);
-        filterGroup.Controls.Add(btnRefresh);
-        filterGroup.Controls.Add(btnExportSales);
-        filterGroup.Controls.Add(btnExportDebt);
+        filterLayout.Controls.Add(lblFrom);
+        filterLayout.Controls.Add(_dtFrom);
+        filterLayout.Controls.Add(lblTo);
+        filterLayout.Controls.Add(_dtTo);
+        filterLayout.Controls.Add(btnRefresh);
+        filterLayout.Controls.Add(btnExportSales);
+        filterLayout.Controls.Add(btnExportDebt);
 
         Load += (_, _) => LoadRevenue();
         KeyDown += (_, e) =>

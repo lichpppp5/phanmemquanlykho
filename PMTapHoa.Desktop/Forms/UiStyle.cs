@@ -27,6 +27,7 @@ public static class UiStyle
         form.MinimumSize = minSize;
         form.StartPosition = FormStartPosition.CenterParent;
         form.WindowState = FormWindowState.Maximized;
+        form.AutoScaleMode = AutoScaleMode.Dpi;
         form.KeyPreview = true;
         form.BackColor = Background;
     }
@@ -39,6 +40,7 @@ public static class UiStyle
         form.FormBorderStyle = sizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
         form.MaximizeBox = sizable;
         form.MinimizeBox = false;
+        form.AutoScaleMode = AutoScaleMode.Dpi;
         form.KeyPreview = true;
         form.BackColor = Background;
     }

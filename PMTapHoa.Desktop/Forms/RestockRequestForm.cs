@@ -36,15 +36,27 @@ public class RestockRequestForm : Form
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
         AutoScroll = true;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(20, 16, 20, 16)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 210f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 220f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        Controls.Add(root);
 
         var panel = new GroupBox
         {
             Text = "Tạo yêu cầu nhập hàng",
-            Location = new Point(20, 20),
-            Width = 1060,
-            Height = 190,
+            Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
 
@@ -112,55 +124,67 @@ public class RestockRequestForm : Form
         btnSave.Click += (_, _) => SaveRequest();
         panel.Controls.Add(btnSave);
 
-        Controls.Add(panel);
+        root.Controls.Add(panel, 0, 0);
 
         var suggestBox = new GroupBox
         {
             Text = "Gợi ý tự động cho hàng sắp hết",
-            Location = new Point(20, 220),
-            Width = 1060,
-            Height = 180,
+            Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
+
+        var suggestLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Padding = new Padding(10, 10, 10, 10)
+        };
+        suggestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40f));
+        suggestLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        suggestBox.Controls.Add(suggestLayout);
+
+        var suggestTop = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false
+        };
+        suggestLayout.Controls.Add(suggestTop, 0, 0);
 
         var btnLoadSuggestions = new Button
         {
             Text = "Tải gợi ý",
             Width = 100,
-            Location = new Point(20, 30),
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
         btnLoadSuggestions.Click += (_, _) => LoadSuggestions();
-        suggestBox.Controls.Add(btnLoadSuggestions);
+        suggestTop.Controls.Add(btnLoadSuggestions);
 
         var btnCreateSuggested = new Button
         {
             Text = "Tạo yêu cầu đã chọn",
             Width = 160,
-            Location = new Point(130, 30),
             BackColor = UiStyle.AccentOrange,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
         };
         btnCreateSuggested.Click += (_, _) => CreateRequestsFromSuggestions();
-        suggestBox.Controls.Add(btnCreateSuggested);
+        suggestTop.Controls.Add(btnCreateSuggested);
 
         var hint = new Label
         {
             Text = "Mặc định sẽ tự chọn dòng chưa có yêu cầu Open/Ordered.",
             AutoSize = true,
-            ForeColor = Color.DimGray,
-            Location = new Point(310, 35)
+            ForeColor = Color.DimGray
         };
-        suggestBox.Controls.Add(hint);
+        suggestTop.Controls.Add(hint);
 
         _gridSuggestions = new DataGridView
         {
-            Location = new Point(20, 65),
-            Width = 1020,
-            Height = 100,
+            Dock = DockStyle.Fill,
             AllowUserToAddRows = false,
             AutoGenerateColumns = false
         };
@@ -176,40 +200,45 @@ public class RestockRequestForm : Form
         _gridSuggestions.ColumnHeadersHeight = 34;
         _gridSuggestions.RowTemplate.Height = 32;
         _gridSuggestions.RowPrePaint += GridSuggestions_RowPrePaint;
-        suggestBox.Controls.Add(_gridSuggestions);
+        suggestLayout.Controls.Add(_gridSuggestions, 0, 1);
 
-        Controls.Add(suggestBox);
+        root.Controls.Add(suggestBox, 0, 1);
 
-        Controls.Add(new Label { Text = "Lọc trạng thái:", AutoSize = true, Location = new Point(20, 415) });
+        var filterPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false
+        };
+        root.Controls.Add(filterPanel, 0, 2);
+        filterPanel.Controls.Add(new Label { Text = "Lọc trạng thái:", AutoSize = true, Margin = new Padding(0, 10, 8, 0) });
         _cmbStatusFilter = new ComboBox
         {
-            Location = new Point(105, 411),
             Width = 140,
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Margin = new Padding(0, 4, 12, 0)
         };
         _cmbStatusFilter.Items.AddRange(["Tất cả", "Open", "Ordered", "Received", "Cancelled"]);
         _cmbStatusFilter.SelectedIndex = 0;
         _cmbStatusFilter.SelectedIndexChanged += (_, _) => LoadRequests();
-        Controls.Add(_cmbStatusFilter);
+        filterPanel.Controls.Add(_cmbStatusFilter);
 
         var btnRefresh = new Button
         {
             Text = "Làm mới",
             Width = 100,
-            Location = new Point(265, 410),
             BackColor = UiStyle.Neutral,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 4, 0, 0)
         };
         btnRefresh.Click += (_, _) => LoadRequests();
-        Controls.Add(btnRefresh);
+        filterPanel.Controls.Add(btnRefresh);
 
         _grid = new DataGridView
         {
-            Location = new Point(20, 450),
-            Width = 1060,
-            Height = 185,
+            Dock = DockStyle.Fill,
             ReadOnly = true,
             AllowUserToAddRows = false,
             AutoGenerateColumns = false
@@ -228,7 +257,7 @@ public class RestockRequestForm : Form
         _grid.RowTemplate.Height = 32;
         _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _grid.CellDoubleClick += Grid_CellDoubleClick;
-        Controls.Add(_grid);
+        root.Controls.Add(_grid, 0, 3);
 
         Load += (_, _) =>
         {

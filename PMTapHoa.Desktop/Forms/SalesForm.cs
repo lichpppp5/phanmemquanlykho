@@ -35,6 +35,7 @@ public class SalesForm : Form
         MinimumSize = new Size(1240, 740);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Maximized;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 

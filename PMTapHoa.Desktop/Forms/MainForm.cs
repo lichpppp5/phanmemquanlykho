@@ -31,6 +31,7 @@ public class MainForm : Form
         MinimumSize = new Size(1160, 740);
         StartPosition = FormStartPosition.CenterScreen;
         WindowState = FormWindowState.Maximized;
+        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
 
@@ -38,16 +39,16 @@ public class MainForm : Form
         {
             Text = "PHẦN MỀM QUẢN LÝ KHO & BÁN HÀNG",
             Font = new Font("Segoe UI", 24, FontStyle.Bold),
-            AutoSize = true,
-            Location = new Point(220, 35)
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft
         };
         _lblUser = new Label
         {
             Text = $"Đăng nhập: {_services.Session.CurrentUser?.FullName} ({_services.Session.CurrentUser?.Role})",
-            AutoSize = true,
+            Dock = DockStyle.Fill,
             ForeColor = Color.DimGray,
             Font = new Font("Segoe UI", 12, FontStyle.Regular),
-            Location = new Point(35, 100)
+            TextAlign = ContentAlignment.MiddleLeft
         };
 
         _btnDashboard = CreateMenuButton("Dashboard tổng quan", UiStyle.Primary, Color.White);
@@ -97,11 +98,10 @@ public class MainForm : Form
 
         var menuGrid = new TableLayoutPanel
         {
-            Location = new Point(80, 150),
-            Width = 1080,
-            Height = 590,
+            Dock = DockStyle.Fill,
             ColumnCount = 3,
-            RowCount = 5
+            RowCount = 5,
+            Margin = new Padding(0, 8, 0, 0)
         };
         menuGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
         menuGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
@@ -127,9 +127,20 @@ public class MainForm : Form
         menuGrid.Controls.Add(_btnSeedDemo, 1, 4);
         menuGrid.Controls.Add(_btnHealthCheck, 2, 4);
 
-        Controls.Add(title);
-        Controls.Add(_lblUser);
-        Controls.Add(menuGrid);
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Padding = new Padding(28, 20, 28, 24)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.Controls.Add(title, 0, 0);
+        root.Controls.Add(_lblUser, 0, 1);
+        root.Controls.Add(menuGrid, 0, 2);
+        Controls.Add(root);
 
         ApplyRolePermissions();
         KeyDown += MainForm_KeyDown;
