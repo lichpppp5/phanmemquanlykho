@@ -478,17 +478,8 @@ public class SalesForm : Form
         var transferContent = _services.QrPaymentService.BuildTransferContent();
         using var qrImage = _services.QrPaymentService.GenerateVietQrImage(total, transferContent);
         using var qrForm = new QrDisplayForm(qrImage, total, transferContent);
-        qrForm.ShowOnBestScreen();
-
-        var confirmation = MessageBox.Show(
-            this,
-            "Đã nhận thanh toán QR từ khách chưa?",
-            "Xác nhận thanh toán QR",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-
-        qrForm.Close();
-        return confirmation == DialogResult.Yes;
+        var result = qrForm.ShowOnBestScreen(this);
+        return result == DialogResult.OK;
     }
 
     private void ReprintLastSale()

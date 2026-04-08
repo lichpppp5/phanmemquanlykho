@@ -9,6 +9,8 @@ public class DashboardForm : Form
     private readonly Label _lblDebtOutstanding;
     private readonly Label _lblLowStock;
     private readonly Label _lblNearExpiry;
+    private readonly Label _lblTodayCapital;
+    private readonly Label _lblTodayProfit;
 
     public DashboardForm(AppServices services)
     {
@@ -50,13 +52,13 @@ public class DashboardForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 3
+            RowCount = 4
         };
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < 4; i++)
         {
-            grid.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33f));
+            grid.RowStyles.Add(new RowStyle(SizeType.Percent, 25f));
         }
         root.Controls.Add(grid, 0, 1);
 
@@ -66,6 +68,8 @@ public class DashboardForm : Form
         var cardDebt = CreateCard(UiStyle.AccentOrange, out _lblDebtOutstanding);
         var cardLowStock = CreateCard(UiStyle.AccentYellow, out _lblLowStock, darkText: true);
         var cardNearExpiry = CreateCard(UiStyle.AccentPurple, out _lblNearExpiry);
+        var cardTodayCapital = CreateCard(UiStyle.Neutral, out _lblTodayCapital);
+        var cardTodayProfit = CreateCard(UiStyle.SuccessBright, out _lblTodayProfit);
 
         grid.Controls.Add(cardTodayRevenue, 0, 0);
         grid.Controls.Add(cardMonthRevenue, 1, 0);
@@ -73,6 +77,8 @@ public class DashboardForm : Form
         grid.Controls.Add(cardDebt, 1, 1);
         grid.Controls.Add(cardLowStock, 0, 2);
         grid.Controls.Add(cardNearExpiry, 1, 2);
+        grid.Controls.Add(cardTodayCapital, 0, 3);
+        grid.Controls.Add(cardTodayProfit, 1, 3);
 
         var btnRefresh = new Button
         {
@@ -132,6 +138,8 @@ public class DashboardForm : Form
         {
             var todayRevenue = _services.SalesService.GetTodayRevenue();
             var monthRevenue = _services.SalesService.GetCurrentMonthRevenue();
+            var todaySummary = _services.SalesService.GetTodayProfitSummary();
+            var monthSummary = _services.SalesService.GetCurrentMonthProfitSummary();
             var todayOrders = _services.SalesService.GetTodaySaleCount();
             var debt = _services.DebtService.GetTotalOutstanding();
             var products = _services.ProductService.GetAll();
@@ -144,6 +152,8 @@ public class DashboardForm : Form
             _lblDebtOutstanding.Text = $"Tổng công nợ: {debt:N0} VND";
             _lblLowStock.Text = $"Sản phẩm sắp hết hàng: {lowStockCount}";
             _lblNearExpiry.Text = $"Sản phẩm gần hết hạn (14 ngày): {nearExpiryCount}";
+            _lblTodayCapital.Text = $"Giá vốn hôm nay: {todaySummary.CapitalAmount:N0} VND\nGiá vốn tháng: {monthSummary.CapitalAmount:N0} VND";
+            _lblTodayProfit.Text = $"Lãi hôm nay: {todaySummary.ProfitAmount:N0} VND\nLãi tháng: {monthSummary.ProfitAmount:N0} VND";
         }
         catch (Exception ex)
         {

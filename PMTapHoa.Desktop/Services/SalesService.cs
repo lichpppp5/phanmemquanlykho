@@ -86,6 +86,36 @@ public class SalesService
         return connection.ExecuteScalar<int>(sql);
     }
 
+    public SalesProfitSummary GetTodayProfitSummary()
+    {
+        const string sql = """
+                           SELECT
+                               COALESCE(SUM(sd.Quantity * sd.UnitPrice), 0) AS RevenueAmount,
+                               COALESCE(SUM(sd.Quantity * COALESCE(p.CostPrice, 0)), 0) AS CapitalAmount
+                           FROM Sales s
+                           INNER JOIN SaleDetails sd ON sd.SaleID = s.SaleID
+                           LEFT JOIN Products p ON p.ProductID = sd.ProductID
+                           WHERE date(s.SaleDate) = date('now', 'localtime');
+                           """;
+        using var connection = _databaseContext.CreateConnection();
+        return connection.QueryFirst<SalesProfitSummary>(sql);
+    }
+
+    public SalesProfitSummary GetCurrentMonthProfitSummary()
+    {
+        const string sql = """
+                           SELECT
+                               COALESCE(SUM(sd.Quantity * sd.UnitPrice), 0) AS RevenueAmount,
+                               COALESCE(SUM(sd.Quantity * COALESCE(p.CostPrice, 0)), 0) AS CapitalAmount
+                           FROM Sales s
+                           INNER JOIN SaleDetails sd ON sd.SaleID = s.SaleID
+                           LEFT JOIN Products p ON p.ProductID = sd.ProductID
+                           WHERE strftime('%Y-%m', s.SaleDate) = strftime('%Y-%m', 'now', 'localtime');
+                           """;
+        using var connection = _databaseContext.CreateConnection();
+        return connection.QueryFirst<SalesProfitSummary>(sql);
+    }
+
     public List<SaleHistoryItem> GetSales(string? keyword, DateTime? fromDate, DateTime? toDate)
     {
         const string sql = """
