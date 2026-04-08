@@ -8,7 +8,7 @@ namespace PMTapHoa.Desktop.Forms;
 public class SalesForm : Form
 {
     private const int PreferredLeftMin = 620;
-    private const int PreferredRightMin = 320;
+    private const int PreferredRightMin = 420;
     private readonly AppServices _services;
     private readonly BindingList<CartItem> _cartItems = [];
     private readonly TextBox _txtBarcode;
@@ -46,24 +46,24 @@ public class SalesForm : Form
         var topHeader = new Panel
         {
             Dock = DockStyle.Top,
-            Height = 66,
+            Height = 76,
             BackColor = UiStyle.HeaderDark
         };
         var lblTitle = new Label
         {
             Text = "POS BÁN HÀNG",
             ForeColor = Color.White,
-            Font = new Font("Segoe UI", 18, FontStyle.Bold),
+            Font = new Font("Segoe UI", 20, FontStyle.Bold),
             AutoSize = true,
-            Location = new Point(20, 15)
+            Location = new Point(20, 18)
         };
         var lblShortcut = new Label
         {
             Text = "Phím tắt: F2 Tiền mặt | F4 QR | F3 Tìm nhanh | Esc Đóng",
             ForeColor = Color.Gainsboro,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Font = new Font("Segoe UI", 11, FontStyle.Regular),
             AutoSize = true,
-            Location = new Point(860, 24)
+            Location = new Point(820, 27)
         };
         topHeader.Controls.Add(lblTitle);
         topHeader.Controls.Add(lblShortcut);
@@ -86,9 +86,9 @@ public class SalesForm : Form
             RowCount = 3,
             Padding = new Padding(14, 14, 8, 14)
         };
-        leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 104f));
+        leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 126f));
         leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
+        leftPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 74f));
         _mainSplit.Panel1.Controls.Add(leftPanel);
 
         var scanGroup = new GroupBox
@@ -106,6 +106,8 @@ public class SalesForm : Form
             RowCount = 2,
             Padding = new Padding(8)
         };
+        scanLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44f));
+        scanLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
         scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
         scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55));
         scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
@@ -114,16 +116,16 @@ public class SalesForm : Form
         scanLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
         scanGroup.Controls.Add(scanLayout);
 
-        var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _txtBarcode = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 14, FontStyle.Bold) };
+        var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
+        _txtBarcode = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 15, FontStyle.Bold) };
         _txtBarcode.KeyDown += TxtBarcode_KeyDown;
 
-        var lblSearch = new Label { Text = "Tên hàng:", AutoSize = true, Anchor = AnchorStyles.Left };
+        var lblSearch = new Label { Text = "Tên hàng:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
         _txtSearchName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12, FontStyle.Regular) };
         _txtSearchName.TextChanged += (_, _) => ApplyNameFilter();
         _txtSearchName.KeyDown += TxtSearchName_KeyDown;
 
-        var btnRefresh = new Button { Text = "Bỏ lọc", Dock = DockStyle.Fill };
+        var btnRefresh = new Button { Text = "Bỏ lọc", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
         btnRefresh.Click += (_, _) =>
         {
             _txtSearchName.Clear();
@@ -136,7 +138,7 @@ public class SalesForm : Form
         scanLayout.Controls.Add(lblSearch, 3, 0);
         scanLayout.Controls.Add(_txtSearchName, 4, 0);
         scanLayout.SetColumnSpan(_txtSearchName, 2);
-        var hintScan = new Label { Text = "Enter để thêm nhanh vào giỏ", AutoSize = true, ForeColor = Color.DimGray, Anchor = AnchorStyles.Left };
+        var hintScan = new Label { Text = "Enter để thêm nhanh vào giỏ", AutoSize = true, ForeColor = Color.DimGray, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
         scanLayout.Controls.Add(hintScan, 1, 1);
         scanLayout.SetColumnSpan(hintScan, 3);
         scanLayout.Controls.Add(btnRefresh, 5, 1);
@@ -156,10 +158,10 @@ public class SalesForm : Form
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.UnitPrice), HeaderText = "Đơn giá", Width = 150 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.LineTotal), HeaderText = "Thành tiền", Width = 170 });
         _grid.DataSource = _cartItems;
-        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        _grid.ColumnHeadersHeight = 36;
-        _grid.RowTemplate.Height = 34;
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _grid.ColumnHeadersHeight = 42;
+        _grid.RowTemplate.Height = 38;
         _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         leftPanel.Controls.Add(_grid, 0, 1);
 
@@ -170,11 +172,11 @@ public class SalesForm : Form
             Padding = new Padding(6),
             WrapContents = false
         };
-        _btnIncreaseQty = new Button { Text = "Tăng SL (+1)", Width = 140, Height = 42, BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnIncreaseQty = new Button { Text = "Tăng SL (+1)", Width = 150, Height = 44, BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
         _btnIncreaseQty.Click += (_, _) => AdjustSelectedItemQuantity(1);
-        _btnDecreaseQty = new Button { Text = "Giảm SL (-1)", Width = 140, Height = 42, BackColor = UiStyle.Warning, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnDecreaseQty = new Button { Text = "Giảm SL (-1)", Width = 150, Height = 44, BackColor = UiStyle.Warning, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
         _btnDecreaseQty.Click += (_, _) => AdjustSelectedItemQuantity(-1);
-        _btnRemoveLine = new Button { Text = "Xóa dòng", Width = 120, Height = 42, BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnRemoveLine = new Button { Text = "Xóa dòng", Width = 130, Height = 44, BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
         _btnRemoveLine.Click += (_, _) => RemoveSelectedItem();
         _lblItemCount = new Label
         {
@@ -196,10 +198,10 @@ public class SalesForm : Form
             RowCount = 4,
             Padding = new Padding(8, 14, 14, 14)
         };
-        rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 180f));
-        rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 120f));
-        rightPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 220f));
         rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 140f));
+        rightPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        rightPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 180f));
         _mainSplit.Panel2.Controls.Add(rightPanel);
 
         var customerGroup = new GroupBox
@@ -216,10 +218,13 @@ public class SalesForm : Form
             RowCount = 3,
             Padding = new Padding(10)
         };
-        customerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90f));
+        customerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130f));
         customerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        customerLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        customerLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        customerLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
         customerGroup.Controls.Add(customerLayout);
-        customerLayout.Controls.Add(new Label { Text = "Khách hàng:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
+        customerLayout.Controls.Add(new Label { Text = "Khách hàng:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 0);
         _txtCustomer = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         customerLayout.Controls.Add(_txtCustomer, 1, 0);
         _chkDebt = new CheckBox
@@ -228,9 +233,9 @@ public class SalesForm : Form
             AutoSize = true
         };
         _chkDebt.CheckedChanged += (_, _) => UpdateQrButtonState();
-        customerLayout.Controls.Add(new Label { Text = "Loại hóa đơn:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
+        customerLayout.Controls.Add(new Label { Text = "Loại hóa đơn:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 1);
         customerLayout.Controls.Add(_chkDebt, 1, 1);
-        customerLayout.Controls.Add(new Label { Text = "Khổ in:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
+        customerLayout.Controls.Add(new Label { Text = "Khổ in:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 2);
         _cmbPaperWidth = new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
@@ -246,10 +251,10 @@ public class SalesForm : Form
         _lblTotal = new Label
         {
             Text = "TỔNG TIỀN: 0 VND",
-            Font = new Font("Segoe UI", 24, FontStyle.Bold),
+            Font = new Font("Segoe UI", 36, FontStyle.Bold),
             ForeColor = Color.DarkRed,
             AutoSize = true,
-            Location = new Point(18, 34)
+            Location = new Point(18, 36)
         };
         totalPanel.Controls.Add(_lblTotal);
         rightPanel.Controls.Add(totalPanel, 0, 1);
@@ -270,10 +275,12 @@ public class SalesForm : Form
         {
             Text = "F2 - Thanh toán tiền mặt",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            Font = new Font("Segoe UI", 14, FontStyle.Bold),
             BackColor = UiStyle.Success,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            MinimumSize = new Size(0, 52),
+            Margin = new Padding(0, 3, 0, 3)
         };
         _btnPayCash.Click += (_, _) => ProcessPayment(useQrFlow: false);
 
@@ -281,10 +288,12 @@ public class SalesForm : Form
         {
             Text = "F4 - Thanh toán QR",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            Font = new Font("Segoe UI", 14, FontStyle.Bold),
             BackColor = UiStyle.AccentPurple,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            MinimumSize = new Size(0, 52),
+            Margin = new Padding(0, 3, 0, 3)
         };
         _btnPayQr.Click += (_, _) => ProcessPayment(useQrFlow: true);
 
@@ -292,10 +301,12 @@ public class SalesForm : Form
         {
             Text = "In lại HĐ gần nhất",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            Font = new Font("Segoe UI", 14, FontStyle.Bold),
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
+            MinimumSize = new Size(0, 52),
+            Margin = new Padding(0, 3, 0, 3),
             Enabled = false
         };
         _btnReprintLast.Click += (_, _) => ReprintLastSale();
@@ -665,7 +676,7 @@ public class SalesForm : Form
             return;
         }
 
-        var desiredLeft = (int)(containerWidth * 0.66);
+        var desiredLeft = (int)(containerWidth * 0.62);
         desiredLeft = Math.Max(minLeft, Math.Min(maxLeft, desiredLeft));
 
         if (_mainSplit.SplitterDistance == desiredLeft)

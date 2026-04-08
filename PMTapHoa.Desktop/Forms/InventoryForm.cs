@@ -50,9 +50,9 @@ public class InventoryForm : Form
             Padding = new Padding(14)
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 54f));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 230f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 120f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 54f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 30f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 16f));
         Controls.Add(root);
 
         var searchPanel = new FlowLayoutPanel
@@ -90,10 +90,11 @@ public class InventoryForm : Form
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.CostPrice), HeaderText = "Giá nhập", Width = 100 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.SellingPrice), HeaderText = "Giá bán", Width = 100 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ExpiryDate), HeaderText = "HSD", Width = 120 });
-        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        _grid.ColumnHeadersHeight = 38;
-        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-        _grid.RowTemplate.Height = 34;
+        _grid.Columns[_grid.Columns.Count - 1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _grid.ColumnHeadersHeight = 40;
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _grid.RowTemplate.Height = 36;
         _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _grid.RowPrePaint += Grid_RowPrePaint;
         _grid.SelectionChanged += (_, _) => LoadSelectedProductToEditor();
@@ -103,7 +104,7 @@ public class InventoryForm : Form
         {
             Text = "CRUD sản phẩm",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         };
         root.Controls.Add(editorPanel, 0, 2);
 
@@ -124,33 +125,33 @@ public class InventoryForm : Form
         editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12f));
         editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44f));
         editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20f));
-        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
-        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
-        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44f));
         editorLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         editorPanel.Controls.Add(editorLayout);
 
         var lblBarcode = new Label { Text = "Mã vạch:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _txtBarcode = new TextBox { Dock = DockStyle.Fill };
+        _txtBarcode = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         _txtBarcode.KeyDown += TxtBarcode_KeyDown;
         var lblName = new Label { Text = "Tên:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _txtName = new TextBox { Dock = DockStyle.Fill };
+        _txtName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         _txtName.KeyDown += TxtName_KeyDown;
         var lblCategory = new Label { Text = "Danh mục:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _txtCategory = new TextBox { Dock = DockStyle.Fill };
+        _txtCategory = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         var lblUnit = new Label { Text = "ĐVT:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _txtUnit = new TextBox { Dock = DockStyle.Fill };
+        _txtUnit = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
 
         var lblCostValue = new Label { Text = "Giá nhập:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _numCost = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000000 };
+        _numCost = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000000, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         var lblPrice = new Label { Text = "Giá bán:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _numPrice = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000000 };
+        _numPrice = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000000, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         var lblStock = new Label { Text = "Tồn kho:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _numStock = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000 };
+        _numStock = new NumericUpDown { Dock = DockStyle.Fill, DecimalPlaces = 2, Maximum = 1000000, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         var lblMin = new Label { Text = "Min:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _numMinStock = new NumericUpDown { Dock = DockStyle.Fill, Maximum = 1000000, Value = 5 };
+        _numMinStock = new NumericUpDown { Dock = DockStyle.Fill, Maximum = 1000000, Value = 5, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         var lblExpiry = new Label { Text = "HSD:", AutoSize = true, Anchor = AnchorStyles.Left };
-        _dtExpiry = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
+        _dtExpiry = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Short, ShowCheckBox = true, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
 
         var lblScanQty = new Label { Text = "SL quét:", AutoSize = true, Anchor = AnchorStyles.Left };
         _numScanQty = new NumericUpDown
@@ -160,7 +161,8 @@ public class InventoryForm : Form
             DecimalPlaces = 2,
             Maximum = 100000,
             Minimum = 1,
-            Value = 1
+            Value = 1,
+            Font = new Font("Segoe UI", 11, FontStyle.Regular)
         };
         _numScanQty.KeyDown += NumScanQty_KeyDown;
 
@@ -172,10 +174,10 @@ public class InventoryForm : Form
             Anchor = AnchorStyles.Left
         };
 
-        _btnAdd = new Button { Text = "Thêm", Width = 110, Height = 34, BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        _btnUpdate = new Button { Text = "Sửa", Width = 110, Height = 34, BackColor = UiStyle.Primary, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        _btnDelete = new Button { Text = "Xóa", Width = 110, Height = 34, BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-        var btnClear = new Button { Text = "Làm mới form", Width = 130, Height = 34, BackColor = UiStyle.Neutral, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        _btnAdd = new Button { Text = "Thêm", Width = 120, Height = 38, BackColor = UiStyle.SuccessBright, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+        _btnUpdate = new Button { Text = "Sửa", Width = 120, Height = 38, BackColor = UiStyle.Primary, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+        _btnDelete = new Button { Text = "Xóa", Width = 120, Height = 38, BackColor = UiStyle.Danger, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+        var btnClear = new Button { Text = "Làm mới form", Width = 145, Height = 38, BackColor = UiStyle.Neutral, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
 
         _btnAdd.Click += (_, _) => CreateProduct();
         _btnUpdate.Click += (_, _) => UpdateProduct();
@@ -213,7 +215,7 @@ public class InventoryForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Margin = new Padding(0, 0, 0, 0)
         };
         editorButtonPanel.Controls.Add(_btnAdd);
@@ -227,7 +229,7 @@ public class InventoryForm : Form
         {
             Text = "Nhập hàng nhanh",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         };
         root.Controls.Add(importPanel, 0, 3);
 
@@ -235,7 +237,7 @@ public class InventoryForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(10, 10, 10, 8)
         };
         importPanel.Controls.Add(importLayout);
@@ -248,9 +250,10 @@ public class InventoryForm : Form
         };
         _numImportQty = new NumericUpDown
         {
-            Width = 90,
+            Width = 110,
             DecimalPlaces = 2,
             Maximum = 100000,
+            Font = new Font("Segoe UI", 11, FontStyle.Regular),
             Margin = new Padding(0, 4, 12, 0)
         };
 
@@ -262,7 +265,8 @@ public class InventoryForm : Form
         };
         _txtCostPrice = new TextBox
         {
-            Width = 140,
+            Width = 160,
+            Font = new Font("Segoe UI", 11, FontStyle.Regular),
             Margin = new Padding(0, 4, 12, 0)
         };
 
@@ -273,7 +277,8 @@ public class InventoryForm : Form
             BackColor = UiStyle.AccentBlueDark,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
-            Height = 34,
+            Height = 38,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Margin = new Padding(0, 4, 10, 0)
         };
         btnImport.Click += (_, _) => QuickImportSelectedProduct();
@@ -285,7 +290,8 @@ public class InventoryForm : Form
             BackColor = UiStyle.Warning,
             ForeColor = Color.Black,
             FlatStyle = FlatStyle.Flat,
-            Height = 34,
+            Height = 38,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Margin = new Padding(0, 4, 0, 0)
         };
         btnRestock.Click += (_, _) => OpenRestockForSelectedProduct();

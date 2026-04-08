@@ -55,12 +55,15 @@ public class MainForm : Form
         _btnLogout = new Button
         {
             Text = "Đăng xuất",
-            Width = 120,
-            Height = 34,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(138, 42),
+            Padding = new Padding(10, 0, 10, 0),
             BackColor = UiStyle.Neutral,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
-            Anchor = AnchorStyles.Right
+            Anchor = AnchorStyles.Right,
+            Margin = new Padding(8, 2, 0, 2)
         };
         _btnLogout.Click += (_, _) => Logout();
 
@@ -157,6 +160,7 @@ public class MainForm : Form
         };
         userBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         userBar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        userBar.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
         userBar.Controls.Add(_lblUser, 0, 0);
         userBar.Controls.Add(_btnLogout, 1, 0);
         root.Controls.Add(userBar, 0, 1);

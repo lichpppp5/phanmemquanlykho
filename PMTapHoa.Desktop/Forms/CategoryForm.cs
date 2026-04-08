@@ -15,9 +15,9 @@ public class CategoryForm : Form
         _services = services;
 
         Text = "Quản lý danh mục";
-        Width = 980;
-        Height = 700;
-        MinimumSize = new Size(860, 620);
+        Width = 1180;
+        Height = 820;
+        MinimumSize = new Size(1020, 700);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Normal;
         AutoScaleMode = AutoScaleMode.Font;
@@ -33,8 +33,8 @@ public class CategoryForm : Form
             Padding = new Padding(14)
         };
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 82f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 110f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 70f));
         Controls.Add(root);
 
         _grid = new DataGridView
@@ -48,10 +48,10 @@ public class CategoryForm : Form
         };
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Category.CategoryID), HeaderText = "ID", Width = 80 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Category.CategoryName), HeaderText = "Tên danh mục", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
-        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        _grid.ColumnHeadersHeight = 36;
-        _grid.RowTemplate.Height = 32;
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _grid.ColumnHeadersHeight = 40;
+        _grid.RowTemplate.Height = 36;
         _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _grid.SelectionChanged += (_, _) => LoadSelected();
         root.Controls.Add(_grid, 0, 0);
@@ -61,14 +61,14 @@ public class CategoryForm : Form
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = true,
-            Padding = new Padding(4, 16, 4, 4)
+            Padding = new Padding(6, 24, 6, 8)
         };
         root.Controls.Add(editorPanel, 0, 1);
-        var lbl = new Label { Text = "Tên danh mục:", AutoSize = true, Margin = new Padding(0, 9, 8, 0) };
+        var lbl = new Label { Text = "Tên danh mục:", AutoSize = true, Margin = new Padding(0, 12, 10, 0), Font = new Font("Segoe UI", 11, FontStyle.Bold) };
         _txtCategoryName = new TextBox
         {
-            Width = 420,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Width = 560,
+            Font = new Font("Segoe UI", 11, FontStyle.Regular),
             Margin = new Padding(0, 4, 0, 0)
         };
         editorPanel.Controls.Add(lbl);
@@ -77,44 +77,48 @@ public class CategoryForm : Form
         var btnAdd = new Button
         {
             Text = "Thêm",
-            Width = 100,
-            Height = 36,
+            Width = 120,
+            Height = 40,
             BackColor = UiStyle.SuccessBright,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
         btnAdd.Click += (_, _) => Create();
 
         var btnUpdate = new Button
         {
             Text = "Sửa",
-            Width = 100,
-            Height = 36,
+            Width = 120,
+            Height = 40,
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
         btnUpdate.Click += (_, _) => UpdateCategory();
 
         var btnDelete = new Button
         {
             Text = "Xóa",
-            Width = 100,
-            Height = 36,
+            Width = 120,
+            Height = 40,
             BackColor = UiStyle.Danger,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
         btnDelete.Click += (_, _) => DeleteCategory();
 
         var btnClear = new Button
         {
             Text = "Làm mới",
-            Width = 100,
-            Height = 36,
+            Width = 120,
+            Height = 40,
             BackColor = UiStyle.Neutral,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
         btnClear.Click += (_, _) => ResetEditor();
 
@@ -131,7 +135,7 @@ public class CategoryForm : Form
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = true,
-            Padding = new Padding(4, 8, 4, 4)
+            Padding = new Padding(6, 10, 6, 6)
         };
         actionPanel.Controls.Add(btnAdd);
         actionPanel.Controls.Add(btnUpdate);

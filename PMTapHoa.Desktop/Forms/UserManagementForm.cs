@@ -23,9 +23,9 @@ public class UserManagementForm : Form
         }
 
         Text = "Quản lý người dùng";
-        Width = 1200;
-        Height = 820;
-        UiStyle.ApplyMainFormStyle(this, Text, new Size(1000, 700));
+        Width = 1320;
+        Height = 860;
+        UiStyle.ApplyMainFormStyle(this, Text, new Size(1120, 760));
 
         var root = new TableLayoutPanel
         {
@@ -34,9 +34,9 @@ public class UserManagementForm : Form
             RowCount = 3,
             Padding = new Padding(14)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 58f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 160f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 62f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 210f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 78f));
         Controls.Add(root);
 
         _grid = new DataGridView
@@ -48,7 +48,12 @@ public class UserManagementForm : Form
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(UserAccount.FullName), HeaderText = "Họ tên", Width = 250 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(UserAccount.Role), HeaderText = "Vai trò", Width = 130 });
         _grid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(UserAccount.IsActive), HeaderText = "Kích hoạt", Width = 100 });
+        _grid.Columns[_grid.Columns.Count - 1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         UiStyle.StyleGrid(_grid);
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _grid.ColumnHeadersHeight = 40;
+        _grid.RowTemplate.Height = 36;
         _grid.SelectionChanged += (_, _) => LoadSelectedUser();
         root.Controls.Add(_grid, 0, 0);
 
@@ -56,69 +61,72 @@ public class UserManagementForm : Form
         {
             Text = "Thông tin tài khoản",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         };
         root.Controls.Add(editorBox, 0, 1);
         var editorLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 4,
-            RowCount = 2,
+            RowCount = 3,
             Padding = new Padding(10, 10, 10, 6)
         };
-        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
         editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40f));
-        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80f));
+        editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
         editorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+        editorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44f));
         editorBox.Controls.Add(editorLayout);
 
-        editorLayout.Controls.Add(new Label { Text = "Username:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
-        _txtUsername = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+        editorLayout.Controls.Add(new Label { Text = "Username:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 0);
+        _txtUsername = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         editorLayout.Controls.Add(_txtUsername, 1, 0);
 
-        editorLayout.Controls.Add(new Label { Text = "Họ tên:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 0);
-        _txtFullName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+        editorLayout.Controls.Add(new Label { Text = "Họ tên:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 2, 0);
+        _txtFullName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         editorLayout.Controls.Add(_txtFullName, 3, 0);
 
-        editorLayout.Controls.Add(new Label { Text = "Vai trò:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
-        _cmbRole = new ComboBox { Dock = DockStyle.Left, Width = 140, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+        editorLayout.Controls.Add(new Label { Text = "Vai trò:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 1);
+        _cmbRole = new ComboBox { Dock = DockStyle.Left, Width = 180, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         _cmbRole.Items.AddRange(["User", "Admin"]);
         _cmbRole.SelectedIndex = 0;
         editorLayout.Controls.Add(_cmbRole, 1, 1);
 
-        editorLayout.Controls.Add(new Label { Text = "Mật khẩu:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 1);
-        _txtPassword = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+        editorLayout.Controls.Add(new Label { Text = "Mật khẩu:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 2, 1);
+        _txtPassword = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         editorLayout.Controls.Add(_txtPassword, 3, 1);
 
-        _chkActive = new CheckBox { Text = "Kích hoạt tài khoản", AutoSize = true, Checked = true, Anchor = AnchorStyles.Left };
-        editorLayout.Controls.Add(_chkActive, 1, 1);
-        editorLayout.SetColumnSpan(_chkActive, 1);
+        _chkActive = new CheckBox { Text = "Kích hoạt tài khoản", AutoSize = true, Checked = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
+        editorLayout.Controls.Add(_chkActive, 0, 2);
+        editorLayout.SetColumnSpan(_chkActive, 2);
 
         var actionPanel = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             Padding = new Padding(4, 10, 4, 4)
         };
         root.Controls.Add(actionPanel, 0, 2);
 
-        var btnCreate = new Button { Text = "Tạo user", Width = 120, Height = 38 };
+        var btnCreate = new Button { Text = "Tạo user", Width = 130, Height = 42, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
         UiStyle.StyleButton(btnCreate, UiStyle.SuccessBright);
         btnCreate.Click += (_, _) => CreateUser();
         actionPanel.Controls.Add(btnCreate);
 
-        var btnUpdate = new Button { Text = "Cập nhật vai trò/trạng thái", Width = 220, Height = 38 };
+        var btnUpdate = new Button { Text = "Cập nhật vai trò/trạng thái", Width = 250, Height = 42, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
         UiStyle.StyleButton(btnUpdate, UiStyle.Primary);
         btnUpdate.Click += (_, _) => UpdateUser();
         actionPanel.Controls.Add(btnUpdate);
 
-        var btnResetPassword = new Button { Text = "Reset mật khẩu", Width = 150, Height = 38 };
+        var btnResetPassword = new Button { Text = "Reset mật khẩu", Width = 170, Height = 42, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
         UiStyle.StyleButton(btnResetPassword, UiStyle.Warning);
         btnResetPassword.Click += (_, _) => ResetPassword();
         actionPanel.Controls.Add(btnResetPassword);
 
-        var btnClear = new Button { Text = "Làm mới", Width = 110, Height = 38 };
+        var btnClear = new Button { Text = "Làm mới", Width = 120, Height = 42, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
         UiStyle.StyleButton(btnClear, UiStyle.Neutral);
         btnClear.Click += (_, _) => ResetEditor();
         actionPanel.Controls.Add(btnClear);

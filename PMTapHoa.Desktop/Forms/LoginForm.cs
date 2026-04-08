@@ -43,17 +43,19 @@ public class LoginForm : Form
             RowCount = 2,
             Padding = new Padding(8, 8, 8, 0)
         };
-        formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140f));
+        formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190f));
         formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
-        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 62f));
+        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 72f));
+        formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 72f));
         root.Controls.Add(formLayout, 0, 1);
 
         var lblUsername = new Label
         {
             Text = "Tài khoản:",
-            AutoSize = true,
-            Anchor = AnchorStyles.Left
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         };
         _txtUsername = new TextBox
         {
@@ -64,8 +66,10 @@ public class LoginForm : Form
         var lblPassword = new Label
         {
             Text = "Mật khẩu:",
-            AutoSize = true,
-            Anchor = AnchorStyles.Left
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         };
         _txtPassword = new TextBox
         {
@@ -102,7 +106,7 @@ public class LoginForm : Form
 
         var lblHint = new Label
         {
-            Text = "Mặc định: admin/admin123 hoặc staff/staff123",
+            Text = "Liên hệ quản trị: 0983 558 082",
             AutoSize = true,
             MaximumSize = new Size(680, 0),
             ForeColor = Color.DimGray,

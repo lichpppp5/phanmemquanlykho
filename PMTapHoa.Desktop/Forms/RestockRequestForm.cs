@@ -37,6 +37,7 @@ public class RestockRequestForm : Form
         WindowState = FormWindowState.Normal;
         AutoScroll = false;
         AutoScaleMode = AutoScaleMode.Font;
+        Font = new Font("Segoe UI", 11, FontStyle.Regular);
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
         UiStyle.ApplyWindowMode(this);
@@ -48,9 +49,9 @@ public class RestockRequestForm : Form
             RowCount = 4,
             Padding = new Padding(20, 16, 20, 16)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 210f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 220f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 250f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 260f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         Controls.Add(root);
 
@@ -58,7 +59,7 @@ public class RestockRequestForm : Form
         {
             Text = "Tạo yêu cầu nhập hàng",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 11, FontStyle.Bold)
+            Font = new Font("Segoe UI", 12, FontStyle.Bold)
         };
         var requestLayout = new TableLayoutPanel
         {
@@ -73,12 +74,12 @@ public class RestockRequestForm : Form
         requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33f));
         requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
         requestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33f));
-        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
-        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
-        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
+        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        requestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
         panel.Controls.Add(requestLayout);
 
-        requestLayout.Controls.Add(new Label { Text = "Sản phẩm:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
+        requestLayout.Controls.Add(new Label { Text = "Sản phẩm:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 0);
         _cmbProducts = new ComboBox
         {
             Dock = DockStyle.Fill,
@@ -87,23 +88,23 @@ public class RestockRequestForm : Form
         };
         requestLayout.Controls.Add(_cmbProducts, 1, 0);
 
-        requestLayout.Controls.Add(new Label { Text = "Mối nhập:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 0);
+        requestLayout.Controls.Add(new Label { Text = "Mối nhập:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 2, 0);
         _txtSupplierName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         requestLayout.Controls.Add(_txtSupplierName, 3, 0);
 
-        requestLayout.Controls.Add(new Label { Text = "Người liên hệ:", AutoSize = true, Anchor = AnchorStyles.Left }, 4, 0);
+        requestLayout.Controls.Add(new Label { Text = "Người liên hệ:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 4, 0);
         _txtContactName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         requestLayout.Controls.Add(_txtContactName, 5, 0);
 
-        requestLayout.Controls.Add(new Label { Text = "SĐT:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
+        requestLayout.Controls.Add(new Label { Text = "SĐT:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 1);
         _txtPhone = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         requestLayout.Controls.Add(_txtPhone, 1, 1);
 
-        requestLayout.Controls.Add(new Label { Text = "Địa chỉ:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 1);
+        requestLayout.Controls.Add(new Label { Text = "Địa chỉ:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 2, 1);
         _txtAddress = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         requestLayout.Controls.Add(_txtAddress, 3, 1);
 
-        requestLayout.Controls.Add(new Label { Text = "SL cần nhập:", AutoSize = true, Anchor = AnchorStyles.Left }, 4, 1);
+        requestLayout.Controls.Add(new Label { Text = "SL cần nhập:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 4, 1);
         _numQty = new NumericUpDown
         {
             Dock = DockStyle.Left,
@@ -115,7 +116,7 @@ public class RestockRequestForm : Form
         };
         requestLayout.Controls.Add(_numQty, 5, 1);
 
-        requestLayout.Controls.Add(new Label { Text = "Giá nhập dự kiến:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
+        requestLayout.Controls.Add(new Label { Text = "Giá nhập dự kiến:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 0, 2);
         _numExpectedCost = new NumericUpDown
         {
             Dock = DockStyle.Left,
@@ -126,7 +127,7 @@ public class RestockRequestForm : Form
         };
         requestLayout.Controls.Add(_numExpectedCost, 1, 2);
 
-        requestLayout.Controls.Add(new Label { Text = "Ghi chú:", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 2);
+        requestLayout.Controls.Add(new Label { Text = "Ghi chú:", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 11, FontStyle.Bold) }, 2, 2);
         _txtNote = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Regular) };
         requestLayout.Controls.Add(_txtNote, 3, 2);
 
@@ -134,11 +135,12 @@ public class RestockRequestForm : Form
         {
             Text = "Lưu yêu cầu",
             Width = 140,
-            Height = 36,
+            Height = 42,
             Anchor = AnchorStyles.Left,
             BackColor = UiStyle.Success,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
         };
         btnSave.Click += (_, _) => SaveRequest();
         requestLayout.Controls.Add(btnSave, 5, 2);
@@ -149,7 +151,7 @@ public class RestockRequestForm : Form
         {
             Text = "Gợi ý tự động cho hàng sắp hết",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            Font = new Font("Segoe UI", 12, FontStyle.Bold)
         };
 
         var suggestLayout = new TableLayoutPanel
@@ -159,7 +161,7 @@ public class RestockRequestForm : Form
             RowCount = 2,
             Padding = new Padding(10, 10, 10, 10)
         };
-        suggestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40f));
+        suggestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
         suggestLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         suggestBox.Controls.Add(suggestLayout);
 
@@ -174,10 +176,12 @@ public class RestockRequestForm : Form
         var btnLoadSuggestions = new Button
         {
             Text = "Tải gợi ý",
-            Width = 100,
+            Width = 120,
+            Height = 38,
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
         btnLoadSuggestions.Click += (_, _) => LoadSuggestions();
         suggestTop.Controls.Add(btnLoadSuggestions);
@@ -185,10 +189,12 @@ public class RestockRequestForm : Form
         var btnCreateSuggested = new Button
         {
             Text = "Tạo yêu cầu đã chọn",
-            Width = 160,
+            Width = 190,
+            Height = 38,
             BackColor = UiStyle.AccentOrange,
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
         btnCreateSuggested.Click += (_, _) => CreateRequestsFromSuggestions();
         suggestTop.Controls.Add(btnCreateSuggested);
@@ -197,7 +203,8 @@ public class RestockRequestForm : Form
         {
             Text = "Mặc định sẽ tự chọn dòng chưa có yêu cầu Open/Ordered.",
             AutoSize = true,
-            ForeColor = Color.DimGray
+            ForeColor = Color.DimGray,
+            Margin = new Padding(10, 8, 0, 0)
         };
         suggestTop.Controls.Add(hint);
 
@@ -230,12 +237,12 @@ public class RestockRequestForm : Form
             WrapContents = true
         };
         root.Controls.Add(filterPanel, 0, 2);
-        filterPanel.Controls.Add(new Label { Text = "Lọc trạng thái:", AutoSize = true, Margin = new Padding(0, 10, 8, 0) });
+        filterPanel.Controls.Add(new Label { Text = "Lọc trạng thái:", AutoSize = true, Margin = new Padding(0, 10, 8, 0), Font = new Font("Segoe UI", 11, FontStyle.Bold) });
         _cmbStatusFilter = new ComboBox
         {
-            Width = 140,
+            Width = 170,
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Font = new Font("Segoe UI", 11, FontStyle.Regular),
             Margin = new Padding(0, 4, 12, 0)
         };
         _cmbStatusFilter.Items.AddRange(["Tất cả", "Open", "Ordered", "Received", "Cancelled"]);
@@ -246,10 +253,12 @@ public class RestockRequestForm : Form
         var btnRefresh = new Button
         {
             Text = "Làm mới",
-            Width = 100,
+            Width = 120,
+            Height = 38,
             BackColor = UiStyle.Neutral,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Margin = new Padding(0, 4, 0, 0)
         };
         btnRefresh.Click += (_, _) => LoadRequests();

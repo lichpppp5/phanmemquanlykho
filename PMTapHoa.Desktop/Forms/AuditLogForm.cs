@@ -17,12 +17,13 @@ public class AuditLogForm : Form
         }
 
         Text = "Nhật ký thao tác";
-        Width = 1180;
-        Height = 760;
-        MinimumSize = new Size(980, 620);
+        Width = 1320;
+        Height = 860;
+        MinimumSize = new Size(1120, 760);
         StartPosition = FormStartPosition.CenterParent;
         WindowState = FormWindowState.Normal;
         AutoScaleMode = AutoScaleMode.Font;
+        Font = new Font("Segoe UI", 11, FontStyle.Regular);
         KeyPreview = true;
         BackColor = Color.WhiteSmoke;
         UiStyle.ApplyWindowMode(this);
@@ -34,7 +35,7 @@ public class AuditLogForm : Form
             RowCount = 2,
             Padding = new Padding(14)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 68f));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         Controls.Add(root);
 
@@ -56,11 +57,12 @@ public class AuditLogForm : Form
 
         _numLimit = new NumericUpDown
         {
-            Width = 90,
+            Width = 110,
             Minimum = 50,
             Maximum = 1000,
             Increment = 50,
             Value = 200,
+            Font = new Font("Segoe UI", 11, FontStyle.Regular),
             Margin = new Padding(0, 4, 12, 0)
         };
         topPanel.Controls.Add(_numLimit);
@@ -68,11 +70,12 @@ public class AuditLogForm : Form
         var btnRefresh = new Button
         {
             Text = "Làm mới",
-            Width = 100,
-            Height = 34,
+            Width = 120,
+            Height = 40,
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Margin = new Padding(0, 2, 0, 0)
         };
         btnRefresh.Click += (_, _) => LoadLogs();
@@ -89,10 +92,10 @@ public class AuditLogForm : Form
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(AuditLog.Username), HeaderText = "User", Width = 140 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(AuditLog.Action), HeaderText = "Action", Width = 170 });
         _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(AuditLog.Detail), HeaderText = "Chi tiết", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
-        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        _grid.ColumnHeadersHeight = 36;
-        _grid.RowTemplate.Height = 32;
+        _grid.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _grid.ColumnHeadersHeight = 40;
+        _grid.RowTemplate.Height = 36;
         _grid.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         root.Controls.Add(_grid, 0, 1);
 

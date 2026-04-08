@@ -34,10 +34,10 @@ public class SalesHistoryForm : Form
             RowCount = 4,
             Padding = new Padding(14)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 66f));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 52f));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 48f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 66f));
         Controls.Add(root);
 
         var filterPanel = new FlowLayoutPanel
@@ -50,36 +50,37 @@ public class SalesHistoryForm : Form
         root.Controls.Add(filterPanel, 0, 0);
 
         var lblKeyword = new Label { Text = "Tìm HĐ/khách:", AutoSize = true, Margin = new Padding(0, 8, 8, 0) };
-        _txtKeyword = new TextBox { Width = 220, Margin = new Padding(0, 4, 18, 0), Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+        _txtKeyword = new TextBox { Width = 300, Margin = new Padding(0, 4, 18, 0), Font = new Font("Segoe UI", 11, FontStyle.Regular) };
 
         var lblFrom = new Label { Text = "Từ:", AutoSize = true, Margin = new Padding(0, 8, 6, 0) };
         _dtFrom = new DateTimePicker
         {
-            Width = 140,
+            Width = 150,
             Margin = new Padding(0, 4, 16, 0),
             Format = DateTimePickerFormat.Short,
             ShowCheckBox = true,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            Font = new Font("Segoe UI", 11, FontStyle.Regular)
         };
 
         var lblTo = new Label { Text = "Đến:", AutoSize = true, Margin = new Padding(0, 8, 6, 0) };
         _dtTo = new DateTimePicker
         {
-            Width = 140,
+            Width = 150,
             Margin = new Padding(0, 4, 16, 0),
             Format = DateTimePickerFormat.Short,
             ShowCheckBox = true,
-            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            Font = new Font("Segoe UI", 11, FontStyle.Regular)
         };
 
         var btnFilter = new Button
         {
             Text = "Lọc",
-            Width = 100,
-            Height = 34,
+            Width = 112,
+            Height = 38,
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Margin = new Padding(0, 2, 0, 0)
         };
         btnFilter.Click += (_, _) => LoadSales();
@@ -105,10 +106,11 @@ public class SalesHistoryForm : Form
         _gridSales.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(SaleHistoryItem.CustomerName), HeaderText = "Khách hàng", Width = 300 });
         _gridSales.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(SaleHistoryItem.TotalAmount), HeaderText = "Tổng tiền", Width = 160 });
         _gridSales.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(SaleHistoryItem.IsDebt), HeaderText = "Ghi nợ", Width = 90 });
-        _gridSales.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-        _gridSales.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        _gridSales.ColumnHeadersHeight = 36;
-        _gridSales.RowTemplate.Height = 32;
+        _gridSales.Columns[_gridSales.Columns.Count - 1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        _gridSales.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _gridSales.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _gridSales.ColumnHeadersHeight = 40;
+        _gridSales.RowTemplate.Height = 36;
         _gridSales.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         _gridSales.SelectionChanged += (_, _) => LoadSaleDetails();
         root.Controls.Add(_gridSales, 0, 1);
@@ -125,10 +127,11 @@ public class SalesHistoryForm : Form
         _gridDetails.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.Quantity), HeaderText = "SL", Width = 100 });
         _gridDetails.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.UnitPrice), HeaderText = "Đơn giá", Width = 180 });
         _gridDetails.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(CartItem.LineTotal), HeaderText = "Thành tiền", Width = 180 });
-        _gridDetails.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-        _gridDetails.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        _gridDetails.ColumnHeadersHeight = 36;
-        _gridDetails.RowTemplate.Height = 32;
+        _gridDetails.Columns[_gridDetails.Columns.Count - 1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        _gridDetails.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+        _gridDetails.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+        _gridDetails.ColumnHeadersHeight = 40;
+        _gridDetails.RowTemplate.Height = 36;
         _gridDetails.AlternatingRowsDefaultCellStyle.BackColor = UiStyle.GridAltRow;
         root.Controls.Add(_gridDetails, 0, 2);
 
@@ -145,9 +148,9 @@ public class SalesHistoryForm : Form
         _cmbPaperWidth = new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 90,
+            Width = 100,
             Margin = new Padding(0, 4, 16, 0),
-            Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            Font = new Font("Segoe UI", 11, FontStyle.Regular)
         };
         _cmbPaperWidth.Items.AddRange(["58", "80"]);
         _cmbPaperWidth.SelectedItem = _services.AppConfigService.DefaultPaperWidth.ToString();
@@ -155,11 +158,12 @@ public class SalesHistoryForm : Form
         var btnReprint = new Button
         {
             Text = "In lại hóa đơn",
-            Width = 160,
-            Height = 36,
+            Width = 180,
+            Height = 40,
             BackColor = UiStyle.Primary,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Margin = new Padding(0, 2, 0, 0)
         };
         btnReprint.Click += (_, _) => ReprintSelectedSale();
