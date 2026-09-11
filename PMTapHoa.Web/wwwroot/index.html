@@ -823,7 +823,7 @@
             <button class="sub-tab-btn" data-settings-sub="hardware" type="button">🖨️ Máy In & Quét Mã</button>
             <button class="sub-tab-btn" data-settings-sub="payment" type="button">⚡ VietQR & Màn Hình ESP32</button>
           </div>
-          <button class="btn btn-success" id="saveSettingsTopBtn" onclick="saveSettings()" type="button"
+          <button class="btn btn-success" id="saveSettingsTopBtn" type="button"
             style="font-weight: 700; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
             💾 Lưu Toàn Bộ Cấu Hình
           </button>
@@ -1123,6 +1123,33 @@
                 </label>
               </div>
               <div>
+                <label style="font-size: 13px; font-weight: 600;">Ngân hàng nhận tiền</label>
+                <select id="settingQrBankSelect" class="pos-select" style="margin-top: 4px; font-weight: 600;">
+                  <option value="970422">MBBank - Ngân hàng Quân Đội (970422)</option>
+                  <option value="970436">Vietcombank - VCB (970436)</option>
+                  <option value="970415">VietinBank - CTG (970415)</option>
+                  <option value="970418">BIDV (970418)</option>
+                  <option value="970405">Agribank (970405)</option>
+                  <option value="970407">Techcombank - TCB (970407)</option>
+                  <option value="970416">ACB - Á Châu (970416)</option>
+                  <option value="970432">VPBank (970432)</option>
+                  <option value="970423">TPBank (970423)</option>
+                  <option value="970403">Sacombank (970403)</option>
+                  <option value="970441">VIB (970441)</option>
+                  <option value="970448">OCB (970448)</option>
+                  <option value="970437">HDBank (970437)</option>
+                  <option value="970443">SHB (970443)</option>
+                  <option value="970426">MSB (970426)</option>
+                  <option value="970440">SeABank (970440)</option>
+                  <option value="970449">LPBank (970449)</option>
+                  <option value="546034">Cake by VPBank (546034)</option>
+                  <option value="963388">Timo by BVBank (963388)</option>
+                  <option value="970428">Nam A Bank (970428)</option>
+                  <option value="970454">BVBank - Viet Capital (970454)</option>
+                  <option value="custom">Ngân hàng khác (Tự nhập BIN)</option>
+                </select>
+              </div>
+              <div>
                 <label style="font-size: 13px; font-weight: 600;">Mã định danh ngân hàng (BIN)</label>
                 <input type="text" id="settingQrBin" class="pos-input" style="margin-top: 4px;"
                   placeholder="VD: 970422 (MB), 970436 (VCB)...">
@@ -1193,7 +1220,7 @@
                   <div style="display: flex; gap: 6px; margin-top: 4px;">
                     <input type="text" id="displayWebhookUrl" class="pos-input"
                       style="font-size: 11.5px; font-family: monospace;" readonly
-                      value="http://localhost:5050/api/payment/webhook">
+                      value="http://taphoa.local:8888/api/payment/webhook">
                     <button class="btn btn-secondary btn-sm" id="btnCopyWebhookUrl" type="button"
                       style="white-space: nowrap;">📋 Copy</button>
                   </div>
@@ -1222,7 +1249,7 @@
                   <div style="display: flex; gap: 6px; margin-top: 4px;">
                     <input type="text" id="displayPhoneNotiUrl" class="pos-input"
                       style="font-size: 11.5px; font-family: monospace;" readonly
-                      value="http://localhost:5050/api/payment/phone-notification">
+                      value="http://taphoa.local:8888/api/payment/phone-notification">
                     <button class="btn btn-secondary btn-sm" id="btnCopyPhoneNotiUrl" type="button"
                       style="white-space: nowrap;">📋 Copy</button>
                   </div>
@@ -1487,11 +1514,19 @@
                           </tr>
                         </tbody>
                       </table>
-                      <div style="margin-top: 8px; font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;">
-                        💡 <strong>Lưu ý khi nạp code Arduino:</strong> Mở Arduino IDE -> Quản lý Thư viện (Cmd+Shift+I
-                        trên Mac / Ctrl+Shift+I) -> Chỉ cần cài 2 thư viện: <code>Adafruit GFX</code> và
-                        <code>Adafruit ST7735</code> (Mã QR đã dùng bộ tạo có sẵn của ESP32, không cần cài thêm). Nạp
-                        với Board <strong>ESP32 Dev Module</strong>.
+                      <div style="margin-top: 10px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; background: rgba(2, 132, 199, 0.06); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(2, 132, 199, 0.18);">
+                        <div>🛠️ <strong>CÀI ĐẶT TRÊN BẤT KỲ MÁY TÍNH NÀO (CHUẨN THƯƠNG MẠI):</strong></div>
+                        <div style="margin-top: 4px;">
+                          1. <strong>Driver USB:</strong> Nếu cắm cáp USB vào máy tính mà trình duyệt không hiện cổng COM, chỉ cần cài 1 trong 2 driver phổ biến nhất:<br>
+                          • Driver chip <strong>CH340</strong> (phổ biến 90% mạch ESP32 bán tại VN): <a href="https://www.wch.cn/downloads/CH341SER_EXE.html" target="_blank" style="color: #0284c7; font-weight: 600;">Tải Driver CH340 Windows</a><br>
+                          • Driver chip <strong>CP2102</strong> (mạch ESP32 chính hãng/NodeMCU): <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank" style="color: #0284c7; font-weight: 600;">Tải Driver CP2102</a><br>
+                          2. <strong>Trình duyệt:</strong> Dùng Google Chrome, Microsoft Edge hoặc Cốc Cốc trên mọi hệ điều hành (Windows 10, 11, MacOS). Trình duyệt sẽ tự động nhớ cổng COM sau lần cấp quyền đầu tiên.<br>
+                          3. <strong>Nạp code Arduino:</strong> Mở Arduino IDE -> Quản lý Thư viện (Ctrl+Shift+I) -> Cài 3 thư viện:<br>
+                          • <code>Adafruit GFX Library</code> (bởi Adafruit)<br>
+                          • <code>Adafruit ST7735 and ST7789 Library</code> (bởi Adafruit)<br>
+                          • <code>QRCode</code> (bởi Richard Moore) -> gõ "qrcode" và bấm Install.<br>
+                          Chọn Board <strong>ESP32 Dev Module</strong> và bấm nút Nạp (Upload).
+                        </div>
                       </div>
                     </div>
                   </details>
@@ -1504,7 +1539,7 @@
         <!-- Bottom Actions -->
         <div
           style="margin-top: 24px; display: flex; justify-content: flex-end; max-width: 1240px; margin-left: auto; margin-right: auto;">
-          <button class="btn btn-success" id="saveSettingsBtn" onclick="saveSettings()" type="button"
+          <button class="btn btn-success" id="saveSettingsBtn" type="button"
             style="padding: 12px 28px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
             💾 Lưu Toàn Bộ Cấu Hình
           </button>
@@ -2003,9 +2038,67 @@
       </div>
       <div class="modal-body" style="align-items: center; padding: 16px 20px;">
         <!-- QR container with Radar Pulse animation -->
-        <div class="qr-radar-wrapper" id="vietQrWrapper">
+        <div class="qr-radar-wrapper" id="vietQrWrapper" style="display: flex; justify-content: center; align-items: center; min-height: 280px; width: 100%;">
           <img id="vietQrImg" src="" alt="Mã QR"
             style="width: 280px; height: 280px; object-fit: contain; display: block; border-radius: 8px; background: #fff; padding: 8px;">
+
+          <!-- Quick Config Box if Account No is missing -->
+          <div id="vietQrMissingConfig" style="display: none; padding: 16px 14px; background: #fff7ed; border: 1.5px dashed #f97316; border-radius: 12px; max-width: 320px; width: 100%; box-sizing: border-box; text-align: left;">
+            <div style="text-align: center; margin-bottom: 10px;">
+              <div style="font-size: 28px;">💳</div>
+              <div style="font-weight: 800; font-size: 14px; color: #9a3412; margin-top: 2px;">Chưa Cài Đặt Tài Khoản Ngân Hàng</div>
+              <div style="font-size: 11.5px; color: #7c2d12; margin-top: 2px;">Nhập số tài khoản bên dưới để tự động tạo mã QR:</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div>
+                <label style="font-size: 11px; font-weight: 700; color: #7c2d12;">Ngân hàng nhận tiền:</label>
+                <select id="quickQrBankSelect" class="pos-select" style="font-size: 12px; padding: 5px 8px; width: 100%; margin-top: 2px;">
+                  <option value="970422">MBBank - Ngân hàng Quân Đội (970422)</option>
+                  <option value="970436" selected>Vietcombank - VCB (970436)</option>
+                  <option value="970415">VietinBank - CTG (970415)</option>
+                  <option value="970418">BIDV (970418)</option>
+                  <option value="970405">Agribank (970405)</option>
+                  <option value="970407">Techcombank - TCB (970407)</option>
+                  <option value="970416">ACB - Á Châu (970416)</option>
+                  <option value="970432">VPBank (970432)</option>
+                  <option value="970423">TPBank (970423)</option>
+                  <option value="970403">Sacombank (970403)</option>
+                  <option value="970441">VIB (970441)</option>
+                  <option value="970448">OCB (970448)</option>
+                  <option value="970437">HDBank (970437)</option>
+                  <option value="970443">SHB (970443)</option>
+                  <option value="970426">MSB (970426)</option>
+                  <option value="970440">SeABank (970440)</option>
+                  <option value="970449">LPBank (970449)</option>
+                  <option value="546034">Cake by VPBank (546034)</option>
+                  <option value="963388">Timo by BVBank (963388)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 700; color: #7c2d12;">Số tài khoản ngân hàng:</label>
+                <input type="text" id="quickQrAccountNo" class="pos-input" style="font-size: 12px; padding: 6px 8px; width: 100%; margin-top: 2px;" placeholder="Nhập số tài khoản...">
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 700; color: #7c2d12;">Tên chủ tài khoản (không dấu):</label>
+                <input type="text" id="quickQrAccountName" class="pos-input" style="font-size: 12px; padding: 6px 8px; width: 100%; margin-top: 2px;" placeholder="VD: NGUYEN VAN A">
+              </div>
+              <button type="button" id="btnSaveQuickQr" class="btn btn-primary btn-sm" style="margin-top: 4px; width: 100%; padding: 8px; font-size: 12.5px; font-weight: 700; background: #ea580c; border: none;">
+                ✓ Lưu & Tạo Mã QR Ngay
+              </button>
+            </div>
+          </div>
+
+          <!-- Fallback error box if image fails to load -->
+          <div id="vietQrErrorBox" style="display: none; padding: 16px 14px; background: #fef2f2; border: 1.5px dashed #ef4444; border-radius: 12px; max-width: 320px; width: 100%; box-sizing: border-box; text-align: center;">
+            <div style="font-size: 28px;">📡⚠️</div>
+            <div style="font-weight: 800; font-size: 13.5px; color: #b91c1c; margin-top: 4px;">Không Thể Tải Ảnh Mã QR</div>
+            <div style="font-size: 11px; color: #7f1d1d; margin-top: 2px;">Vui lòng kiểm tra kết nối mạng Internet hoặc số tài khoản.</div>
+            <div id="vietQrFallbackDetails" style="margin-top: 10px; background: #fff; border-radius: 8px; padding: 10px; text-align: left; font-size: 11.5px; line-height: 1.6; border: 1px solid #fee2e2;">
+            </div>
+            <button type="button" id="btnRetryVietQr" class="btn btn-secondary btn-sm" style="margin-top: 10px; width: 100%; font-size: 12px;">
+              🔄 Thử Tải Lại Mã QR
+            </button>
+          </div>
         </div>
 
         <div style="margin-top: 12px; width: 100%;">
@@ -2028,7 +2121,7 @@
         <div id="vietQrStatusBox" class="vietqr-status-listening" style="margin-top: 14px; width: 100%;">
           <span class="pulse-radar-dot"></span>
           <span id="vietQrStatusText" style="font-size: 12.5px; font-weight: 600; color: #0284c7;">
-            📡 Chờ xác thực chuyển khoản thành công ...
+            📡 Đang lắng nghe tín hiệu chuyển khoản ngân hàng...
           </span>
         </div>
 
@@ -2041,15 +2134,9 @@
         </div>
       </div>
 
-      <div class="modal-footer" style="display: flex; flex-direction: column; gap: 8px;">
-        <button class="btn btn-warning btn-sm" id="btnSimulatePayment" type="button"
-          style="width: 100%; background: #f59e0b; color: #000; font-weight: 700;">
-          ⚡ Giả Lập Khách Đã Chuyển Khoản (Thử Nghiệm Tự Động)
-        </button>
-        <div style="display: flex; gap: 8px; width: 100%;">
-          <button class="btn btn-secondary" data-close="vietQrModal" style="flex: 1;">Hủy Bỏ</button>
-          <button class="btn btn-success" id="vietQrDoneBtn" style="flex: 2;">✓ Xác Nhận Thủ Công</button>
-        </div>
+      <div class="modal-footer" style="display: flex; gap: 8px; width: 100%;">
+        <button class="btn btn-secondary" id="cancelVietQrModalBtn" data-close="vietQrModal" style="flex: 1;">Hủy Bỏ</button>
+        <button class="btn btn-success" id="vietQrDoneBtn" style="flex: 2;">✓ Xác Nhận Thủ Công</button>
       </div>
     </div>
   </div>
@@ -2108,7 +2195,7 @@
     <div class="image-lightbox-caption" id="lightboxCaption"></div>
   </div>
 
-  <script src="js/app.js?v=20260910_v4"></script>
+  <script src="js/app.js?v=20260911_v12"></script>
 </body>
 
 </html>

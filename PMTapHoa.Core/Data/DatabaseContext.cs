@@ -53,5 +53,16 @@ public class DatabaseContext
         {
             // Ignore if column already exists
         }
+
+        try
+        {
+            using var cleanCmd = connection.CreateCommand();
+            cleanCmd.CommandText = "UPDATE Products SET Barcode = NULL WHERE Barcode IS NOT NULL AND TRIM(Barcode) = '';";
+            cleanCmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            // Ignore if error
+        }
     }
 }

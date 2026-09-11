@@ -5,7 +5,7 @@ using PMTapHoa.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("http://0.0.0.0:5050");
+builder.WebHost.UseUrls("http://0.0.0.0:8888", "http://0.0.0.0:5050");
 
 builder.Services.AddCors(options =>
 {
@@ -181,27 +181,48 @@ app.MapPost("/api/products", (HttpContext ctx, [FromServices] CoreServices servi
     {
         return Results.BadRequest(new { message = "Tên sản phẩm không được để trống" });
     }
-    var id = services.ProductService.CreateProduct(p, null);
-    p.ProductID = id;
-    services.AuditService.Log(operatorUser ?? "admin", "Thêm sản phẩm", $"Tạo mới: {p.ProductName}, Giá: {p.SellingPrice:N0}đ");
-    return Results.Ok(new { message = "Thêm sản phẩm thành công", product = p });
+    try
+    {
+        var id = services.ProductService.CreateProduct(p, null);
+        p.ProductID = id;
+        services.AuditService.Log(operatorUser ?? "admin", "Thêm sản phẩm", $"Tạo mới: {p.ProductName}, Giá: {p.SellingPrice:N0}đ");
+        return Results.Ok(new { message = "Thêm sản phẩm thành công", product = p });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
 });
 
 app.MapPut("/api/products/{id:int}", (HttpContext ctx, [FromServices] CoreServices services, int id, [FromBody] Product p, [FromQuery] string? operatorUser) =>
 {
     if (!IsAdmin(ctx, services)) return ForbiddenResult();
-    p.ProductID = id;
-    services.ProductService.UpdateProduct(p, null);
-    services.AuditService.Log(operatorUser ?? "admin", "Cập nhật sản phẩm", $"Cập nhật ID {id}: {p.ProductName}, Giá: {p.SellingPrice:N0}đ");
-    return Results.Ok(new { message = "Cập nhật sản phẩm thành công" });
+    try
+    {
+        p.ProductID = id;
+        services.ProductService.UpdateProduct(p, null);
+        services.AuditService.Log(operatorUser ?? "admin", "Cập nhật sản phẩm", $"Cập nhật ID {id}: {p.ProductName}, Giá: {p.SellingPrice:N0}đ");
+        return Results.Ok(new { message = "Cập nhật sản phẩm thành công" });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
 });
 
 app.MapDelete("/api/products/{id:int}", (HttpContext ctx, [FromServices] CoreServices services, int id, [FromQuery] string? operatorUser) =>
 {
     if (!IsAdmin(ctx, services)) return ForbiddenResult();
-    services.ProductService.DeleteProduct(id);
-    services.AuditService.Log(operatorUser ?? "admin", "Xoá sản phẩm", $"Xoá sản phẩm ID {id}");
-    return Results.Ok(new { message = "Đã xoá sản phẩm" });
+    try
+    {
+        services.ProductService.DeleteProduct(id);
+        services.AuditService.Log(operatorUser ?? "admin", "Xoá sản phẩm", $"Xoá sản phẩm ID {id}");
+        return Results.Ok(new { message = "Đã xoá sản phẩm" });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
 });
 
 app.MapPost("/api/products/quick-import", (HttpContext ctx, [FromServices] CoreServices services, [FromBody] QuickImportRequest req, [FromQuery] string? operatorUser) =>
@@ -1162,7 +1183,7 @@ app.MapGet("/api/vietqr", ([FromServices] CoreServices services, [FromQuery] dec
     var content = Uri.EscapeDataString(string.IsNullOrWhiteSpace(memo) ? (cfg.QrTransferPrefix ?? "HD") : memo);
     var intAmount = (long)Math.Max(0, amount);
 
-    var qrUrl = $"https://img.vietqr.io/image/{bank}-{acc}-compact2.png?amount={intAmount}&addInfo={content}&accountName={name}";
+    var qrUrl = $"https://img.vietqr.io/image/{bank}-{acc}-qr_only.png?amount={intAmount}&addInfo={content}";
     return Results.Ok(new
     {
         qrUrl,
@@ -1204,6 +1225,38 @@ app.MapGet("/api/payment/status/{code}", ([FromServices] CoreServices services, 
         transactionRef = p.TransactionRef,
         source = p.Source
     });
+});
+
+// ==================== GIỌNG ĐỌC THANH TOÁN (TTS NỮ TIẾNG VIỆT) ====================
+var ttsCache = new System.Collections.Concurrent.ConcurrentDictionary<string, byte[]>();
+app.MapGet("/api/tts", async (string text) =>
+{
+    if (string.IsNullOrWhiteSpace(text)) return Results.BadRequest();
+    var cleanText = text.Trim();
+    if (cleanText.Length > 200) cleanText = cleanText.Substring(0, 200);
+
+    if (ttsCache.TryGetValue(cleanText, out var cachedBytes))
+    {
+        return Results.File(cachedBytes, "audio/mpeg");
+    }
+
+    try
+    {
+        var url = $"https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q={Uri.EscapeDataString(cleanText)}";
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
+        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        var bytes = await client.GetByteArrayAsync(url);
+        if (bytes != null && bytes.Length > 0)
+        {
+            ttsCache[cleanText] = bytes;
+            return Results.File(bytes, "audio/mpeg");
+        }
+    }
+    catch
+    {
+        // fallback
+    }
+    return Results.StatusCode(502);
 });
 
 // GIẢI PHÁP 1: Cổng Webhook trực tuyến SePay / Casso / Ngân hàng
@@ -1372,9 +1425,10 @@ static string GetLocalIpAddress(HttpContext? ctx = null)
 
 Console.WriteLine("==================================================================");
 Console.WriteLine(" PM TẠP HOÁ - WEB APP LOCAL SẴN SÀNG");
-Console.WriteLine(" Mở trình duyệt trên máy Mac và truy cập:");
-Console.WriteLine("   -> http://localhost:5050");
-Console.WriteLine("   -> http://127.0.0.1:5050");
+Console.WriteLine(" Mở trình duyệt và truy cập:");
+Console.WriteLine("   -> http://taphoa.local:8888");
+Console.WriteLine("   -> http://localhost:8888");
+Console.WriteLine("   -> http://127.0.0.1:8888");
 Console.WriteLine("==================================================================");
 
 app.Run();

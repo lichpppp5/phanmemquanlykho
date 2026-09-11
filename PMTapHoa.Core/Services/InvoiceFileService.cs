@@ -98,7 +98,7 @@ public class InvoiceFileService
             var name = Uri.EscapeDataString(_config.QrAccountName ?? "");
             var content = Uri.EscapeDataString($"HD{sale.SaleID:D6}");
             var intAmount = (long)Math.Max(0, sale.TotalAmount);
-            qrUrl = $"https://img.vietqr.io/image/{bank}-{acc}-compact2.png?amount={intAmount}&addInfo={content}&accountName={name}";
+            qrUrl = $"https://img.vietqr.io/image/{bank}-{acc}-qr_only.png?amount={intAmount}&addInfo={content}";
         }
 
         var subtotal = items.Sum(i => i.LineTotal);
@@ -212,10 +212,8 @@ public class InvoiceFileService
 
             if (showQr && !string.IsNullOrWhiteSpace(qrUrl))
             {
-                sb.AppendLine("    <div style=\"text-align:center; margin:14px 0 6px 0; padding:10px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;\">");
-                sb.AppendLine("      <div style=\"font-size:11.5px; font-weight:bold; color:#15803d; margin-bottom:4px;\">QUÉT MÃ QR THANH TOÁN (VIETQR)</div>");
-                sb.AppendLine($"      <img src=\"{qrUrl}\" style=\"width:120px; height:120px; border:1px solid #cbd5e1; border-radius:6px; background:#fff;\" alt=\"QR\">");
-                sb.AppendLine($"      <div style=\"font-size:11px; color:#475569; margin-top:3px;\">{_config.QrAccountNo} - {_config.QrAccountName}</div>");
+                sb.AppendLine("    <div style=\"text-align:center; margin:10px 0 6px 0; padding:6px;\">");
+                sb.AppendLine($"      <img src=\"{qrUrl}\" style=\"width:130px; height:130px; border:none; background:#fff; margin:0 auto; display:block;\" alt=\"QR\">");
                 sb.AppendLine("    </div>");
             }
 
@@ -462,7 +460,7 @@ public class InvoiceFileService
             var name = Uri.EscapeDataString(_config.QrAccountName ?? "");
             var content = Uri.EscapeDataString($"HD{sale.SaleID:D6}");
             var intAmount = (long)Math.Max(0, total);
-            qrUrl = $"https://img.vietqr.io/image/{bank}-{acc}-compact2.png?amount={intAmount}&addInfo={content}&accountName={name}";
+            qrUrl = $"https://img.vietqr.io/image/{bank}-{acc}-qr_only.png?amount={intAmount}&addInfo={content}";
         }
 
         var sb = new StringBuilder();
@@ -607,16 +605,11 @@ public class InvoiceFileService
         sb.AppendLine($"      <b>Số tiền viết bằng chữ:</b> <i>{amountInWords}</i>");
         sb.AppendLine("    </div>");
 
-        // QR Code & Bank info (if enabled)
+        // QR Code (if enabled)
         if (showQr && !string.IsNullOrWhiteSpace(qrUrl))
         {
-            sb.AppendLine("    <div style=\"display:flex; justify-content:space-between; align-items:center; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px 14px; margin-bottom:18px;\">");
-            sb.AppendLine("      <div style=\"font-size:13px;\">");
-            sb.AppendLine($"        <div style=\"font-weight:bold; color:#15803d;\">Quét mã QR chuyển khoản thanh toán nhanh:</div>");
-            sb.AppendLine($"        <div>Tài khoản: <b>{_config.QrAccountNo}</b> - {_config.QrAccountName}</div>");
-            sb.AppendLine($"        <div>Nội dung: <b>HD{sale.SaleID:D6}</b></div>");
-            sb.AppendLine("      </div>");
-            sb.AppendLine($"      <img src=\"{qrUrl}\" style=\"width:80px; height:80px; object-fit:contain; border-radius:4px; border:1px solid #e2e8f0;\" alt=\"VietQR\">");
+            sb.AppendLine("    <div style=\"text-align:center; margin:14px 0; padding:10px;\">");
+            sb.AppendLine($"      <img src=\"{qrUrl}\" style=\"width:110px; height:110px; object-fit:contain; border:none; margin:0 auto; display:block;\" alt=\"QR\">");
             sb.AppendLine("    </div>");
         }
 

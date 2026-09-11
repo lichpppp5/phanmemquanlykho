@@ -89,6 +89,20 @@ Response.prototype.safeJson = async function () {
   }
 };
 
+// Helper: Remove Vietnamese diacritics / tones
+function removeVietnameseTones(str) {
+  if (!str) return '';
+  // Bước 1: Chuẩn hóa Unicode về dạng NFC (hợp nhất các ký tự ghép)
+  try { str = str.normalize('NFC'); } catch (_) {}
+  // Bước 2: Chuyển sang NFD để tách dấu thanh ra rồi xóa tất cả dấu thanh
+  try { str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (_) {}
+  // Bước 3: Xử lý đặc biệt ký tự đ/Đ (không bị NFD tách)
+  str = str.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  // Bước 4: Xóa mọi ký tự không phải ASCII printable (0x20-0x7E) còn sót lại
+  str = str.replace(/[^\x20-\x7E]/g, '');
+  return str;
+}
+
 
 // Helper getter for active cart
 function getActiveCart() {
@@ -400,12 +414,16 @@ function setupUserSession() {
     document.getElementById('changePassCurrent').value = '';
     document.getElementById('changePassNew').value = '';
     document.getElementById('changePassConfirm').value = '';
+    const btn = document.getElementById('confirmChangePassBtn');
+    if (btn) { btn.disabled = false; btn.textContent = 'Đổi Mật Khẩu'; }
     document.getElementById('changePasswordModal').classList.add('active');
   });
 
   document.getElementById('openLoginBtn').addEventListener('click', () => {
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
+    const btn = document.getElementById('confirmLoginBtn');
+    if (btn) { btn.disabled = false; btn.textContent = 'Đăng Nhập'; }
     document.getElementById('loginModal').classList.add('active');
   });
 
@@ -461,6 +479,13 @@ async function handleLogin() {
     return;
   }
 
+  const btn = document.getElementById('confirmLoginBtn');
+  const origText = btn ? btn.textContent : 'Đăng Nhập';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang đăng nhập...';
+  }
+
   try {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
@@ -488,6 +513,11 @@ async function handleLogin() {
     }
   } catch (e) {
     alert('Lỗi: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
   }
 }
 
@@ -509,6 +539,13 @@ async function handleChangePassword() {
     return;
   }
 
+  const btn = document.getElementById('confirmChangePassBtn');
+  const origText = btn ? btn.textContent : 'Đổi Mật Khẩu';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang đổi...';
+  }
+
   try {
     const res = await fetch('/api/auth/change-password', {
       method: 'POST',
@@ -528,6 +565,11 @@ async function handleChangePassword() {
     }
   } catch (e) {
     alert('Lỗi: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
   }
 }
 
@@ -1160,43 +1202,62 @@ async function handleCheckout() {
     return;
   }
 
-  const subtotal = cart.items.reduce((s, i) => s + (i.unitPrice * i.quantity), 0);
-  const discountAmount = Math.max(0, parseFloat(document.getElementById('discountInput').value) || 0);
-  const discountNote = document.getElementById('discountNoteInput').value.trim();
-  const finalTotal = Math.max(0, subtotal - discountAmount);
-
-  const customerName = document.getElementById('customerSearchInput').value.trim() || 'Khách lẻ';
-  const customer = state.customers.find(c => c.customerName.toLowerCase() === customerName.toLowerCase());
-
-  let receivedAmount = parseFloat(document.getElementById('receivedAmountInput').value) || 0;
-  if (cart.paymentMethod === 'Tiền mặt' && receivedAmount < finalTotal) {
-    receivedAmount = finalTotal;
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  const origCheckoutHTML = checkoutBtn ? checkoutBtn.innerHTML : null;
+  if (checkoutBtn) {
+    checkoutBtn.disabled = true;
+    checkoutBtn.innerHTML = '<div class="checkout-label"><span class="checkout-title">⏳ Đang xử lý...</span></div>';
   }
 
-  if (cart.paymentMethod === 'Chuyển khoản' && state.settings.qrPaymentEnabled) {
-    openVietQrModal(finalTotal, customerName, async () => {
-      await sendCheckoutRequest({
-        customerId: customer ? customer.customerID : null,
-        customerName,
-        paymentMethod: 'Chuyển khoản',
-        discountAmount,
-        discountNote,
-        receivedAmount: finalTotal,
-        items: cart.items
+  try {
+    const subtotal = cart.items.reduce((s, i) => s + (i.unitPrice * i.quantity), 0);
+    const discountAmount = Math.max(0, parseFloat(document.getElementById('discountInput').value) || 0);
+    const discountNote = document.getElementById('discountNoteInput').value.trim();
+    const finalTotal = Math.max(0, subtotal - discountAmount);
+
+    const customerName = document.getElementById('customerSearchInput').value.trim() || 'Khách lẻ';
+    const customer = state.customers.find(c => c.customerName.toLowerCase() === customerName.toLowerCase());
+
+    let receivedAmount = parseFloat(document.getElementById('receivedAmountInput').value) || 0;
+    if (cart.paymentMethod === 'Tiền mặt' && receivedAmount < finalTotal) {
+      receivedAmount = finalTotal;
+    }
+
+    if (cart.paymentMethod === 'Chuyển khoản' && state.settings.qrPaymentEnabled) {
+      // Restore button before opening modal (modal has its own flow)
+      if (checkoutBtn && origCheckoutHTML) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.innerHTML = origCheckoutHTML;
+      }
+      openVietQrModal(finalTotal, customerName, async () => {
+        await sendCheckoutRequest({
+          customerId: customer ? customer.customerID : null,
+          customerName,
+          paymentMethod: 'Chuyển khoản',
+          discountAmount,
+          discountNote,
+          receivedAmount: finalTotal,
+          items: cart.items
+        });
       });
-    });
-    return;
-  }
+      return;
+    }
 
-  await sendCheckoutRequest({
-    customerId: customer ? customer.customerID : null,
-    customerName,
-    paymentMethod: cart.paymentMethod,
-    discountAmount,
-    discountNote,
-    receivedAmount: cart.paymentMethod === 'Ghi nợ' ? 0 : receivedAmount,
-    items: cart.items
-  });
+    await sendCheckoutRequest({
+      customerId: customer ? customer.customerID : null,
+      customerName,
+      paymentMethod: cart.paymentMethod,
+      discountAmount,
+      discountNote,
+      receivedAmount: cart.paymentMethod === 'Ghi nợ' ? 0 : receivedAmount,
+      items: cart.items
+    });
+  } finally {
+    if (checkoutBtn && origCheckoutHTML) {
+      checkoutBtn.disabled = false;
+      checkoutBtn.innerHTML = origCheckoutHTML;
+    }
+  }
 }
 
 async function sendCheckoutRequest(payload) {
@@ -1340,60 +1401,259 @@ function playPaymentTingTing(amount = null) {
       osc.stop(now + idx * 0.08 + 0.32);
     });
 
-    if ('speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch (_) {}
-
-      let textToSpeak = "Đã nhận đủ tiền từ khách hàng";
-      if (amount && Number(amount) > 0) {
-        textToSpeak = `Đã nhận thành công ${formatNumberToVietnameseSpeech(amount)}`;
-      }
-
-      const utter = new SpeechSynthesisUtterance(textToSpeak);
-      utter.lang = 'vi-VN';
-      utter.rate = 1.05;
-      utter.pitch = 1.0;
-
-      const voices = window.speechSynthesis.getVoices();
-      const viVoice = voices.find(v => (v.lang || '').toLowerCase().includes('vi'));
-      if (viVoice) utter.voice = viVoice;
-
-      setTimeout(() => {
-        try {
-          window.speechSynthesis.speak(utter);
-        } catch (_) {}
-      }, 420);
+    let textToSpeak = "Đã nhận đủ tiền từ khách hàng";
+    if (amount && Number(amount) > 0) {
+      textToSpeak = `Đã nhận thành công ${formatNumberToVietnameseSpeech(amount)}`;
     }
+
+    setTimeout(() => {
+      speakVietnameseFemale(textToSpeak);
+    }, 450);
   } catch (_) { }
+}
+
+let currentTtsAudio = null;
+
+function speakVietnameseFemale(textToSpeak) {
+  if (!textToSpeak) return;
+
+  // Dừng âm thanh cũ nếu đang phát
+  try {
+    if (currentTtsAudio) {
+      currentTtsAudio.pause();
+      currentTtsAudio.currentTime = 0;
+      currentTtsAudio = null;
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  } catch (_) {}
+
+  // 1. ƯU TIÊN 1: Dùng API TTS giọng nữ tiếng Việt chuẩn "Chị Google" (rất tự nhiên, 100% tiếng Việt nữ)
+  let played = false;
+  try {
+    const audio = new Audio(`/api/tts?text=${encodeURIComponent(textToSpeak)}`);
+    currentTtsAudio = audio;
+    audio.playbackRate = 1.0;
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        played = true;
+      }).catch(() => {
+        if (!played) fallbackBrowserVietnameseFemale(textToSpeak);
+      });
+    }
+
+    audio.onerror = () => {
+      if (!played) fallbackBrowserVietnameseFemale(textToSpeak);
+    };
+  } catch (_) {
+    fallbackBrowserVietnameseFemale(textToSpeak);
+  }
+}
+
+function fallbackBrowserVietnameseFemale(textToSpeak) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(textToSpeak);
+    utter.lang = 'vi-VN';
+    utter.rate = 1.0;
+    utter.pitch = 1.15;
+
+    const voices = window.speechSynthesis.getVoices() || [];
+    
+    // Ưu tiên các giọng nữ tiếng Việt:
+    const viFemaleVoice = voices.find(v => {
+      const l = (v.lang || '').toLowerCase();
+      const n = (v.name || '').toLowerCase();
+      if (!l.includes('vi')) return false;
+      return n.includes('hoaimy') || n.includes('google') || n.includes('linh') || n.includes('female') || n.includes('nu');
+    }) || voices.find(v => {
+      const l = (v.lang || '').toLowerCase();
+      const n = (v.name || '').toLowerCase();
+      return l.includes('vi') && !n.includes('nam') && !n.includes('male') && !n.includes('david');
+    }) || voices.find(v => (v.lang || '').toLowerCase().includes('vi'));
+
+    // BẮT BUỘC: Chỉ đọc nếu tìm thấy giọng Tiếng Việt, KHÔNG BAO GIỜ để trình duyệt tự phát giọng nam tiếng Anh
+    if (viFemaleVoice) {
+      utter.voice = viFemaleVoice;
+      window.speechSynthesis.speak(utter);
+    }
+  } catch (_) {}
+}
+
+if ('speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== undefined) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    try { window.speechSynthesis.getVoices(); } catch (_) {}
+  };
+}
+
+const VIETQR_BANKS = [
+  { bin: '970422', name: 'MBBank (Quân Đội)' },
+  { bin: '970436', name: 'Vietcombank (VCB)' },
+  { bin: '970415', name: 'VietinBank' },
+  { bin: '970418', name: 'BIDV' },
+  { bin: '970405', name: 'Agribank' },
+  { bin: '970407', name: 'Techcombank' },
+  { bin: '970416', name: 'ACB' },
+  { bin: '970432', name: 'VPBank' },
+  { bin: '970423', name: 'TPBank' },
+  { bin: '970403', name: 'Sacombank' },
+  { bin: '970441', name: 'VIB' },
+  { bin: '970448', name: 'OCB' },
+  { bin: '970437', name: 'HDBank' },
+  { bin: '970443', name: 'SHB' },
+  { bin: '970426', name: 'MSB' },
+  { bin: '970440', name: 'SeABank' },
+  { bin: '970449', name: 'LPBank' },
+  { bin: '546034', name: 'Cake by VPBank' },
+  { bin: '963388', name: 'Timo by BVBank' }
+];
+
+function getBankNameByBin(bin) {
+  const b = VIETQR_BANKS.find(x => x.bin === bin);
+  return b ? b.name : `Ngân hàng (BIN ${bin})`;
 }
 
 async function openVietQrModal(amount, customerName, onConfirm) {
   const modal = document.getElementById('vietQrModal');
   const memo = `${state.settings.qrTransferPrefix || 'HD'}${Date.now().toString().slice(-6)}`;
 
-  const bank = state.settings.qrBankBin;
-  const acc = state.settings.qrAccountNo;
-  const url = `https://img.vietqr.io/image/${bank}-${acc}-qr_only.png?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(memo)}`;
+  const bank = (state.settings.qrBankBin || '970436').trim();
+  const acc = (state.settings.qrAccountNo || '').trim();
+  const accountName = (state.settings.qrAccountName || '').trim();
 
-  document.getElementById('vietQrImg').src = url;
-  document.getElementById('vietQrAmountDisplay').textContent = formatVND(amount);
+  const qrImg = document.getElementById('vietQrImg');
+  const missingConfigEl = document.getElementById('vietQrMissingConfig');
+  const errorBoxEl = document.getElementById('vietQrErrorBox');
   const accInfoEl = document.getElementById('vietQrAccountInfo');
-  if (accInfoEl) accInfoEl.style.display = 'none';
+
+  document.getElementById('vietQrAmountDisplay').textContent = formatVND(amount);
   document.getElementById('vietQrMemoInfo').textContent = memo;
+
+  if (!acc) {
+    // Chưa cài đặt STK ngân hàng: Hiển thị form cài đặt nhanh
+    if (qrImg) qrImg.style.display = 'none';
+    if (errorBoxEl) errorBoxEl.style.display = 'none';
+    if (missingConfigEl) {
+      missingConfigEl.style.display = 'block';
+      const quickBank = document.getElementById('quickQrBankSelect');
+      if (quickBank) quickBank.value = bank || '970436';
+      const quickAcc = document.getElementById('quickQrAccountNo');
+      if (quickAcc) {
+        quickAcc.value = '';
+        setTimeout(() => quickAcc.focus(), 250);
+      }
+      const quickName = document.getElementById('quickQrAccountName');
+      if (quickName) quickName.value = accountName;
+
+      const saveQuickBtn = document.getElementById('btnSaveQuickQr');
+      if (saveQuickBtn) {
+        saveQuickBtn.onclick = async () => {
+          const newAcc = document.getElementById('quickQrAccountNo')?.value.trim();
+          const newBank = document.getElementById('quickQrBankSelect')?.value || '970436';
+          const newName = document.getElementById('quickQrAccountName')?.value.trim().toUpperCase() || '';
+          if (!newAcc) {
+            alert('Vui lòng nhập Số tài khoản ngân hàng nhận tiền!');
+            return;
+          }
+          saveQuickBtn.disabled = true;
+          saveQuickBtn.textContent = 'Đang lưu...';
+
+          state.settings.qrBankBin = newBank;
+          state.settings.qrAccountNo = newAcc;
+          state.settings.qrAccountName = newName;
+          state.settings.qrPaymentEnabled = true;
+
+          try {
+            await fetch('/api/settings', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(state.settings)
+            });
+            const sBin = document.getElementById('settingQrBin');
+            if (sBin) sBin.value = newBank;
+            const sAcc = document.getElementById('settingQrAccountNo');
+            if (sAcc) sAcc.value = newAcc;
+            const sName = document.getElementById('settingQrAccountName');
+            if (sName) sName.value = newName;
+            const sBankSel = document.getElementById('settingQrBankSelect');
+            if (sBankSel) sBankSel.value = newBank;
+
+            // Re-render modal với mã QR mới
+            openVietQrModal(amount, customerName, onConfirm);
+          } catch (e) {
+            alert('Lỗi lưu cấu hình: ' + e.message);
+          } finally {
+            saveQuickBtn.disabled = false;
+            saveQuickBtn.textContent = '✓ Lưu & Tạo Mã QR Ngay';
+          }
+        };
+      }
+    }
+    if (accInfoEl) accInfoEl.style.display = 'none';
+  } else {
+    // Đã có STK ngân hàng: Hiển thị mã QR VietQR chuẩn compact2
+    if (missingConfigEl) missingConfigEl.style.display = 'none';
+    if (errorBoxEl) errorBoxEl.style.display = 'none';
+
+    if (accInfoEl) {
+      accInfoEl.style.display = 'none';
+    }
+
+    const url = `https://img.vietqr.io/image/${bank}-${acc}-qr_only.png?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(memo)}`;
+
+    if (qrImg) {
+      qrImg.style.display = 'block';
+      qrImg.src = url;
+
+      qrImg.onerror = () => {
+        qrImg.style.display = 'none';
+        if (errorBoxEl) {
+          errorBoxEl.style.display = 'block';
+          const detailsEl = document.getElementById('vietQrFallbackDetails');
+          if (detailsEl) {
+            detailsEl.innerHTML = `
+              <div>🏦 <b>Ngân hàng:</b> ${escapeHtml(getBankNameByBin(bank))} (BIN: ${escapeHtml(bank)})</div>
+              <div>🔢 <b>Số tài khoản:</b> <span style="font-size: 14px; color: #0284c7; font-weight: 800; font-family: monospace;">${escapeHtml(acc)}</span></div>
+              ${accountName ? `<div>👤 <b>Chủ tài khoản:</b> ${escapeHtml(accountName)}</div>` : ''}
+              <div>💵 <b>Số tiền:</b> <span style="color: #dc2626; font-weight: 800;">${formatVND(amount)}</span></div>
+              <div>📝 <b>Nội dung CK:</b> <span style="font-size: 13px; color: #0284c7; font-weight: 800; font-family: monospace;">${escapeHtml(memo)}</span></div>
+            `;
+          }
+          const retryBtn = document.getElementById('btnRetryVietQr');
+          if (retryBtn) {
+            retryBtn.onclick = () => {
+              errorBoxEl.style.display = 'none';
+              qrImg.style.display = 'block';
+              qrImg.src = url + '&t=' + Date.now();
+            };
+          }
+        }
+      };
+
+      qrImg.onload = () => {
+        qrImg.style.display = 'block';
+        if (errorBoxEl) errorBoxEl.style.display = 'none';
+      };
+    }
+  }
 
   // Reset status UI
   const statusBox = document.getElementById('vietQrStatusBox');
   const successBox = document.getElementById('vietQrSuccessBox');
   const statusText = document.getElementById('vietQrStatusText');
   const doneBtn = document.getElementById('vietQrDoneBtn');
-  const simulateBtn = document.getElementById('btnSimulatePayment');
 
   if (statusBox) statusBox.style.display = 'flex';
   if (successBox) successBox.style.display = 'none';
   if (statusText) statusText.textContent = '📡 Đang lắng nghe tín hiệu chuyển khoản ngân hàng...';
-  if (doneBtn) doneBtn.disabled = false;
-  if (simulateBtn) simulateBtn.disabled = false;
+  if (doneBtn) {
+    doneBtn.disabled = false;
+    doneBtn.textContent = '✓ Xác Nhận Thủ Công';
+  }
 
   modal.classList.add('active');
 
@@ -1434,58 +1694,99 @@ async function openVietQrModal(amount, customerName, onConfirm) {
     }).catch(() => {});
   } catch (_) { }
 
+  // Helper hàm đóng modal VietQR và dọn dẹp sạch sẽ trạng thái
+  const closeVietQrModal = () => {
+    if (qrPollingTimer) {
+      clearInterval(qrPollingTimer);
+      qrPollingTimer = null;
+    }
+    modal.classList.remove('active');
+    if (doneBtn) {
+      doneBtn.disabled = false;
+      doneBtn.textContent = '✓ Xác Nhận Thủ Công';
+    }
+    const store = state.settings?.storeName || 'TAP HOA VIET';
+    sendEsp32UsbCommand(`IDLE|${removeVietnameseTones(store)}|Xin chao quy khach!`);
+    fetch('/api/esp32/set-state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: 'IDLE' })
+    }).catch(() => {});
+  };
+
   // Clear any existing polling timer
   if (qrPollingTimer) clearInterval(qrPollingTimer);
 
   let isCompleted = false;
 
-  const completePayment = async (paidInfo = null) => {
-    if (isCompleted) return;
-    isCompleted = true;
-    if (qrPollingTimer) clearInterval(qrPollingTimer);
-
-    // Đồng bộ báo thành công sang màn hình phụ khách hàng ESP32 (Cả USB Serial và WiFi)
-    const paidAmt = Math.round(paidInfo?.receivedAmount || amount);
-    const bank = paidInfo?.bankName || 'Ngan hang';
-    const formattedAmt = `${paidAmt.toLocaleString('vi-VN')} VND`;
-    sendEsp32UsbCommand(`SUCCESS|${memo}|${formattedAmt}|${removeVietnameseTones(bank)}`);
-
-    // Phát âm thanh chuông ting-ting và đọc to số tiền chuyển khoản
-    playPaymentTingTing(paidAmt);
-
-    try {
-      fetch('/api/esp32/set-state', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          state: 'SUCCESS',
-          orderCode: memo,
-          amount: paidAmt,
-          bankName: bank
-        })
-      }).catch(() => {});
-    } catch (_) { }
-
-    if (statusBox) statusBox.style.display = 'none';
-    if (successBox) {
-      successBox.style.display = 'block';
-      const titleEl = document.getElementById('vietQrSuccessTitle');
-      const descEl = document.getElementById('vietQrSuccessDesc');
-      if (titleEl) {
-        titleEl.textContent = paidInfo?.bankName
-          ? `✓ ĐÃ NHẬN ${formatVND(paidInfo.receivedAmount || amount)} QUA ${paidInfo.bankName.toUpperCase()}!`
-          : `✓ ĐÃ NHẬN TIỀN THÀNH CÔNG!`;
+  const completePayment = (paidInfo = null) => {
+    return new Promise((resolve) => {
+      if (isCompleted) {
+        resolve();
+        return;
       }
-      if (descEl) {
-        descEl.textContent = 'Đang tự động lưu hoá đơn và kích hoạt máy in...';
+      isCompleted = true;
+      if (qrPollingTimer) {
+        clearInterval(qrPollingTimer);
+        qrPollingTimer = null;
       }
-    }
 
-    // Short delay for visual delight and voice announcement, then complete checkout
-    setTimeout(async () => {
-      modal.classList.remove('active');
-      if (onConfirm) await onConfirm();
-    }, 1800);
+      const paidAmt = Math.round(paidInfo?.receivedAmount || amount);
+      const bank = paidInfo?.bankName || 'Ngan hang';
+      const formattedAmt = `${paidAmt.toLocaleString('vi-VN')} VND`;
+
+      // Đồng bộ báo thành công sang màn hình phụ khách hàng ESP32 (Cả USB Serial và WiFi)
+      try {
+        sendEsp32UsbCommand(`SUCCESS|${memo}|${formattedAmt}|${removeVietnameseTones(bank)}`);
+      } catch (_) { }
+
+      // Phát âm thanh chuông ting-ting và đọc to số tiền chuyển khoản
+      try {
+        playPaymentTingTing(paidAmt);
+      } catch (_) { }
+
+      try {
+        fetch('/api/esp32/set-state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: 'SUCCESS',
+            orderCode: memo,
+            amount: paidAmt,
+            bankName: bank
+          })
+        }).catch(() => {});
+      } catch (_) { }
+
+      try {
+        if (statusBox) statusBox.style.display = 'none';
+        if (successBox) {
+          successBox.style.display = 'block';
+          const titleEl = document.getElementById('vietQrSuccessTitle');
+          const descEl = document.getElementById('vietQrSuccessDesc');
+          if (titleEl) {
+            titleEl.textContent = paidInfo?.bankName && paidInfo.bankName !== 'Xác nhận thủ công'
+              ? `✓ ĐÃ NHẬN ${formatVND(paidInfo.receivedAmount || amount)} QUA ${paidInfo.bankName.toUpperCase()}!`
+              : `✓ ĐÃ XÁC NHẬN THANH TOÁN THÀNH CÔNG!`;
+          }
+          if (descEl) {
+            descEl.textContent = 'Đang tự động lưu hoá đơn và in bill...';
+          }
+        }
+      } catch (_) { }
+
+      // Short delay for visual feedback, then complete checkout
+      setTimeout(async () => {
+        try {
+          closeVietQrModal();
+          if (onConfirm) await onConfirm();
+        } catch (err) {
+          console.error('Error completing payment:', err);
+        } finally {
+          resolve();
+        }
+      }, 1000);
+    });
   };
 
   // Start polling
@@ -1507,25 +1808,19 @@ async function openVietQrModal(amount, customerName, onConfirm) {
   }, 1200);
 
   // Manual fallback button
-  doneBtn.onclick = async () => {
-    await completePayment({ receivedAmount: amount, bankName: 'Xác nhận thủ công' });
-  };
-
-  if (simulateBtn) {
-    simulateBtn.onclick = async () => {
-      simulateBtn.disabled = true;
+  if (doneBtn) {
+    doneBtn.onclick = async () => {
+      doneBtn.disabled = true;
+      doneBtn.textContent = '⏳ Đang xử lý...';
       try {
-        await fetch('/api/payment/simulate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            paymentCode: memo,
-            amount: Math.round(amount),
-            bank: null
-          })
-        });
-      } catch (e) {
-        alert('Không thể xác nhận: ' + e.message);
+        await completePayment({ receivedAmount: amount, bankName: 'Xác nhận thủ công' });
+      } catch (err) {
+        console.error('Error in doneBtn:', err);
+        closeVietQrModal();
+        if (onConfirm) await onConfirm();
+      } finally {
+        doneBtn.disabled = false;
+        doneBtn.textContent = '✓ Xác Nhận Thủ Công';
       }
     };
   }
@@ -1533,17 +1828,11 @@ async function openVietQrModal(amount, customerName, onConfirm) {
   // Close modal button
   const closeBtn = document.getElementById('closeVietQrModalBtn');
   if (closeBtn) {
-    closeBtn.onclick = () => {
-      if (qrPollingTimer) clearInterval(qrPollingTimer);
-      modal.classList.remove('active');
-      const store = state.settings?.storeName || 'TAP HOA VIET';
-      sendEsp32UsbCommand(`IDLE|${removeVietnameseTones(store)}|Xin chao quy khach!`);
-      fetch('/api/esp32/set-state', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state: 'IDLE' })
-      }).catch(() => {});
-    };
+    closeBtn.onclick = closeVietQrModal;
+  }
+  const cancelBtn = document.getElementById('cancelVietQrModalBtn');
+  if (cancelBtn) {
+    cancelBtn.onclick = closeVietQrModal;
   }
 }
 
@@ -1656,9 +1945,7 @@ function buildReceiptHtml(data) {
 
         ${qrEnabled ? `
           <div style="text-align: center; margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--border-color);">
-            <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px;">QUÉT MÃ VIETQR THANH TOÁN</div>
-            <img src="https://img.vietqr.io/image/${state.settings.qrBankBin}-${state.settings.qrAccountNo}-compact2.png?amount=${Math.round(data.finalAmount || data.totalAmount)}&addInfo=${encodeURIComponent(data.invoiceCode || 'HD')}&accountName=${encodeURIComponent(state.settings.qrAccountName || '')}" style="width: 140px; height: 140px; display: block; margin: 0 auto; object-fit: contain;" alt="VietQR">
-            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">${escapeHtml(state.settings.qrAccountName || '')} - ${state.settings.qrAccountNo}</div>
+            <img src="https://img.vietqr.io/image/${state.settings.qrBankBin}-${state.settings.qrAccountNo}-qr_only.png?amount=${Math.round(data.finalAmount || data.totalAmount)}&addInfo=${encodeURIComponent(data.invoiceCode || 'HD')}" style="width: 130px; height: 130px; display: block; margin: 0 auto; object-fit: contain;" alt="QR Code">
           </div>
         ` : ''}
 
@@ -1801,7 +2088,7 @@ function buildSampleA4Html(data = null) {
   const finalAmount = data?.finalAmount || (subtotal - discount);
   const words = readVNDWords(finalAmount);
 
-  const qrUrl = showQr ? `https://img.vietqr.io/image/${state.settings.qrBankBin}-${state.settings.qrAccountNo}-compact2.png?amount=${Math.round(finalAmount)}&addInfo=${encodeURIComponent(invCode)}&accountName=${encodeURIComponent(state.settings.qrAccountName || '')}` : '';
+  const qrUrl = showQr ? `https://img.vietqr.io/image/${state.settings.qrBankBin}-${state.settings.qrAccountNo}-qr_only.png?amount=${Math.round(finalAmount)}&addInfo=${encodeURIComponent(invCode)}` : '';
 
   return `<!DOCTYPE html>
 <html lang="vi">
@@ -1986,9 +2273,7 @@ function buildSampleA4Html(data = null) {
     <div>
       ${showQr ? `
         <div class="qr-box">
-          <div style="font-size: 10.5px; font-weight: bold; color: #0284c7; margin-bottom: 2px;">VIETQR THANH TOÁN</div>
-          <img src="${qrUrl}" style="width: 105px; height: 105px; display: block; margin: 0 auto;" alt="VietQR">
-          <div style="font-size: 9.5px; color: #475569; margin-top: 2px;">${escapeHtml(state.settings.qrAccountNo)}</div>
+          <img src="${qrUrl}" style="width: 105px; height: 105px; display: block; margin: 0 auto;" alt="QR Code">
         </div>
       ` : ''}
     </div>
@@ -2220,6 +2505,8 @@ window.openReturnItemModal = async (saleId) => {
 
     select.onchange = updateReturnRefundCalculation;
     document.getElementById('returnQuantityInput').oninput = updateReturnRefundCalculation;
+    const retBtn = document.getElementById('confirmReturnBtn');
+    if (retBtn) { retBtn.disabled = false; retBtn.textContent = 'Xác Nhận Trả Hàng & Hoàn Tiền'; }
     document.getElementById('returnItemModal').classList.add('active');
   } catch (e) {
     alert('Lỗi: ' + e.message);
@@ -2248,7 +2535,7 @@ function updateReturnRefundCalculation() {
   document.getElementById('returnRefundAmountInput').value = unitPrice * qty;
 }
 
-document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
+document.getElementById('confirmReturnBtn').addEventListener('click', async (e) => {
   const saleId = parseInt(document.getElementById('returnSaleId').value);
   const select = document.getElementById('returnProductSelect');
   const productId = parseInt(select.value);
@@ -2263,6 +2550,13 @@ document.getElementById('confirmReturnBtn').addEventListener('click', async () =
 
   if (!confirm(`Xác nhận trả ${quantity} sản phẩm và hoàn ${formatVND(refundAmount)} cho khách?`)) {
     return;
+  }
+
+  const btn = e.currentTarget;
+  const origText = btn ? btn.textContent : 'Xác Nhận Trả Hàng & Hoàn Tiền';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang xử lý...';
   }
 
   const operator = state.currentUser ? state.currentUser.username : 'Thu ngân';
@@ -2290,6 +2584,11 @@ document.getElementById('confirmReturnBtn').addEventListener('click', async () =
     }
   } catch (e) {
     alert('Lỗi: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
   }
 });
 
@@ -2388,6 +2687,8 @@ window.openQuickImportModal = (productId) => {
   document.getElementById('quickImportQty').value = '10';
   document.getElementById('quickImportCost').value = p.costPrice || '';
   document.getElementById('quickImportNote').value = '';
+  const importBtn = document.getElementById('confirmQuickImportBtn');
+  if (importBtn) { importBtn.disabled = false; importBtn.textContent = 'Xác Nhận Nhập'; }
   document.getElementById('quickImportModal').classList.add('active');
 };
 
@@ -2410,6 +2711,8 @@ window.openEditProductModal = (productId) => {
     state.categories.map(c => `<option value="${c.categoryID}" ${c.categoryID === p.categoryID ? 'selected' : ''}>${c.categoryName}</option>`).join('');
 
   setProductModalImage(p.imageUrl || '');
+  const saveBtn = document.getElementById('saveProductBtn');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Lưu Sản Phẩm'; }
   document.getElementById('productModal').classList.add('active');
 };
 
@@ -2471,6 +2774,8 @@ window.openDebtPayModal = (saleId, customerName, outstandingAmount) => {
   document.getElementById('debtPayCustomerInfo').textContent = `Khách hàng: ${customerName} (Còn nợ: ${formatVND(outstandingAmount)})`;
   document.getElementById('debtPayAmount').value = outstandingAmount;
   document.getElementById('debtPayNote').value = 'Khách trả nợ';
+  const payBtn = document.getElementById('confirmDebtPaymentBtn');
+  if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Ghi Nhận Thanh Toán'; }
   document.getElementById('debtPaymentModal').classList.add('active');
 };
 
@@ -2541,6 +2846,8 @@ function openAddCustomerModal() {
   document.getElementById('customerModalPhone').value = '';
   document.getElementById('customerModalAddress').value = '';
   document.getElementById('customerModalNote').value = '';
+  const custBtn = document.getElementById('confirmSaveCustomerBtn');
+  if (custBtn) { custBtn.disabled = false; custBtn.textContent = 'Lưu Khách Hàng'; }
   document.getElementById('customerModal').classList.add('active');
   setTimeout(() => document.getElementById('customerModalName').focus(), 100);
 }
@@ -2554,6 +2861,8 @@ window.openEditCustomerModal = (id) => {
   document.getElementById('customerModalPhone').value = c.phone || '';
   document.getElementById('customerModalAddress').value = c.address || '';
   document.getElementById('customerModalNote').value = c.note || '';
+  const custBtn = document.getElementById('confirmSaveCustomerBtn');
+  if (custBtn) { custBtn.disabled = false; custBtn.textContent = 'Lưu Khách Hàng'; }
   document.getElementById('customerModal').classList.add('active');
   setTimeout(() => document.getElementById('customerModalName').focus(), 100);
 };
@@ -2566,6 +2875,10 @@ async function saveCustomer() {
   const note = document.getElementById('customerModalNote').value.trim();
 
   if (!name) { alert('Vui lòng nhập tên khách hàng!'); return; }
+
+  const saveBtn = document.getElementById('confirmSaveCustomerBtn');
+  const origText = saveBtn ? saveBtn.textContent : null;
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ Đang lưu...'; }
 
   const actor = state.currentUser?.username || 'admin';
   const payload = { customerName: name, phone: phone || null, address: address || null, note: note || null };
@@ -2585,6 +2898,8 @@ async function saveCustomer() {
     }
   } catch (e) {
     alert('Lỗi kết nối: ' + e.message);
+  } finally {
+    if (saveBtn && origText) { saveBtn.disabled = false; saveBtn.textContent = origText; }
   }
 }
 
@@ -2989,6 +3304,8 @@ window.openEditUserModal = (id, username, fullName, role, isActive) => {
   document.getElementById('modalUserActiveContainer').style.display = 'block';
   document.getElementById('modalUserPasswordGroup').style.display = 'none';
 
+  const userBtn = document.getElementById('saveUserBtn');
+  if (userBtn) { userBtn.disabled = false; userBtn.textContent = 'Lưu Thay Đổi'; }
   document.getElementById('userModal').classList.add('active');
 };
 
@@ -3004,16 +3321,21 @@ document.getElementById('openAddUserModalBtn').addEventListener('click', () => {
   document.getElementById('modalUserPasswordGroup').style.display = 'block';
   document.getElementById('modalUserPassword').value = '';
 
+  const userBtn = document.getElementById('saveUserBtn');
+  if (userBtn) { userBtn.disabled = false; userBtn.textContent = 'Lưu Người Dùng'; }
   document.getElementById('userModal').classList.add('active');
 });
 
-document.getElementById('saveUserBtn').addEventListener('click', async () => {
+document.getElementById('saveUserBtn').addEventListener('click', async (e) => {
   const id = document.getElementById('modalUserId').value;
   const username = document.getElementById('modalUserUsername').value.trim();
   const fullName = document.getElementById('modalUserFullName').value.trim();
   const role = document.getElementById('modalUserRole').value;
   const isActive = document.getElementById('modalUserActive').value === 'true';
   const password = document.getElementById('modalUserPassword').value;
+
+  const btn = e.currentTarget;
+  const origText = btn ? btn.textContent : (id ? 'Lưu Thay Đổi' : 'Lưu Người Dùng');
 
   const actor = state.currentUser ? state.currentUser.username : 'admin';
 
@@ -3022,6 +3344,7 @@ document.getElementById('saveUserBtn').addEventListener('click', async () => {
       alert('Vui lòng điền đầy đủ thông tin và mật khẩu!');
       return;
     }
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang lưu...'; }
     try {
       const res = await fetch(`/api/users?operatorUser=${encodeURIComponent(actor)}`, {
         method: 'POST',
@@ -3037,8 +3360,11 @@ document.getElementById('saveUserBtn').addEventListener('click', async () => {
       }
     } catch (e) {
       alert('Lỗi: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
     }
   } else {
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang lưu...'; }
     try {
       const res = await fetch(`/api/users/${id}?operatorUser=${encodeURIComponent(actor)}`, {
         method: 'PUT',
@@ -3054,6 +3380,8 @@ document.getElementById('saveUserBtn').addEventListener('click', async () => {
       }
     } catch (e) {
       alert('Lỗi: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
     }
   }
 });
@@ -3126,7 +3454,7 @@ async function loadAndRenderAuditLogs() {
 document.getElementById('refreshAuditBtn').addEventListener('click', loadAndRenderAuditLogs);
 
 // ==================== BACKUP & RESTORE ====================
-document.getElementById('confirmRestoreBtn').addEventListener('click', async () => {
+document.getElementById('confirmRestoreBtn').addEventListener('click', async (e) => {
   const fileInput = document.getElementById('restoreFileInput');
   if (!fileInput.files || fileInput.files.length === 0) {
     alert('Vui lòng chọn file backup (.db)!');
@@ -3135,6 +3463,10 @@ document.getElementById('confirmRestoreBtn').addEventListener('click', async () 
   if (!confirm('CẢNH BÁO: Thao tác này sẽ ghi đè toàn bộ dữ liệu hiện tại bằng dữ liệu trong file backup. Bạn có chắc chắn muốn khôi phục?')) {
     return;
   }
+
+  const btn = e.currentTarget;
+  const origText = btn ? btn.textContent : 'Khôi Phục Dữ Liệu';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang khôi phục...'; }
 
   const formData = new FormData();
   formData.append('file', fileInput.files[0]);
@@ -3153,6 +3485,8 @@ document.getElementById('confirmRestoreBtn').addEventListener('click', async () 
     }
   } catch (e) {
     alert('Lỗi: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
   }
 });
 
@@ -3180,10 +3514,15 @@ function renderCategoriesModal() {
   `).join('');
 }
 
-document.getElementById('addCategoryBtn').addEventListener('click', async () => {
+document.getElementById('addCategoryBtn').addEventListener('click', async (e) => {
   const input = document.getElementById('newCategoryInput');
   const name = input.value.trim();
   if (!name) return;
+
+  const btn = e.currentTarget;
+  const origText = btn ? btn.textContent : 'Thêm';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang thêm...'; }
+
   try {
     const res = await fetch('/api/categories', {
       method: 'POST',
@@ -3201,6 +3540,8 @@ document.getElementById('addCategoryBtn').addEventListener('click', async () => 
     }
   } catch (e) {
     alert('Lỗi: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
   }
 });
 
@@ -3303,7 +3644,21 @@ function populateSettingsForm() {
 
   setVal('settingPrinterName', s.defaultPrinter || '');
   setChecked('settingQrEnabled', s.qrPaymentEnabled);
-  setVal('settingQrBin', s.qrBankBin || '');
+  setVal('settingQrBin', s.qrBankBin || '970436');
+  const bankSel = document.getElementById('settingQrBankSelect');
+  if (bankSel) {
+    const targetBin = s.qrBankBin || '970436';
+    const hasOption = Array.from(bankSel.options).some(o => o.value === targetBin);
+    bankSel.value = hasOption ? targetBin : 'custom';
+    if (!bankSel.dataset.listenerAttached) {
+      bankSel.dataset.listenerAttached = 'true';
+      bankSel.addEventListener('change', () => {
+        if (bankSel.value !== 'custom') {
+          setVal('settingQrBin', bankSel.value);
+        }
+      });
+    }
+  }
   setVal('settingQrAccountNo', s.qrAccountNo || '');
   setVal('settingQrAccountName', s.qrAccountName || '');
   setVal('settingQrPrefix', s.qrTransferPrefix || 'HD');
@@ -3685,10 +4040,14 @@ function setupEventListeners() {
       state.categories.map(c => `<option value="${c.categoryID}">${c.categoryName}</option>`).join('');
 
     setProductModalImage('');
+    const saveBtn = document.getElementById('saveProductBtn');
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Lưu Sản Phẩm'; }
     document.getElementById('productModal').classList.add('active');
   });
 
-  document.getElementById('saveProductBtn').addEventListener('click', async () => {
+  document.getElementById('saveProductBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const origText = btn.textContent;
     const id = document.getElementById('modalProductId').value;
     const name = document.getElementById('modalProductName').value.trim();
     const price = parseFloat(document.getElementById('modalProductPrice').value);
@@ -3699,8 +4058,12 @@ function setupEventListeners() {
       return;
     }
 
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang lưu...';
+
+    const barcodeVal = document.getElementById('modalProductBarcode').value.trim();
     const payload = {
-      barcode: document.getElementById('modalProductBarcode').value.trim(),
+      barcode: barcodeVal.length > 0 ? barcodeVal : null,
       productName: name,
       categoryID: parseInt(document.getElementById('modalProductCategory').value) || null,
       unit: document.getElementById('modalProductUnit').value.trim() || 'Cái',
@@ -3727,15 +4090,27 @@ function setupEventListeners() {
         renderInventoryTable();
         renderPosProducts();
       } else {
-        const err = await res.json();
-        alert('Lỗi: ' + (err.message || 'Không thành công'));
+        let msg = 'Không thành công';
+        try {
+          const err = await res.json();
+          msg = err.message || msg;
+        } catch {
+          const text = await res.text().catch(() => '');
+          if (text) msg = text;
+        }
+        alert('Lỗi: ' + msg);
       }
     } catch (e) {
       alert('Lỗi: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
     }
   });
 
-  document.getElementById('confirmQuickImportBtn').addEventListener('click', async () => {
+  document.getElementById('confirmQuickImportBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const origText = btn.textContent;
     const productId = parseInt(document.getElementById('quickImportProductId').value);
     const qty = parseFloat(document.getElementById('quickImportQty').value);
     const cost = parseFloat(document.getElementById('quickImportCost').value) || null;
@@ -3745,6 +4120,9 @@ function setupEventListeners() {
       alert('Số lượng nhập phải lớn hơn 0!');
       return;
     }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang nhập kho...';
 
     const actor = state.currentUser ? state.currentUser.username : 'admin';
     try {
@@ -3761,9 +4139,15 @@ function setupEventListeners() {
         renderPosProducts();
         const fileNotice = result.savedHtmlFile ? `\n\n📄 Đã tự động lưu phiếu nhập: ${result.savedHtmlFile}` : '';
         alert(`Đã nhập hàng thành công!${fileNotice}`);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert('Lỗi nhập kho: ' + (err.message || 'Không thành công'));
       }
     } catch (e) {
       alert('Lỗi: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
     }
   });
 
@@ -3790,7 +4174,9 @@ function setupEventListeners() {
     }
   });
 
-  document.getElementById('confirmDebtPaymentBtn').addEventListener('click', async () => {
+  document.getElementById('confirmDebtPaymentBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const origText = btn.textContent;
     const saleId = parseInt(document.getElementById('debtPaySaleId').value);
     const amount = parseFloat(document.getElementById('debtPayAmount').value);
     const note = document.getElementById('debtPayNote').value.trim();
@@ -3799,6 +4185,9 @@ function setupEventListeners() {
       alert('Số tiền thanh toán phải lớn hơn 0!');
       return;
     }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang ghi nhận...';
 
     const actor = state.currentUser ? state.currentUser.username : 'admin';
     try {
@@ -3811,9 +4200,15 @@ function setupEventListeners() {
         document.getElementById('debtPaymentModal').classList.remove('active');
         await loadAndRenderDebts();
         alert('Đã ghi nhận thanh toán nợ thành công!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert('Lỗi: ' + (err.message || 'Không thành công'));
       }
     } catch (e) {
       alert('Lỗi: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
     }
   });
 
@@ -3932,7 +4327,7 @@ function setupEventListeners() {
   }
 
   // Cập nhật URL webhook/phone-notification từ server IP thực
-  const serverBaseUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port || 5050}`;
+  const serverBaseUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port || 8888}`;
   const webhookUrlInput = document.getElementById('displayWebhookUrl');
   const phoneUrlInput = document.getElementById('displayPhoneNotiUrl');
   if (webhookUrlInput) webhookUrlInput.value = `${serverBaseUrl}/api/payment/webhook`;
@@ -3979,15 +4374,22 @@ window.esp32UsbState = {
 async function sendEsp32UsbCommand(cmdString) {
   if (!window.esp32UsbState.isConnected) return false;
   try {
+    // Đảm bảo chỉ gửi ký tự ASCII printable (0x20-0x7E) và | (0x7C) để ESP32 hiển thị đúng font
+    const safeCmdString = (cmdString || '')
+      .normalize('NFC')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+      .replace(/[^\x20-\x7E\n]/g, '');
+
     if (!window.esp32UsbState.writer && window.esp32UsbState.port && window.esp32UsbState.port.writable) {
       window.esp32UsbState.writer = window.esp32UsbState.port.writable.getWriter();
     }
     if (!window.esp32UsbState.writer) return false;
     const encoder = new TextEncoder();
-    await window.esp32UsbState.writer.write(encoder.encode(cmdString + '\n'));
+    await window.esp32UsbState.writer.write(encoder.encode(safeCmdString + '\n'));
     return true;
   } catch (e) {
-    console.warn('Lỗi truyền dữ liệu USB Serial sang ESP32:', e);
+    console.warn('Loi truyen du lieu USB Serial sang ESP32:', e);
     try {
       if (window.esp32UsbState.writer) {
         window.esp32UsbState.writer.releaseLock();
@@ -4062,8 +4464,8 @@ function setupEsp32CustomerDisplay() {
         btnConnectUsb.style.display = 'none';
         btnDisconnectUsb.style.display = 'inline-flex';
 
-        // Gửi thông điệp chào ban đầu qua USB
-        const store = state.settings?.storeName || 'TAP HOA VIET';
+        // Gửi thông điệp chào ban đầu qua USB (phải dùng removeVietnameseTones để ESP32 hiển thị đúng)
+        const store = removeVietnameseTones(state.settings?.storeName || 'TAP HOA VIET').toUpperCase();
         await sendEsp32UsbCommand(`IDLE|${store}|Xin chao quy khach!`);
         alert('✓ Đã kết nối thành công với ESP32 qua cổng USB!\nTừ giờ khi tính tiền mã QR sẽ lập tức hiển thị ra màn hình TFT.');
       } catch (e) {
@@ -4136,24 +4538,6 @@ function setupEsp32CustomerDisplay() {
   if (ssidInput) ssidInput.addEventListener('input', updateDownloadUrl);
   if (passInput) passInput.addEventListener('input', updateDownloadUrl);
 
-function removeVietnameseTones(str) {
-  if (!str) return '';
-  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
-  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
-  str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
-  str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
-  str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
-  str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
-  str = str.replace(/đ/g, 'd');
-  str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, 'A');
-  str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, 'E');
-  str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, 'I');
-  str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, 'O');
-  str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, 'U');
-  str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, 'Y');
-  str = str.replace(/Đ/g, 'D');
-  return str;
-}
 
   // 4. Vẽ mô phỏng giao diện màn hình TFT 1.8 inch (128x160)
   function renderTftSimulator(screen) {

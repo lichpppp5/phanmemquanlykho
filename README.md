@@ -2,16 +2,17 @@
 
 Ứng dụng quản lý kho, bán hàng (POS), in ấn hoá đơn chuyên nghiệp cho cửa hàng tạp hóa, siêu thị mini và đại lý bán buôn. Hỗ trợ cả ứng dụng **Desktop WinForms** và **Web App Local** chạy mượt mà trên macOS, Windows, Linux.
 
-## 🚀 Chạy Ngay Web App Local (Mọi Hệ Điều Hành)
+## 🚀 Cài Đặt & Chạy Nhanh Cho Máy Tính Mới
 
-Chỉ cần chạy 1 lệnh để mở Web POS hiện đại:
-
+- Xem toàn bộ danh sách module & driver yêu cầu tại: 👉 **[REQUIREMENTS.md](file:///d:/code%20tap%20hoa/phanmemquanlykho/REQUIREMENTS.md)**
+- **Cài đặt tự động toàn bộ module (1 Click):** Chạy file `scripts\install-dependencies.bat`
+- **Khởi động bán hàng:** Chạy file `scripts\run-web.bat` (tự động mở trình duyệt tại `http://taphoa.local:8888`)
+- **Tạo tên miền nội bộ (1 lần duy nhất):** Chạy file `scripts\setup-local-domain.bat`
+- **Hoặc dùng lệnh:**
 ```bash
 dotnet run --project PMTapHoa.Web/PMTapHoa.Web.csproj
 ```
 
-Sau đó mở trình duyệt truy cập:
-👉 **`http://localhost:5050`**
 
 ---
 

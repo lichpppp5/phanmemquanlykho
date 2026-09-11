@@ -91,7 +91,22 @@ public class ProductService
         using var transaction = connection.BeginTransaction();
         try
         {
-            var categoryId = EnsureCategory(connection, transaction, categoryName);
+            if (!string.IsNullOrEmpty(product.Barcode))
+            {
+                var existing = connection.QueryFirstOrDefault<Product>(
+                    "SELECT ProductID, ProductName FROM Products WHERE Barcode = @Barcode LIMIT 1;",
+                    new { product.Barcode },
+                    transaction);
+                if (existing != null)
+                {
+                    throw new InvalidOperationException($"Mã vạch '{product.Barcode}' đã tồn tại ở sản phẩm '{existing.ProductName}'.");
+                }
+            }
+
+            var categoryId = !string.IsNullOrWhiteSpace(categoryName)
+                ? EnsureCategory(connection, transaction, categoryName)
+                : product.CategoryID;
+
             var productId = connection.ExecuteScalar<int>(
                 """
                 INSERT INTO Products (Barcode, ProductName, CategoryID, Unit, CostPrice, SellingPrice, StockQuantity, MinStock, ExpiryDate, SupplierID, ImageUrl)
@@ -131,7 +146,22 @@ public class ProductService
         using var transaction = connection.BeginTransaction();
         try
         {
-            var categoryId = EnsureCategory(connection, transaction, categoryName);
+            if (!string.IsNullOrEmpty(product.Barcode))
+            {
+                var existing = connection.QueryFirstOrDefault<Product>(
+                    "SELECT ProductID, ProductName FROM Products WHERE Barcode = @Barcode AND ProductID != @ProductID LIMIT 1;",
+                    new { product.Barcode, product.ProductID },
+                    transaction);
+                if (existing != null)
+                {
+                    throw new InvalidOperationException($"Mã vạch '{product.Barcode}' đã tồn tại ở sản phẩm '{existing.ProductName}'.");
+                }
+            }
+
+            var categoryId = !string.IsNullOrWhiteSpace(categoryName)
+                ? EnsureCategory(connection, transaction, categoryName)
+                : product.CategoryID;
+
             connection.Execute(
                 """
                 UPDATE Products
@@ -282,6 +312,15 @@ public class ProductService
         if (string.IsNullOrWhiteSpace(product.ProductName))
         {
             throw new InvalidOperationException("Tên sản phẩm không được để trống.");
+        }
+
+        if (string.IsNullOrWhiteSpace(product.Barcode))
+        {
+            product.Barcode = null;
+        }
+        else
+        {
+            product.Barcode = product.Barcode.Trim();
         }
 
         if (product.SellingPrice < 0 || product.CostPrice < 0)

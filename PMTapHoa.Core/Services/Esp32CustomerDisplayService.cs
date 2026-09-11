@@ -317,7 +317,7 @@ public class Esp32CustomerDisplayService
  * 1. Adafruit GFX Library (Adafruit)
  * 2. Adafruit ST7735 and ST7789 Library (Adafruit)
  * 3. ArduinoJson (Benoit Blanchon - bản 6.x hoặc 7.x)
- * (Mã QR dùng thư viện có sẵn trong nhân ESP32, KHÔNG CẦN CÀI THÊM THƯ VIỆN QR)
+ * 4. QRCode (bởi Richard Moore)
  * =====================================================================
  */
 
@@ -327,13 +327,13 @@ public class Esp32CustomerDisplayService
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7735.h>
 #include <SPI.h>
-#include ""esp_qrcode.h""
+#include <qrcode.h>
 
 // ========== CẤU HÌNH WIFI & MÁY CHỦ BÁN HÀNG ==========
 const char* WIFI_SSID     = ""{wifiSsid}"";
 const char* WIFI_PASSWORD = ""{wifiPass}"";
-const char* SERVER_URL    = ""http://{serverIp}:5050/api/esp32/display"";
-const char* PING_URL      = ""http://{serverIp}:5050/api/esp32/ping"";
+const char* SERVER_URL    = ""http://{serverIp}:8888/api/esp32/display"";
+const char* PING_URL      = ""http://{serverIp}:8888/api/esp32/ping"";
 
 // ========== CẤU HÌNH CHÂN SPI TFT ST7735 ==========
 #define TFT_CS    5
@@ -586,7 +586,7 @@ void printCenter(String text, int y, int size = 1, uint16_t color = ST77XX_WHITE
       maxChars = maxWidth / charW;
     }}
     if (text.length() > maxChars) {{
-      text = text.substring(0, maxChars - 2) + "..";
+      text = text.substring(0, maxChars - 2) + "".."";
     }}
   }}
   int textWidth = text.length() * charW;
@@ -609,13 +609,13 @@ void showScreenIdle(String store, String msg) {{
   printCenter(store, 10, 1, ST77XX_WHITE, 120);
 
   // Lời chào trung tâm to rõ
-  printCenter("XIN CHAO!", 54, 2, ST77XX_CYAN, 120);
-  printCenter("Cam on quy khach!", 86, 1, ST77XX_WHITE, 120);
-  printCenter("Hen gap lai!", 102, 1, 0xCE79, 120);
+  printCenter(""XIN CHAO!"", 54, 2, ST77XX_CYAN, 120);
+  printCenter(""Cam on quy khach!"", 86, 1, ST77XX_WHITE, 120);
+  printCenter(""Hen gap lai!"", 102, 1, 0xCE79, 120);
 
   // Dưới cùng: Tín hiệu kết nối
   tft.drawFastHLine(10, 136, 108, 0x39E7);
-  printCenter("WiFi: ONLINE", 144, 1, ST77XX_GREEN, 120);
+  printCenter(""WiFi: ONLINE"", 144, 1, ST77XX_GREEN, 120);
 }}
 
 // ================= GIAO DIỆN 2: MÃ VIETQR FULL MÀN HÌNH =================
@@ -630,7 +630,7 @@ void showScreenSuccess(String orderCode, String amount) {{
 
   // Thanh tiêu đề thông báo
   tft.fillRect(0, 0, 128, 32, 0x0360);
-  printCenter("DA NHAN TIEN!", 10, 1, ST77XX_YELLOW, 120);
+  printCenter(""DA NHAN TIEN!"", 10, 1, ST77XX_YELLOW, 120);
 
   // Hộp chi tiết hoá đơn
   tft.fillRoundRect(8, 42, 112, 58, 4, ST77XX_BLACK);
@@ -639,8 +639,8 @@ void showScreenSuccess(String orderCode, String amount) {{
   printCenter(orderCode, 52, 1, ST77XX_CYAN, 106);
   printCenter(amount, 74, 1, ST77XX_YELLOW, 106);
 
-  printCenter("Cam on quy khach!", 116, 1, ST77XX_WHITE, 120);
-  printCenter("HEN GAP LAI", 134, 1, 0x07E0, 120);
+  printCenter(""Cam on quy khach!"", 116, 1, ST77XX_WHITE, 120);
+  printCenter(""HEN GAP LAI"", 134, 1, 0x07E0, 120);
 }}
 
 // ================= MÀN HÌNH KẾT NỐI WIFI =================
@@ -667,57 +667,47 @@ void showWiFiError() {{
 }}
 
 // Callback hiển thị mã QR lên màn hình TFT 1.8 ST7735 bằng thư viện ESP32 gốc (Native)
-void drawQrCodeCallback(esp_qrcode_handle_t qrcode) {{
-  int size = esp_qrcode_get_size(qrcode);
-  if (size <= 0) return;
-
-  // Tính scale tối đa: dùng tới 124px chiều ngang để lề trắng 2px mỗi bên
-  int scale = 124 / size;
-  if (scale < 1) scale = 1;
-
-  int qrSize = size * scale;
-  // Căn chính giữa màn hình 128x160
-  int startX = (128 - qrSize) / 2;
-  int startY = (160 - qrSize) / 2;
-
-  // Nền trắng toàn màn hình
-  tft.fillScreen(ST77XX_WHITE);
-
-  // Vẽ từng module QR
-  for (int y = 0; y < size; y++) {{
-    for (int x = 0; x < size; x++) {{
-      if (esp_qrcode_get_module(qrcode, x, y)) {{
-        tft.fillRect(startX + (x * scale),
-                     startY + (y * scale),
-                     scale, scale, ST77XX_BLACK);
-      }}
-    }}
-  }}
-}}
-
 // ===== HÀM VẼ MÃ QR TOÀN MÀN HÌNH TFT 1.8 (128x160) - KHÔNG CÓ VIỀN / CHỮ =====
 void drawQRCodeFullScreen(String text) {{
   text.trim();
   if (text.length() == 0) return;
 
-  esp_qrcode_config_t cfg = {{
-    .display_func = drawQrCodeCallback,
-    .max_qrcode_version = 10,
-    .qrcode_ecc_level = ESP_QRCODE_ECC_LOW
-  }};
-
-  esp_err_t res = esp_qrcode_generate(&cfg, text.c_str());
-  if (res != ESP_OK) {{
-    text.toUpperCase();
-    res = esp_qrcode_generate(&cfg, text.c_str());
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(4)];
+  int version = 4;
+  int err = qrcode_initText(&qrcode, qrcodeData, version, ECC_LOW, text.c_str());
+  if (err != 0) {{
+    version = 6;
+    uint8_t qrcodeData6[qrcode_getBufferSize(6)];
+    err = qrcode_initText(&qrcode, qrcodeData6, version, ECC_LOW, text.c_str());
+    if (err != 0) {{
+      tft.fillScreen(ST77XX_BLACK);
+      tft.setTextColor(ST77XX_RED);
+      tft.setTextSize(1);
+      tft.setCursor(10, 60);
+      tft.println(""LOI SINH MA QR!"");
+      return;
+    }}
   }}
 
-  if (res != ESP_OK) {{
-    tft.fillScreen(ST77XX_BLACK);
-    tft.setTextColor(ST77XX_RED);
-    tft.setTextSize(1);
-    tft.setCursor(10, 70);
-    tft.println(""LOI DU LIEU QR!"");
+  int size = qrcode.size;
+  int scale = 124 / size;
+  if (scale < 1) scale = 1;
+
+  int qrPixelSize = size * scale;
+  int startX = (128 - qrPixelSize) / 2;
+  int startY = (160 - qrPixelSize) / 2;
+
+  tft.fillScreen(ST77XX_WHITE);
+
+  for (uint8_t y = 0; y < qrcode.size; y++) {{
+    for (uint8_t x = 0; x < qrcode.size; x++) {{
+      if (qrcode_getModule(&qrcode, x, y)) {{
+        tft.fillRect(startX + (x * scale),
+                     startY + (y * scale),
+                     scale, scale, ST77XX_BLACK);
+      }}
+    }}
   }}
 }}
 ";
@@ -753,17 +743,17 @@ void drawQRCodeFullScreen(String text) {{
  *  LED (BLK) | 3.3V        | Đèn nền màn hình (Backlight)
  * ---------------------------------------------------------------------
  *
- * THƯ VIỆN CẦN CÀI TRÊN ARDUINO IDE (Chỉ cần 2 thư viện màn hình):
- * 1. Adafruit GFX Library (Adafruit)
- * 2. Adafruit ST7735 and ST7789 Library (Adafruit)
- * (Mã QR dùng thư viện có sẵn trong nhân ESP32, KHÔNG CẦN CÀI THÊM THƯ VIỆN QR)
+ * THƯ VIỆN CẦN CÀI TRÊN ARDUINO IDE (Vào Sketch -> Include Library -> Manage Libraries):
+ * 1. Adafruit GFX Library (bởi Adafruit)
+ * 2. Adafruit ST7735 and ST7789 Library (bởi Adafruit)
+ * 3. QRCode (bởi Richard Moore) -> gõ ""qrcode"" trong Manage Libraries và cài đặt
  * =====================================================================
  */
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7735.h>
 #include <SPI.h>
-#include ""esp_qrcode.h""
+#include <qrcode.h>
 
 // ========== CẤU HÌNH CHÂN SPI TFT ST7735 ==========
 #define TFT_CS    5
@@ -858,7 +848,7 @@ void processUsbCommand(String cmdLine) {{
     String store = (secondPipe != -1) ? rest.substring(0, secondPipe) : ""{storeName}"";
     String msg = (secondPipe != -1) ? rest.substring(secondPipe + 1) : ""Xin chao quy khach!"";
     showScreenIdle(store, msg);
-    Serial.println("ACK|IDLE_SHOWN");
+    Serial.println(""ACK|IDLE_SHOWN"");
   }}
 }}
 
@@ -963,7 +953,7 @@ void printCenter(String text, int y, int size = 1, uint16_t color = ST77XX_WHITE
       maxChars = maxWidth / charW;
     }}
     if ((int)text.length() > maxChars) {{
-      text = text.substring(0, maxChars - 2) + "..";
+      text = text.substring(0, maxChars - 2) + "".."";
     }}
   }}
   int textWidth = text.length() * charW;
@@ -986,13 +976,13 @@ void showScreenIdle(String store, String msg) {{
   printCenter(store, 10, 1, ST77XX_WHITE, 150, 160);
 
   // Lời chào trung tâm to rõ (rotation=1: 160x128 ngang)
-  printCenter("XIN CHAO!", 44, 2, ST77XX_CYAN, 150, 160);
-  printCenter("Cam on quy khach!", 76, 1, ST77XX_WHITE, 150, 160);
-  printCenter("Hen gap lai!", 90, 1, 0xCE79, 150, 160);
+  printCenter(""XIN CHAO!"", 44, 2, ST77XX_CYAN, 150, 160);
+  printCenter(""Cam on quy khach!"", 76, 1, ST77XX_WHITE, 150, 160);
+  printCenter(""Hen gap lai!"", 90, 1, 0xCE79, 150, 160);
 
   // Dưới cùng: Báo kết nối USB ổn định
   tft.drawFastHLine(10, 110, 140, 0x39E7);
-  printCenter("USB: 115200 BAUD", 116, 1, ST77XX_GREEN, 150, 160);
+  printCenter(""USB: 115200 BAUD"", 116, 1, ST77XX_GREEN, 150, 160);
 }}
 
 // ===== GIAO DIỆN 2: MÃ VIETQR FULL MÀN HÌNH - KHÔNG CÓ CHỮ / LOGO =====
@@ -1005,73 +995,67 @@ void showScreenQR(String qrData) {{
 void showScreenSuccess(String orderCode, String amount) {{
   tft.fillScreen(0x04A0); // Nền xanh lá đậm dịu mắt
 
-  // Thanh tiêu đề thông báo
-  tft.fillRect(0, 0, 128, 32, 0x0360);
-  printCenter("DA NHAN TIEN!", 10, 1, ST77XX_YELLOW, 120);
+  // Thanh tiêu đề thông báo (160x128 ngang)
+  tft.fillRect(0, 0, 160, 28, 0x0360);
+  printCenter(""DA NHAN TIEN!"", 8, 1, ST77XX_YELLOW, 150, 160);
 
   // Hộp chi tiết hoá đơn
-  tft.fillRoundRect(8, 42, 112, 58, 4, ST77XX_BLACK);
-  tft.drawRoundRect(8, 42, 112, 58, 4, ST77XX_WHITE);
+  tft.fillRoundRect(10, 36, 140, 52, 4, ST77XX_BLACK);
+  tft.drawRoundRect(10, 36, 140, 52, 4, ST77XX_WHITE);
 
-  printCenter(orderCode, 52, 1, ST77XX_CYAN, 106);
-  printCenter(amount, 74, 1, ST77XX_YELLOW, 106);
+  printCenter(orderCode, 44, 1, ST77XX_CYAN, 134, 160);
+  printCenter(amount, 64, 1, ST77XX_YELLOW, 134, 160);
 
-  printCenter("Cam on quy khach!", 116, 1, ST77XX_WHITE, 120);
-  printCenter("HEN GAP LAI", 134, 1, 0x07E0, 120);
+  printCenter(""Cam on quy khach!"", 96, 1, ST77XX_WHITE, 150, 160);
+  printCenter(""HEN GAP LAI"", 112, 1, 0x07E0, 150, 160);
 }}
 
-// Callback hiển thị mã QR lên màn hình TFT 1.8 ST7735 bằng thư viện ESP32 gốc (Native)
-void drawQrCodeCallback(esp_qrcode_handle_t qrcode) {{
-  int size = esp_qrcode_get_size(qrcode);
-  if (size <= 0) return;
+// ================= GIAO DIỆN 2: MÃ VIETQR FULL MÀN HÌNH =================
+// Dùng thư viện QRCode tiêu chuẩn (bởi Richard Moore / ricmoo)
+void drawQRCodeFullScreen(String text) {{
+  text.trim();
+  if (text.length() == 0) return;
 
-  // Tính scale tối đa: dùng tới 124px chiều ngang để lề trắng 2px mỗi bên
+  // Phiên bản 3 (29x29 module) đủ chứa mã VietQR, độ phóng đại scale=4 (116x116px) vừa khít màn hình 128px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(4)];
+  int version = 4;
+  int err = qrcode_initText(&qrcode, qrcodeData, version, ECC_LOW, text.c_str());
+  if (err != 0) {{
+    // Nếu quá dài, thử phiên bản 6
+    version = 6;
+    uint8_t qrcodeData6[qrcode_getBufferSize(6)];
+    err = qrcode_initText(&qrcode, qrcodeData6, version, ECC_LOW, text.c_str());
+    if (err != 0) {{
+      tft.fillScreen(ST77XX_BLACK);
+      tft.setTextColor(ST77XX_RED);
+      tft.setTextSize(1);
+      tft.setCursor(10, 60);
+      tft.println(""LOI SINH MA QR!"");
+      return;
+    }}
+  }}
+
+  int size = qrcode.size;
   int scale = 124 / size;
   if (scale < 1) scale = 1;
 
-  int qrSize = size * scale;
-  // Căn chính giữa màn hình 128x160
-  int startX = (128 - qrSize) / 2;
-  int startY = (160 - qrSize) / 2;
+  int qrPixelSize = size * scale;
+  int startX = (160 - qrPixelSize) / 2;
+  int startY = (128 - qrPixelSize) / 2;
 
-  // Nền trắng toàn màn hình
+  // Xoá màn hình thành màu trắng
   tft.fillScreen(ST77XX_WHITE);
 
-  // Vẽ từng module QR
-  for (int y = 0; y < size; y++) {{
-    for (int x = 0; x < size; x++) {{
-      if (esp_qrcode_get_module(qrcode, x, y)) {{
+  // Vẽ từng module QR lên màn hình TFT ST7735
+  for (uint8_t y = 0; y < qrcode.size; y++) {{
+    for (uint8_t x = 0; x < qrcode.size; x++) {{
+      if (qrcode_getModule(&qrcode, x, y)) {{
         tft.fillRect(startX + (x * scale),
                      startY + (y * scale),
                      scale, scale, ST77XX_BLACK);
       }}
     }}
-  }}
-}}
-
-// Duplicate drawQRCodeFullScreen implementation removed
-void drawQRCodeFullScreen(String text) {{
-  text.trim();
-  if (text.length() == 0) return;
-
-  esp_qrcode_config_t cfg = {{
-    .display_func = drawQrCodeCallback,
-    .max_qrcode_version = 10,
-    .qrcode_ecc_level = ESP_QRCODE_ECC_LOW
-  }};
-
-  esp_err_t res = esp_qrcode_generate(&cfg, text.c_str());
-  if (res != ESP_OK) {{
-    text.toUpperCase();
-    res = esp_qrcode_generate(&cfg, text.c_str());
-  }}
-
-  if (res != ESP_OK) {{
-    tft.fillScreen(ST77XX_BLACK);
-    tft.setTextColor(ST77XX_RED);
-    tft.setTextSize(1);
-    tft.setCursor(10, 70);
-    tft.println(""LOI DU LIEU QR!"");
   }}
 }}
 ";
