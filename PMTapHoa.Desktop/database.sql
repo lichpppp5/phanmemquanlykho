@@ -5,6 +5,15 @@ CREATE TABLE IF NOT EXISTS Categories (
     CategoryName TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS Customers (
+    CustomerID INTEGER PRIMARY KEY AUTOINCREMENT,
+    CustomerName TEXT NOT NULL,
+    Phone TEXT,
+    Address TEXT,
+    Note TEXT,
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS Products (
     ProductID INTEGER PRIMARY KEY AUTOINCREMENT,
     Barcode TEXT UNIQUE,
@@ -16,15 +25,21 @@ CREATE TABLE IF NOT EXISTS Products (
     StockQuantity REAL DEFAULT 0,
     MinStock INTEGER DEFAULT 5,
     ExpiryDate DATE,
-    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
+    SupplierID INTEGER,
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID),
+    FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID)
 );
 
 CREATE TABLE IF NOT EXISTS Sales (
     SaleID INTEGER PRIMARY KEY AUTOINCREMENT,
     SaleDate DATETIME DEFAULT CURRENT_TIMESTAMP,
     TotalAmount DECIMAL(18, 2),
+    DiscountAmount DECIMAL(18, 2) DEFAULT 0,
+    DiscountNote TEXT,
     CustomerName TEXT,
-    IsDebt BOOLEAN DEFAULT 0
+    CustomerID INTEGER,
+    IsDebt BOOLEAN DEFAULT 0,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
 );
 
 CREATE TABLE IF NOT EXISTS SaleDetails (
@@ -33,6 +48,7 @@ CREATE TABLE IF NOT EXISTS SaleDetails (
     ProductID INTEGER,
     Quantity INTEGER,
     UnitPrice DECIMAL(18, 2),
+    Note TEXT,
     FOREIGN KEY (SaleID) REFERENCES Sales(SaleID),
     FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
 );
@@ -90,13 +106,29 @@ CREATE TABLE IF NOT EXISTS RestockRequests (
     FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID)
 );
 
+CREATE TABLE IF NOT EXISTS StockImportHistory (
+    ImportID INTEGER PRIMARY KEY AUTOINCREMENT,
+    ProductID INTEGER NOT NULL,
+    SupplierID INTEGER,
+    Quantity REAL NOT NULL,
+    CostPrice DECIMAL(18, 2),
+    ImportDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ImportedBy TEXT,
+    Note TEXT,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID),
+    FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID)
+);
+
 CREATE INDEX IF NOT EXISTS IDX_Products_Barcode ON Products(Barcode);
 CREATE INDEX IF NOT EXISTS IDX_Sales_Date ON Sales(SaleDate);
 CREATE INDEX IF NOT EXISTS IDX_Sales_Customer ON Sales(CustomerName);
+CREATE INDEX IF NOT EXISTS IDX_Sales_CustomerID ON Sales(CustomerID);
 CREATE INDEX IF NOT EXISTS IDX_DebtPayments_SaleID ON DebtPayments(SaleID);
 CREATE INDEX IF NOT EXISTS IDX_AuditLogs_LogTime ON AuditLogs(LogTime);
 CREATE INDEX IF NOT EXISTS IDX_RestockRequests_ProductID ON RestockRequests(ProductID);
 CREATE INDEX IF NOT EXISTS IDX_RestockRequests_Status ON RestockRequests(Status);
+CREATE INDEX IF NOT EXISTS IDX_StockImportHistory_ProductID ON StockImportHistory(ProductID);
+CREATE INDEX IF NOT EXISTS IDX_Customers_Phone ON Customers(Phone);
 
 INSERT INTO Categories (CategoryName)
 SELECT 'Chưa phân loại'

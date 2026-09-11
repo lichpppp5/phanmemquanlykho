@@ -17,7 +17,8 @@ public class ProductService
     public Product? GetByBarcode(string barcode)
     {
         const string sql = """
-                           SELECT p.ProductID, p.Barcode, p.ProductName, p.CategoryID, c.CategoryName, p.Unit, p.CostPrice, p.SellingPrice, p.StockQuantity, p.MinStock, p.ExpiryDate
+                           SELECT p.ProductID, p.Barcode, p.ProductName, p.CategoryID, c.CategoryName,
+                                  p.Unit, p.CostPrice, p.SellingPrice, p.StockQuantity, p.MinStock, p.ExpiryDate, p.SupplierID
                            FROM Products p
                            LEFT JOIN Categories c ON p.CategoryID = c.CategoryID
                            WHERE Barcode = @Barcode
@@ -30,7 +31,8 @@ public class ProductService
     public List<Product> Search(string keyword)
     {
         const string sql = """
-                           SELECT p.ProductID, p.Barcode, p.ProductName, p.CategoryID, c.CategoryName, p.Unit, p.CostPrice, p.SellingPrice, p.StockQuantity, p.MinStock, p.ExpiryDate
+                           SELECT p.ProductID, p.Barcode, p.ProductName, p.CategoryID, c.CategoryName,
+                                  p.Unit, p.CostPrice, p.SellingPrice, p.StockQuantity, p.MinStock, p.ExpiryDate, p.SupplierID
                            FROM Products p
                            LEFT JOIN Categories c ON p.CategoryID = c.CategoryID
                            WHERE p.ProductName LIKE @Keyword OR p.Barcode LIKE @Keyword
@@ -43,13 +45,29 @@ public class ProductService
     public List<Product> GetAll()
     {
         const string sql = """
-                           SELECT p.ProductID, p.Barcode, p.ProductName, p.CategoryID, c.CategoryName, p.Unit, p.CostPrice, p.SellingPrice, p.StockQuantity, p.MinStock, p.ExpiryDate
+                           SELECT p.ProductID, p.Barcode, p.ProductName, p.CategoryID, c.CategoryName,
+                                  p.Unit, p.CostPrice, p.SellingPrice, p.StockQuantity, p.MinStock, p.ExpiryDate, p.SupplierID
                            FROM Products p
                            LEFT JOIN Categories c ON p.CategoryID = c.CategoryID
                            ORDER BY p.ProductName;
                            """;
         using var connection = _databaseContext.CreateConnection();
         return connection.Query<Product>(sql).ToList();
+    }
+
+    public List<Product> GetByCategory(int? categoryId)
+    {
+        if (categoryId == null) return GetAll();
+        const string sql = """
+                           SELECT p.ProductID, p.Barcode, p.ProductName, p.CategoryID, c.CategoryName,
+                                  p.Unit, p.CostPrice, p.SellingPrice, p.StockQuantity, p.MinStock, p.ExpiryDate, p.SupplierID
+                           FROM Products p
+                           LEFT JOIN Categories c ON p.CategoryID = c.CategoryID
+                           WHERE p.CategoryID = @CategoryID
+                           ORDER BY p.ProductName;
+                           """;
+        using var connection = _databaseContext.CreateConnection();
+        return connection.Query<Product>(sql, new { CategoryID = categoryId }).ToList();
     }
 
     public int CreateProduct(Product product, string? categoryName)
@@ -62,8 +80,8 @@ public class ProductService
             var categoryId = EnsureCategory(connection, transaction, categoryName);
             var productId = connection.ExecuteScalar<int>(
                 """
-                INSERT INTO Products (Barcode, ProductName, CategoryID, Unit, CostPrice, SellingPrice, StockQuantity, MinStock, ExpiryDate)
-                VALUES (@Barcode, @ProductName, @CategoryID, @Unit, @CostPrice, @SellingPrice, @StockQuantity, @MinStock, @ExpiryDate);
+                INSERT INTO Products (Barcode, ProductName, CategoryID, Unit, CostPrice, SellingPrice, StockQuantity, MinStock, ExpiryDate, SupplierID)
+                VALUES (@Barcode, @ProductName, @CategoryID, @Unit, @CostPrice, @SellingPrice, @StockQuantity, @MinStock, @ExpiryDate, @SupplierID);
                 SELECT last_insert_rowid();
                 """,
                 new
@@ -76,7 +94,8 @@ public class ProductService
                     product.SellingPrice,
                     product.StockQuantity,
                     product.MinStock,
-                    product.ExpiryDate
+                    product.ExpiryDate,
+                    product.SupplierID
                 },
                 transaction);
 
@@ -109,7 +128,8 @@ public class ProductService
                     SellingPrice = @SellingPrice,
                     StockQuantity = @StockQuantity,
                     MinStock = @MinStock,
-                    ExpiryDate = @ExpiryDate
+                    ExpiryDate = @ExpiryDate,
+                    SupplierID = @SupplierID
                 WHERE ProductID = @ProductID;
                 """,
                 new
@@ -123,7 +143,8 @@ public class ProductService
                     product.SellingPrice,
                     product.StockQuantity,
                     product.MinStock,
-                    product.ExpiryDate
+                    product.ExpiryDate,
+                    product.SupplierID
                 },
                 transaction);
             transaction.Commit();
@@ -141,21 +162,72 @@ public class ProductService
         connection.Execute("DELETE FROM Products WHERE ProductID = @ProductID;", new { ProductID = productId });
     }
 
-    public void QuickImportStock(int productId, double quantityToAdd, decimal? newCostPrice)
+    /// <summary>Nhập hàng nhanh - cập nhật tồn kho và ghi lịch sử nhập.</summary>
+    public void QuickImportStock(int productId, double quantityToAdd, decimal? newCostPrice, string? importedBy = null, string? note = null, int? supplierId = null)
+    {
+        using var connection = _databaseContext.CreateConnection();
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            connection.Execute(
+                """
+                UPDATE Products
+                SET StockQuantity = StockQuantity + @QuantityToAdd,
+                    CostPrice = COALESCE(@NewCostPrice, CostPrice)
+                WHERE ProductID = @ProductID;
+                """,
+                new { ProductID = productId, QuantityToAdd = quantityToAdd, NewCostPrice = newCostPrice },
+                transaction);
+
+            // Lấy CostPrice hiện tại nếu không truyền vào
+            var costPrice = newCostPrice;
+            if (costPrice == null)
+            {
+                costPrice = connection.ExecuteScalar<decimal?>(
+                    "SELECT CostPrice FROM Products WHERE ProductID = @ProductID;",
+                    new { ProductID = productId }, transaction);
+            }
+
+            connection.Execute(
+                """
+                INSERT INTO StockImportHistory (ProductID, SupplierID, Quantity, CostPrice, ImportedBy, Note)
+                VALUES (@ProductID, @SupplierID, @Quantity, @CostPrice, @ImportedBy, @Note);
+                """,
+                new
+                {
+                    ProductID = productId,
+                    SupplierID = supplierId,
+                    Quantity = quantityToAdd,
+                    CostPrice = costPrice,
+                    ImportedBy = importedBy,
+                    Note = note
+                },
+                transaction);
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public List<StockImportHistoryItem> GetImportHistory(int? productId = null, int limit = 200)
     {
         const string sql = """
-                           UPDATE Products
-                           SET StockQuantity = StockQuantity + @QuantityToAdd,
-                               CostPrice = COALESCE(@NewCostPrice, CostPrice)
-                           WHERE ProductID = @ProductID;
+                           SELECT h.ImportID, h.ProductID, p.ProductName,
+                                  s.SupplierName, h.Quantity, h.CostPrice,
+                                  h.ImportDate, h.ImportedBy, h.Note
+                           FROM StockImportHistory h
+                           LEFT JOIN Products p ON p.ProductID = h.ProductID
+                           LEFT JOIN Suppliers s ON s.SupplierID = h.SupplierID
+                           WHERE (@ProductID IS NULL OR h.ProductID = @ProductID)
+                           ORDER BY h.ImportDate DESC
+                           LIMIT @Limit;
                            """;
         using var connection = _databaseContext.CreateConnection();
-        connection.Execute(sql, new
-        {
-            ProductID = productId,
-            QuantityToAdd = quantityToAdd,
-            NewCostPrice = newCostPrice
-        });
+        return connection.Query<StockImportHistoryItem>(sql, new { ProductID = productId, Limit = limit }).ToList();
     }
 
     private static int? EnsureCategory(IDbConnection connection, IDbTransaction transaction, string? categoryName)

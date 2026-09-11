@@ -6,10 +6,14 @@ namespace PMTapHoa.Desktop.Services;
 
 public class ReceiptService
 {
-    public string GenerateTempReceiptFile(int saleId, List<CartItem> items, decimal total, string? customerName, bool isDebt)
+    public string GenerateTempReceiptFile(
+        int saleId, List<CartItem> items, decimal total, string? customerName, bool isDebt,
+        decimal discountAmount = 0, string? discountNote = null,
+        string? storeName = null, string? storeAddress = null, string? storePhone = null, string? footer = null)
     {
         var tempFile = Path.Combine(Path.GetTempPath(), $"hoadon_{saleId}_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-        var content = BuildReceiptText(saleId, items, total, customerName, isDebt, 58);
+        var content = BuildReceiptText(saleId, items, total, customerName, isDebt, 58,
+            discountAmount, discountNote, storeName, storeAddress, storePhone, footer);
         File.WriteAllText(tempFile, content, Encoding.UTF8);
         return tempFile;
     }
@@ -21,10 +25,17 @@ public class ReceiptService
         string? customerName,
         bool isDebt,
         int paperWidthMm,
-        string? printerName = null)
+        string? printerName = null,
+        decimal discountAmount = 0,
+        string? discountNote = null,
+        string? storeName = null,
+        string? storeAddress = null,
+        string? storePhone = null,
+        string? footer = null)
     {
         var width = paperWidthMm == 80 ? 80 : 58;
-        var text = BuildReceiptText(saleId, items, total, customerName, isDebt, width);
+        var text = BuildReceiptText(saleId, items, total, customerName, isDebt, width,
+            discountAmount, discountNote, storeName, storeAddress, storePhone, footer);
         PrintText(text, width, printerName);
     }
 
@@ -34,29 +45,72 @@ public class ReceiptService
         decimal total,
         string? customerName,
         bool isDebt,
-        int paperWidthMm)
+        int paperWidthMm,
+        decimal discountAmount = 0,
+        string? discountNote = null,
+        string? storeName = null,
+        string? storeAddress = null,
+        string? storePhone = null,
+        string? footer = null)
     {
-        var charsPerLine = paperWidthMm == 80 ? 42 : 30;
+        var charsPerLine = paperWidthMm == 80 ? 42 : 32;
         var nameWidth = paperWidthMm == 80 ? 24 : 16;
+        var displayStoreName = string.IsNullOrWhiteSpace(storeName) ? "CUA HANG TAP HOA" : storeName.ToUpper();
+        var displayFooter = string.IsNullOrWhiteSpace(footer) ? "Cam on quy khach! Hen gap lai." : footer;
+
         var builder = new StringBuilder();
-        builder.AppendLine("===== CUA HANG TAP HOA =====");
-        builder.AppendLine($"Hoa don: #{saleId}");
-        builder.AppendLine($"Ngay: {DateTime.Now:dd/MM/yyyy HH:mm:ss}");
+        // Header
+        builder.AppendLine(Center(displayStoreName, charsPerLine));
+        if (!string.IsNullOrWhiteSpace(storeAddress))
+            builder.AppendLine(Center(Shorten(storeAddress, charsPerLine), charsPerLine));
+        if (!string.IsNullOrWhiteSpace(storePhone))
+            builder.AppendLine(Center($"DT: {storePhone}", charsPerLine));
+        builder.AppendLine(new string('=', charsPerLine));
+        builder.AppendLine($"HOA DON: #{saleId:D6}");
+        builder.AppendLine($"Ngay : {DateTime.Now:dd/MM/yyyy HH:mm}");
         builder.AppendLine($"Khach: {customerName ?? "Khach le"}");
         builder.AppendLine(new string('-', charsPerLine));
-        builder.AppendLine(paperWidthMm == 80 ? "Ten hang                 SL         Gia" : "Ten hang          SL     Gia");
 
+        // Items
+        var header = paperWidthMm == 80
+            ? "Ten hang                 SL      Thanh tien"
+            : "Ten hang          SL    Tien";
+        builder.AppendLine(header);
+        builder.AppendLine(new string('-', charsPerLine));
+
+        var subtotal = items.Sum(i => i.LineTotal);
         foreach (var item in items)
         {
             var name = Shorten(item.ProductName, nameWidth).PadRight(nameWidth);
             builder.AppendLine($"{name} {item.Quantity,3} {item.LineTotal,10:N0}");
+            if (!string.IsNullOrWhiteSpace(item.Note))
+                builder.AppendLine($"  -> {item.Note}");
         }
 
         builder.AppendLine(new string('-', charsPerLine));
-        builder.AppendLine($"Tong tien: {total:N0} VND");
-        builder.AppendLine($"Trang thai: {(isDebt ? "Ghi no" : "Da thanh toan")}");
-        builder.AppendLine("Cam on quy khach!");
+        builder.AppendLine($"{"Tong cong:",-18} {subtotal,13:N0}");
+
+        if (discountAmount > 0)
+        {
+            var discLabel = string.IsNullOrWhiteSpace(discountNote) ? "Giam gia:" : $"{discountNote}:";
+            builder.AppendLine($"{Shorten(discLabel, 18),-18} {-discountAmount,13:N0}");
+        }
+
+        builder.AppendLine(new string('=', charsPerLine));
+        builder.AppendLine($"{"THANH TOAN:",-18} {total,13:N0} VND");
+        builder.AppendLine(new string('=', charsPerLine));
+        builder.AppendLine($"Trang thai: {(isDebt ? "*** GHI NO ***" : "Da thanh toan")}");
+        builder.AppendLine();
+        builder.AppendLine(Center(displayFooter, charsPerLine));
+        builder.AppendLine();
         return builder.ToString();
+    }
+
+    private static string Center(string text, int width)
+    {
+        if (text.Length >= width) return text;
+        var padding = (width - text.Length) / 2;
+        return text.PadLeft(text.Length + padding).PadRight(width);
     }
 
     private static void PrintText(string text, int paperWidthMm, string? printerName)

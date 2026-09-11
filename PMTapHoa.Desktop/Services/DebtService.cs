@@ -19,10 +19,12 @@ public class DebtService
                            SELECT s.SaleID,
                                   s.SaleDate,
                                   s.CustomerName,
+                                  c.Phone AS CustomerPhone,
                                   s.TotalAmount,
                                   COALESCE(dp.PaidAmount, 0) AS PaidAmount,
                                   (s.TotalAmount - COALESCE(dp.PaidAmount, 0)) AS OutstandingAmount
                            FROM Sales s
+                           LEFT JOIN Customers c ON c.CustomerID = s.CustomerID
                            LEFT JOIN (
                                SELECT SaleID, SUM(Amount) AS PaidAmount
                                FROM DebtPayments
@@ -32,7 +34,8 @@ public class DebtService
                              AND (s.TotalAmount - COALESCE(dp.PaidAmount, 0)) > 0
                              AND (@Keyword IS NULL
                                   OR s.CustomerName LIKE @LikeKeyword
-                                  OR CAST(s.SaleID AS TEXT) LIKE @LikeKeyword)
+                                  OR CAST(s.SaleID AS TEXT) LIKE @LikeKeyword
+                                  OR c.Phone LIKE @LikeKeyword)
                            ORDER BY s.SaleDate DESC;
                            """;
         var trimmed = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
@@ -145,5 +148,51 @@ public class DebtService
                            """;
         using var connection = _databaseContext.CreateConnection();
         return connection.ExecuteScalar<decimal>(sql);
+    }
+
+    /// <summary>Đếm số nợ quá hạn (quá X ngày kể từ ngày bán).</summary>
+    public int GetOverdueDebtCount(int overdueDays = 30)
+    {
+        const string sql = """
+                           SELECT COUNT(*)
+                           FROM Sales s
+                           LEFT JOIN (
+                               SELECT SaleID, SUM(Amount) AS PaidAmount
+                               FROM DebtPayments
+                               GROUP BY SaleID
+                           ) dp ON dp.SaleID = s.SaleID
+                           WHERE s.IsDebt = 1
+                             AND (s.TotalAmount - COALESCE(dp.PaidAmount, 0)) > 0
+                             AND julianday('now','localtime') - julianday(s.SaleDate) > @OverdueDays;
+                           """;
+        using var connection = _databaseContext.CreateConnection();
+        return connection.ExecuteScalar<int>(sql, new { OverdueDays = overdueDays });
+    }
+
+    /// <summary>Lấy danh sách nợ quá hạn theo ngày.</summary>
+    public List<DebtSaleItem> GetOverdueDebts(int overdueDays = 30)
+    {
+        const string sql = """
+                           SELECT s.SaleID,
+                                  s.SaleDate,
+                                  s.CustomerName,
+                                  c.Phone AS CustomerPhone,
+                                  s.TotalAmount,
+                                  COALESCE(dp.PaidAmount, 0) AS PaidAmount,
+                                  (s.TotalAmount - COALESCE(dp.PaidAmount, 0)) AS OutstandingAmount
+                           FROM Sales s
+                           LEFT JOIN Customers c ON c.CustomerID = s.CustomerID
+                           LEFT JOIN (
+                               SELECT SaleID, SUM(Amount) AS PaidAmount
+                               FROM DebtPayments
+                               GROUP BY SaleID
+                           ) dp ON dp.SaleID = s.SaleID
+                           WHERE s.IsDebt = 1
+                             AND (s.TotalAmount - COALESCE(dp.PaidAmount, 0)) > 0
+                             AND julianday('now','localtime') - julianday(s.SaleDate) > @OverdueDays
+                           ORDER BY s.SaleDate ASC;
+                           """;
+        using var connection = _databaseContext.CreateConnection();
+        return connection.Query<DebtSaleItem>(sql, new { OverdueDays = overdueDays }).ToList();
     }
 }

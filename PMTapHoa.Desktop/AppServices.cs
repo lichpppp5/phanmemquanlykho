@@ -22,6 +22,9 @@ public class AppServices
     public HealthCheckService HealthCheckService { get; }
     public RestockService RestockService { get; }
     public QrPaymentService QrPaymentService { get; }
+    public CustomerService CustomerService { get; }
+    public DiscountService DiscountService { get; }
+    public NotificationService NotificationService { get; }
 
     public AppServices(string appDataDirectory, string sqlScriptPath)
     {
@@ -47,6 +50,9 @@ public class AppServices
         HealthCheckService = new HealthCheckService(DatabaseContext, AppConfigService);
         RestockService = new RestockService(DatabaseContext);
         QrPaymentService = new QrPaymentService(AppConfigService);
+        CustomerService = new CustomerService(DatabaseContext);
+        DiscountService = new DiscountService();
+        NotificationService = new NotificationService(InventoryService, ProductService, DebtService);
 
         AuthService.EnsureDefaultUsers();
     }

@@ -46,6 +46,32 @@ public class AppConfigService
             });
     }
 
+    // ── Thông tin cửa hàng ──────────────────────────────────────────────────────
+    public string StoreName
+    {
+        get => Get("store_name") ?? "Cửa Hàng Tạp Hóa";
+        set => Set("store_name", value);
+    }
+
+    public string StoreAddress
+    {
+        get => Get("store_address") ?? string.Empty;
+        set => Set("store_address", value);
+    }
+
+    public string StorePhone
+    {
+        get => Get("store_phone") ?? string.Empty;
+        set => Set("store_phone", value);
+    }
+
+    public string ReceiptFooter
+    {
+        get => Get("receipt_footer") ?? "Cảm ơn quý khách! Hẹn gặp lại.";
+        set => Set("receipt_footer", value);
+    }
+
+    // ── Máy in ──────────────────────────────────────────────────────────────────
     public string? DefaultPrinter
     {
         get => Get("default_printer");
@@ -62,6 +88,7 @@ public class AppConfigService
         set => Set("default_paper_width", value == 80 ? "80" : "58");
     }
 
+    // ── Tồn kho & Hạn sử dụng ───────────────────────────────────────────────────
     public bool LowStockReminderEnabled
     {
         get
@@ -72,6 +99,18 @@ public class AppConfigService
         set => Set("low_stock_reminder_enabled", value ? "1" : "0");
     }
 
+    /// <summary>Số ngày trước hết hạn để cảnh báo (mặc định 14 ngày).</summary>
+    public int NearExpiryWarningDays
+    {
+        get
+        {
+            var value = Get("near_expiry_days");
+            return int.TryParse(value, out var d) && d > 0 ? d : 14;
+        }
+        set => Set("near_expiry_days", value.ToString());
+    }
+
+    // ── Thanh toán QR ───────────────────────────────────────────────────────────
     public bool QrPaymentEnabled
     {
         get
@@ -106,6 +145,7 @@ public class AppConfigService
         set => Set("qr_transfer_prefix", value);
     }
 
+    // ── Hiển thị ────────────────────────────────────────────────────────────────
     public string DisplayMode
     {
         get
@@ -113,7 +153,7 @@ public class AppConfigService
             var value = Get("display_mode");
             return string.Equals(value, "fullscreen", StringComparison.OrdinalIgnoreCase)
                 ? "fullscreen"
-                : "fullscreen";
+                : "standard";
         }
         set => Set(
             "display_mode",

@@ -5,7 +5,7 @@ public class QuickNewProductPopupForm : Form
     private readonly TextBox _txtName;
     private readonly NumericUpDown _numQty;
 
-    public string ProductName => _txtName.Text.Trim();
+    public new string ProductName => _txtName.Text.Trim();
     public double Quantity => (double)_numQty.Value;
 
     public QuickNewProductPopupForm(string barcode)

@@ -13,4 +13,5 @@ public class Product
     public double StockQuantity { get; set; }
     public int MinStock { get; set; } = 5;
     public DateTime? ExpiryDate { get; set; }
+    public int? SupplierID { get; set; }
 }

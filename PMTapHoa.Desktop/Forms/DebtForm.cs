@@ -76,7 +76,8 @@ public class DebtForm : Form
         };
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.SaleID), HeaderText = "Hóa đơn", Width = 90 });
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.SaleDate), HeaderText = "Ngày bán", Width = 170 });
-        _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.CustomerName), HeaderText = "Khách hàng", Width = 260 });
+        _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.CustomerName), HeaderText = "Khách hàng", Width = 220 });
+        _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.CustomerPhone), HeaderText = "SĐT", Width = 140 });
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.TotalAmount), HeaderText = "Tổng tiền", Width = 150 });
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.PaidAmount), HeaderText = "Đã trả", Width = 150 });
         _gridDebts.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(DebtSaleItem.OutstandingAmount), HeaderText = "Còn nợ", Width = 150 });
@@ -107,8 +108,9 @@ public class DebtForm : Form
         paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 11f));
         paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 16f));
         paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9f));
-        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44f));
-        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 15f));
+        paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 15f));
         paymentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 2f));
         paymentPanel.Controls.Add(paymentLayout);
 
@@ -132,9 +134,22 @@ public class DebtForm : Form
             BackColor = UiStyle.SuccessBright,
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
-            Font = new Font("Segoe UI", 11, FontStyle.Bold)
+            Font = new Font("Segoe UI", 11, FontStyle.Bold),
+            Margin = new Padding(0, 0, 8, 0)
         };
         btnCollect.Click += (_, _) => CollectDebt();
+
+        var btnRemind = new Button
+        {
+            Text = "🔔 Nhắc nợ",
+            Dock = DockStyle.Fill,
+            Height = 42,
+            BackColor = UiStyle.AccentOrange,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 11, FontStyle.Bold)
+        };
+        btnRemind.Click += (_, _) => CopyRemindMessage();
 
         if (!_services.Session.IsAdmin)
         {
@@ -146,6 +161,7 @@ public class DebtForm : Form
         paymentLayout.Controls.Add(lblNote, 2, 0);
         paymentLayout.Controls.Add(_txtNote, 3, 0);
         paymentLayout.Controls.Add(btnCollect, 4, 0);
+        paymentLayout.Controls.Add(btnRemind, 5, 0);
 
         _gridPayments = new DataGridView
         {
@@ -230,6 +246,28 @@ public class DebtForm : Form
         catch (Exception ex)
         {
             MessageBox.Show($"Thu nợ thất bại: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void CopyRemindMessage()
+    {
+        try
+        {
+            if (_gridDebts.CurrentRow?.DataBoundItem is not DebtSaleItem selectedDebt)
+            {
+                MessageBox.Show("Vui lòng chọn hóa đơn công nợ cần nhắc.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var storeName = _services.AppConfigService.StoreName;
+            var storeText = string.IsNullOrWhiteSpace(storeName) ? "Cửa hàng" : storeName;
+            var msg = $"Xin chào anh/chị {selectedDebt.CustomerName},\n\nHiện tại anh/chị đang có khoản nợ {selectedDebt.OutstandingAmount:N0} VND tại {storeText}. Anh/chị vui lòng sắp xếp thanh toán sớm giúp cửa hàng nhé.\n\nXin cảm ơn!";
+            Clipboard.SetText(msg);
+            MessageBox.Show("Đã copy tin nhắn nhắc nợ vào Clipboard.\nBạn có thể dán (Ctrl+V) vào Zalo/SMS để gửi cho khách.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Lỗi khi copy tin nhắn: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

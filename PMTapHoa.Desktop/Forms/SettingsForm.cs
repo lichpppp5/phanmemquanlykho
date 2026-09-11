@@ -5,10 +5,18 @@ namespace PMTapHoa.Desktop.Forms;
 public class SettingsForm : Form
 {
     private readonly AppServices _services;
+    // Store info
+    private readonly TextBox _txtStoreName;
+    private readonly TextBox _txtStoreAddress;
+    private readonly TextBox _txtStorePhone;
+    private readonly TextBox _txtReceiptFooter;
+    private readonly NumericUpDown _numNearExpiryDays;
+    // Print
     private readonly ComboBox _cmbPrinters;
     private readonly ComboBox _cmbPaperWidth;
     private readonly ComboBox _cmbDisplayMode;
     private readonly CheckBox _chkLowStockReminder;
+    // QR
     private readonly CheckBox _chkQrEnabled;
     private readonly TextBox _txtQrBankBin;
     private readonly TextBox _txtQrAccountNo;
@@ -34,21 +42,69 @@ public class SettingsForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 3,
+            RowCount = 4,
             Padding = new Padding(16)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 220f));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 76f));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 200f)); // Store info
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 220f)); // Print/display
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));  // QR
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 76f));  // Actions
         Controls.Add(root);
+
+        // ── Store info group ───────────────────────────────────────────────────
+        var storeBox = new GroupBox
+        {
+            Text = "🏪  Thông tin cửa hàng",
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            ForeColor = UiStyle.Primary
+        };
+        root.Controls.Add(storeBox, 0, 0);
+
+        var storeLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 4,
+            RowCount = 3,
+            Padding = new Padding(12, 8, 12, 8)
+        };
+        storeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130f));
+        storeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55f));
+        storeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
+        storeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45f));
+        for (var i = 0; i < 3; i++) storeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50f));
+        storeBox.Controls.Add(storeLayout);
+
+        Label MkLbl(string t) => new Label { Text = t, AutoSize = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+        TextBox MkTxt() => new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11) };
+
+        storeLayout.Controls.Add(MkLbl("Tên cửa hàng:"), 0, 0);
+        _txtStoreName = MkTxt();
+        storeLayout.Controls.Add(_txtStoreName, 1, 0);
+        storeLayout.Controls.Add(MkLbl("Số điện thoại:"), 2, 0);
+        _txtStorePhone = MkTxt();
+        storeLayout.Controls.Add(_txtStorePhone, 3, 0);
+
+        storeLayout.Controls.Add(MkLbl("Địa chỉ:"), 0, 1);
+        _txtStoreAddress = MkTxt();
+        storeLayout.Controls.Add(_txtStoreAddress, 1, 1);
+        storeLayout.SetColumnSpan(_txtStoreAddress, 3);
+
+        storeLayout.Controls.Add(MkLbl("Chân hóa đơn:"), 0, 2);
+        _txtReceiptFooter = MkTxt();
+        storeLayout.Controls.Add(_txtReceiptFooter, 1, 2);
+        storeLayout.Controls.Add(MkLbl("Cảnh báo HSD (ngày):"), 2, 2);
+        _numNearExpiryDays = new NumericUpDown { Dock = DockStyle.Fill, Minimum = 1, Maximum = 180, Font = new Font("Segoe UI", 11) };
+        storeLayout.Controls.Add(_numNearExpiryDays, 3, 2);
 
         var basicBox = new GroupBox
         {
-            Text = "Cấu hình chung",
+            Text = "🖨️  Máy in & Hiển thị",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 12, FontStyle.Bold)
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            ForeColor = UiStyle.AccentSlate
         };
-        root.Controls.Add(basicBox, 0, 0);
+        root.Controls.Add(basicBox, 0, 1);
 
         var basicLayout = new TableLayoutPanel
         {
@@ -128,11 +184,12 @@ public class SettingsForm : Form
 
         var qrBox = new GroupBox
         {
-            Text = "Cấu hình QR thanh toán (VietQR)",
+            Text = "📱  Cấu hình QR thanh toán (VietQR)",
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 12, FontStyle.Bold)
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            ForeColor = UiStyle.AccentPurple
         };
-        root.Controls.Add(qrBox, 0, 1);
+        root.Controls.Add(qrBox, 0, 2);
 
         var qrLayout = new TableLayoutPanel
         {
@@ -195,7 +252,7 @@ public class SettingsForm : Form
             WrapContents = false,
             Padding = new Padding(4, 8, 4, 4)
         };
-        root.Controls.Add(actionPanel, 0, 2);
+        root.Controls.Add(actionPanel, 0, 3);
 
         var btnSave = new Button
         {
@@ -222,6 +279,14 @@ public class SettingsForm : Form
 
     private void LoadSettings()
     {
+        // Store info
+        _txtStoreName.Text = _services.AppConfigService.StoreName;
+        _txtStoreAddress.Text = _services.AppConfigService.StoreAddress;
+        _txtStorePhone.Text = _services.AppConfigService.StorePhone;
+        _txtReceiptFooter.Text = _services.AppConfigService.ReceiptFooter;
+        _numNearExpiryDays.Value = Math.Max(1, Math.Min(180, _services.AppConfigService.NearExpiryWarningDays));
+
+        // Print
         _cmbPrinters.Items.Clear();
         _cmbPrinters.Items.Add("(Không chọn)");
         foreach (string printer in PrinterSettings.InstalledPrinters)
@@ -231,21 +296,14 @@ public class SettingsForm : Form
 
         var defaultPrinter = _services.AppConfigService.DefaultPrinter;
         if (!string.IsNullOrWhiteSpace(defaultPrinter) && _cmbPrinters.Items.Contains(defaultPrinter))
-        {
             _cmbPrinters.SelectedItem = defaultPrinter;
-        }
         else
-        {
             _cmbPrinters.SelectedIndex = 0;
-        }
 
         var defaultWidth = _services.AppConfigService.DefaultPaperWidth;
         _cmbPaperWidth.SelectedItem = defaultWidth.ToString();
         _cmbDisplayMode.SelectedIndex = _services.AppConfigService.DisplayFullScreen ? 1 : 0;
-        if (_cmbDisplayMode.SelectedIndex < 0)
-        {
-            _cmbDisplayMode.SelectedIndex = 1;
-        }
+        if (_cmbDisplayMode.SelectedIndex < 0) _cmbDisplayMode.SelectedIndex = 1;
         _chkLowStockReminder.Checked = _services.AppConfigService.LowStockReminderEnabled;
         _chkQrEnabled.Checked = _services.AppConfigService.QrPaymentEnabled;
         _txtQrBankBin.Text = _services.AppConfigService.QrBankBin;
@@ -256,6 +314,13 @@ public class SettingsForm : Form
 
     private void SaveSettings()
     {
+        // Store info
+        _services.AppConfigService.StoreName = _txtStoreName.Text.Trim();
+        _services.AppConfigService.StoreAddress = _txtStoreAddress.Text.Trim();
+        _services.AppConfigService.StorePhone = _txtStorePhone.Text.Trim();
+        _services.AppConfigService.ReceiptFooter = _txtReceiptFooter.Text.Trim();
+        _services.AppConfigService.NearExpiryWarningDays = (int)_numNearExpiryDays.Value;
+
         var selectedPrinter = _cmbPrinters.SelectedIndex <= 0 ? null : _cmbPrinters.SelectedItem?.ToString();
         var width = int.TryParse(_cmbPaperWidth.Text, out var parsed) ? parsed : 58;
 
@@ -272,8 +337,8 @@ public class SettingsForm : Form
         _services.AuditService.Log(
             _services.Session.CurrentUser?.Username,
             "UPDATE_SETTINGS",
-            $"Printer={selectedPrinter ?? "none"}, Width={width}, DisplayMode={_services.AppConfigService.DisplayMode}, LowStockReminder={_chkLowStockReminder.Checked}, QREnabled={_chkQrEnabled.Checked}");
-        MessageBox.Show("Đã lưu cấu hình.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            $"Store={_services.AppConfigService.StoreName}, Printer={selectedPrinter ?? "none"}, Width={width}");
+        MessageBox.Show("Đã lưu cấu hình thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
         Close();
     }
 }

@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+publish/
+
+# .NET
+*.user
+*.suo
+.vs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal

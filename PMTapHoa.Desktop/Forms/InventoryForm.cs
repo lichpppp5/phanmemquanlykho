@@ -7,6 +7,8 @@ public class InventoryForm : Form
     private readonly AppServices _services;
     private readonly DataGridView _grid;
     private readonly TextBox _txtSearch;
+    private readonly ComboBox _cmbCategoryFilter;
+    private readonly ComboBox _cmbStatusFilter;
     private readonly NumericUpDown _numImportQty;
     private readonly TextBox _txtCostPrice;
     private readonly TextBox _txtBarcode;
@@ -62,15 +64,32 @@ public class InventoryForm : Form
             WrapContents = false,
             Padding = new Padding(4, 10, 4, 4)
         };
-        searchPanel.Controls.Add(new Label { Text = "Tìm nhanh (tên/mã vạch):", AutoSize = true, Margin = new Padding(0, 8, 10, 0) });
+        searchPanel.Controls.Add(new Label { Text = "Tìm (tên/mã):", AutoSize = true, Margin = new Padding(0, 8, 8, 0) });
         _txtSearch = new TextBox
         {
-            Width = 360,
+            Width = 240,
             Font = new Font("Segoe UI", 11, FontStyle.Regular),
-            Margin = new Padding(0, 4, 0, 0)
+            Margin = new Padding(0, 4, 12, 0)
         };
         _txtSearch.TextChanged += (_, _) => LoadGrid();
         searchPanel.Controls.Add(_txtSearch);
+
+        searchPanel.Controls.Add(new Label { Text = "Danh mục:", AutoSize = true, Margin = new Padding(0, 8, 8, 0) });
+        _cmbCategoryFilter = new ComboBox { Width = 150, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 11), Margin = new Padding(0, 4, 12, 0) };
+        _cmbCategoryFilter.SelectedIndexChanged += (_, _) => LoadGrid();
+        searchPanel.Controls.Add(_cmbCategoryFilter);
+
+        searchPanel.Controls.Add(new Label { Text = "Trạng thái:", AutoSize = true, Margin = new Padding(0, 8, 8, 0) });
+        _cmbStatusFilter = new ComboBox { Width = 150, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 11), Margin = new Padding(0, 4, 12, 0) };
+        _cmbStatusFilter.Items.AddRange(["Tất cả", "Sắp hết hàng", "Sắp hết hạn"]);
+        _cmbStatusFilter.SelectedIndex = 0;
+        _cmbStatusFilter.SelectedIndexChanged += (_, _) => LoadGrid();
+        searchPanel.Controls.Add(_cmbStatusFilter);
+
+        var btnExport = new Button { Text = "📥 Xuất Excel", AutoSize = true, BackColor = UiStyle.Success, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold), Margin = new Padding(8, 2, 0, 0) };
+        btnExport.FlatAppearance.BorderSize = 0;
+        btnExport.Click += (_, _) => ExportInventory();
+        searchPanel.Controls.Add(btnExport);
         root.Controls.Add(searchPanel, 0, 0);
 
         _grid = new DataGridView
@@ -315,6 +334,19 @@ public class InventoryForm : Form
 
     private void InventoryForm_Load(object? sender, EventArgs e)
     {
+        var allProducts = _services.ProductService.GetAll();
+        var categories = allProducts.Where(p => !string.IsNullOrEmpty(p.CategoryName))
+                                    .Select(p => p.CategoryName)
+                                    .Distinct()
+                                    .OrderBy(c => c)
+                                    .ToList();
+        _cmbCategoryFilter.SelectedIndexChanged -= (_, _) => LoadGrid();
+        _cmbCategoryFilter.Items.Clear();
+        _cmbCategoryFilter.Items.Add("Tất cả");
+        foreach (var c in categories) _cmbCategoryFilter.Items.Add(c!);
+        _cmbCategoryFilter.SelectedIndex = 0;
+        _cmbCategoryFilter.SelectedIndexChanged += (_, _) => LoadGrid();
+
         LoadGrid();
         ShowLowStockReminderIfNeeded();
     }
@@ -322,12 +354,37 @@ public class InventoryForm : Form
     private void LoadGrid()
     {
         var keyword = _txtSearch.Text.Trim();
-        _products = string.IsNullOrWhiteSpace(keyword)
+        var cat = _cmbCategoryFilter.SelectedIndex > 0 ? _cmbCategoryFilter.SelectedItem?.ToString() : null;
+        var status = _cmbStatusFilter.SelectedIndex;
+
+        var all = string.IsNullOrWhiteSpace(keyword)
             ? _services.ProductService.GetAll()
             : _services.ProductService.Search(keyword);
 
+        if (!string.IsNullOrEmpty(cat))
+            all = all.Where(p => p.CategoryName == cat).ToList();
+
+        if (status == 1) // Low stock
+            all = _services.InventoryService.GetLowStockProducts(all);
+        else if (status == 2) // Near expiry
+            all = _services.InventoryService.GetNearExpiryProducts(all, _services.AppConfigService.NearExpiryWarningDays);
+
+        _products = all;
         _grid.DataSource = null;
         _grid.DataSource = _products;
+    }
+
+    private void ExportInventory()
+    {
+        try
+        {
+            using var dlg = new SaveFileDialog { Filter = "Excel (*.xlsx)|*.xlsx", FileName = $"tonkho_{DateTime.Now:yyyyMMdd}.xlsx" };
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
+            _services.ExportService.ExportInventoryToExcel(dlg.FileName, _products);
+            _services.AuditService.Log(_services.Session.CurrentUser?.Username, "EXPORT_INVENTORY", dlg.FileName);
+            MessageBox.Show("Đã xuất tồn kho ra Excel.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex) { MessageBox.Show($"Xuất file thất bại: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error); }
     }
 
     private void LoadSelectedProductToEditor()
@@ -359,21 +416,33 @@ public class InventoryForm : Form
 
     private void Grid_RowPrePaint(object? sender, DataGridViewRowPrePaintEventArgs e)
     {
-        if (e.RowIndex < 0 || e.RowIndex >= _grid.Rows.Count)
-        {
-            return;
-        }
-
+        if (e.RowIndex < 0 || e.RowIndex >= _grid.Rows.Count) return;
         var row = _grid.Rows[e.RowIndex];
-        if (row.DataBoundItem is Product product && product.StockQuantity < product.MinStock)
+        if (row.DataBoundItem is Product product)
         {
-            row.DefaultCellStyle.BackColor = Color.MistyRose;
-            row.DefaultCellStyle.ForeColor = Color.DarkRed;
-        }
-        else
-        {
-            row.DefaultCellStyle.BackColor = Color.White;
-            row.DefaultCellStyle.ForeColor = Color.Black;
+            var isLowStock = product.StockQuantity < product.MinStock;
+            var isNearExpiry = product.ExpiryDate.HasValue && product.ExpiryDate.Value.Date <= DateTime.Today.AddDays(_services.AppConfigService.NearExpiryWarningDays);
+
+            if (isLowStock && isNearExpiry)
+            {
+                row.DefaultCellStyle.BackColor = Color.FromArgb(255, 200, 200); // Reddish
+                row.DefaultCellStyle.ForeColor = Color.DarkRed;
+            }
+            else if (isLowStock)
+            {
+                row.DefaultCellStyle.BackColor = Color.MistyRose;
+                row.DefaultCellStyle.ForeColor = Color.DarkRed;
+            }
+            else if (isNearExpiry)
+            {
+                row.DefaultCellStyle.BackColor = Color.FromArgb(255, 240, 200); // Yellowish
+                row.DefaultCellStyle.ForeColor = Color.DarkOrange;
+            }
+            else
+            {
+                row.DefaultCellStyle.BackColor = Color.White;
+                row.DefaultCellStyle.ForeColor = Color.Black;
+            }
         }
     }
 

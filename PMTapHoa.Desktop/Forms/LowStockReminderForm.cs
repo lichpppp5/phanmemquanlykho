@@ -47,10 +47,12 @@ public class LowStockReminderForm : Form
         {
             Dock = DockStyle.Fill
         };
-        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductName), HeaderText = "Sản phẩm", Width = 300 });
-        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Barcode), HeaderText = "Mã vạch", Width = 150 });
-        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.StockQuantity), HeaderText = "Tồn", Width = 90 });
-        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.MinStock), HeaderText = "Min", Width = 90 });
+        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.ProductName), HeaderText = "Sản phẩm", Width = 280 });
+        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Barcode), HeaderText = "Mã vạch", Width = 140 });
+        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.StockQuantity), HeaderText = "Tồn", Width = 70 });
+        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.MinStock), HeaderText = "Min", Width = 70 });
+        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.CostPrice), HeaderText = "Giá nhập", Width = 110, DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } });
+        grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Product.Unit), HeaderText = "ĐVT", Width = 70 });
         UiStyle.StyleGrid(grid);
         grid.DataSource = lowStockProducts
             .OrderBy(p => p.StockQuantity - p.MinStock)
