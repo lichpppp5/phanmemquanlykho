@@ -22,6 +22,11 @@ public class SalesService
             throw new InvalidOperationException("Giỏ hàng đang trống.");
         }
 
+        if (isDebt && (string.IsNullOrWhiteSpace(customerName) || customerName.Trim().Equals("Khách lẻ", StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("Đơn hàng ghi nợ bắt buộc phải có đầy đủ Tên khách hàng (không được để trống hoặc 'Khách lẻ').");
+        }
+
         var subtotal = cartItems.Sum(i => i.LineTotal);
         var total = Math.Max(0, subtotal - discountAmount);
 

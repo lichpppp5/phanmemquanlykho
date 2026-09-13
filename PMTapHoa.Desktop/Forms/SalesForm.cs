@@ -613,6 +613,22 @@ public class SalesForm : Form
             int? customerId = null;
             var customerName = _txtCustomer.Text.Trim();
             var customerPhone = _txtCustomerPhone.Text.Trim();
+
+            if (_chkDebt.Checked)
+            {
+                if (string.IsNullOrWhiteSpace(customerName) || customerName.Equals("Khách lẻ", StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show("Đơn hàng ghi nợ bắt buộc phải có đầy đủ Tên khách hàng (không được để trống hoặc 'Khách lẻ').", "Thiếu thông tin khách hàng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    _txtCustomer.Focus();
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(customerPhone) || customerPhone.Length < 8)
+                {
+                    MessageBox.Show("Đơn hàng ghi nợ bắt buộc phải có Số điện thoại khách hàng hợp lệ (tối thiểu 8-10 chữ số) để theo dõi công nợ.", "Thiếu thông tin khách hàng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    _txtCustomerPhone.Focus();
+                    return;
+                }
+            }
             if (!string.IsNullOrWhiteSpace(customerPhone))
             {
                 var existing = _services.CustomerService.GetByPhone(customerPhone);

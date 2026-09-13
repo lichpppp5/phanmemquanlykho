@@ -105,10 +105,23 @@ public class QrDisplayForm : Form
         };
     }
 
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+        var screens = Screen.AllScreens;
+        var target = screens.Length > 1 ? screens[1] : screens[0];
+        Location = target.Bounds.Location;
+        Size = target.Bounds.Size;
+        Bounds = target.Bounds;
+    }
+
     public DialogResult ShowOnBestScreen(IWin32Window? owner = null)
     {
         var screens = Screen.AllScreens;
         var target = screens.Length > 1 ? screens[1] : screens[0];
+        StartPosition = FormStartPosition.Manual;
+        Location = target.Bounds.Location;
+        Size = target.Bounds.Size;
         Bounds = target.Bounds;
 
         var pictureSize = Math.Min(target.Bounds.Width - 120, target.Bounds.Height - 330);
@@ -123,6 +136,7 @@ public class QrDisplayForm : Form
         _btnConfirmed.Location = new Point(centerX - _btnConfirmed.Width - 10, buttonY);
         _btnCancel.Location = new Point(centerX + 10, buttonY);
 
-        return owner == null ? ShowDialog() : ShowDialog(owner);
+        // Khi có màn hình phụ rời, không truyền owner để tránh Windows ép cửa sổ về màn hình chính
+        return (screens.Length > 1 || owner == null) ? ShowDialog() : ShowDialog(owner);
     }
 }

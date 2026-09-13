@@ -50,7 +50,7 @@ public class Esp32DeviceStatus
     public int? Rssi { get; set; } // WiFi signal strength in dBm
     public DateTime LastPingUtc { get; set; } = DateTime.MinValue;
     public string FirmwareVersion { get; set; } = "1.0.0";
-    public string ScreenResolution { get; set; } = "128x160 ST7735";
+    public string ScreenResolution { get; set; } = "240x320 ILI9341 2.8\"";
 }
 
 public class Esp32CustomerDisplayService
@@ -290,34 +290,45 @@ public class Esp32CustomerDisplayService
     }
 
     /// <summary>
-    /// Tạo mã nguồn Arduino .ino hoàn chỉnh dành cho ESP32 + ST7735 1.8" SPI 128x160
-    /// Chế độ WiFi: ESP32 tự kết nối WiFi và poll dữ liệu từ server POS
+    /// Tạo mã nguồn Arduino .ino hoàn chỉnh dành cho ESP32-C3 Super Mini + 2.8" TFT 240x320 ILI9341 SPI
+    /// Chế độ WiFi: ESP32-C3 kết nối WiFi không dây và poll dữ liệu từ máy chủ POS
     /// </summary>
     public string GenerateArduinoCode(string serverIp, string wifiSsid, string wifiPass)
     {
         var storeName = string.IsNullOrWhiteSpace(_config.StoreName) ? "TAP HOA VIET" : _config.StoreName;
 
         return $@"/*
+ * =====================================================================
+ * PHẦN MỀM BÁN HÀNG - MÀN HÌNH PHỤ KHÁCH HÀNG (WIFI KHÔNG DÂY)
+ * PHẦN CỨNG: TENSTAR ROBOT ESP32-C3 SUPER MINI + 2.8"" TFT 240x320 ILI9341
+ * =====================================================================
  *
- * SƠ ĐỒ ĐẤU DÂY (ESP32 -> TFT ST7735 1.8"" 128x160 SPI):
- * --------------------------------------------------------
- *  TFT PIN   | ESP32 GPIO  | GHI CHÚ
- *  ----------+-------------+-----------------------------
- *  VCC       | 3.3V (hoặc 5V nếu board có LDO 3.3V)
- *  GND       | GND
- *  CS        | GPIO 5      | Chip Select
- *  RESET     | GPIO 4      | Reset màn hình
- *  A0 (DC)   | GPIO 2      | Data / Command
- *  SDA (MOSI)| GPIO 23     | Hardware SPI MOSI
- *  SCK (SCLK)| GPIO 18     | Hardware SPI CLK
- *  LED (BLK) | 3.3V        | Đèn nền (Backlight)
- * --------------------------------------------------------
+ * SƠ ĐỒ ĐẤU NỐI DÂY (ESP32-C3 SUPER MINI -> MÀN HÌNH TFT 2.8"" ILI9341 SPI):
+ * ---------------------------------------------------------------------
+ *  TFT 2.8"" PIN  | ESP32-C3 SUPER MINI | GHI CHÚ
+ *  --------------+---------------------+--------------------------------
+ *  VCC           | 5V (hoặc 3.3V)      | Nguồn cấp (màn hình có IC hạ áp U2)
+ *  GND           | G (GND)             | Nguồn âm / Mass
+ *  CS            | GPIO 5              | TFT Chip Select
+ *  RESET (RES)   | GPIO 3              | TFT Reset phần cứng
+ *  DC (RS)       | GPIO 4              | Data / Command
+ *  SDI (MOSI)    | GPIO 7              | Hardware SPI MOSI (ESP32-C3)
+ *  SCK (CLK)     | GPIO 6              | Hardware SPI Clock (ESP32-C3)
+ *  LED (BLK)     | 3.3V                | Đèn nền màn hình (sáng liên tục)
+ *  SDO (MISO)    | Không nối (NC)      | Không bắt buộc với hiển thị QR
+ * ---------------------------------------------------------------------
  *
- * THƯ VIỆN CẦN CÀI TRÊN ARDUINO IDE:
- * 1. Adafruit GFX Library (Adafruit)
- * 2. Adafruit ST7735 and ST7789 Library (Adafruit)
- * 3. ArduinoJson (Benoit Blanchon - bản 6.x hoặc 7.x)
- * 4. QRCode (bởi Richard Moore)
+ * CÀI ĐẶT TRÊN ARDUINO IDE:
+ * 1. Vào Sketch -> Include Library -> Manage Libraries (Ctrl+Shift+I):
+ *    - Adafruit GFX Library (bởi Adafruit)
+ *    - Adafruit ILI9341 (bởi Adafruit)
+ *    - ArduinoJson (Benoit Blanchon - bản 6.x hoặc 7.x)
+ *    - QRCode (bởi Richard Moore) -> gõ ""qrcode"" và bấm Install
+ * 2. Menu Tools trên Arduino IDE:
+ *    - Board: ""ESP32C3 Dev Module"" (hoặc ""AirM2M_CORE_ESP32C3"")
+ *    - Flash Size: ""4MB (32Mb)""
+ *    - USB CDC On Boot: ""Enabled""
+ *    - Upload Speed: ""921600"" hoặc ""460800""
  * =====================================================================
  */
 
@@ -325,7 +336,7 @@ public class Esp32CustomerDisplayService
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <Adafruit_GFX.h>
-#include <Adafruit_ST7735.h>
+#include <Adafruit_ILI9341.h>
 #include <SPI.h>
 #include <qrcode.h>
 
@@ -335,32 +346,49 @@ const char* WIFI_PASSWORD = ""{wifiPass}"";
 const char* SERVER_URL    = ""http://{serverIp}:8888/api/esp32/display"";
 const char* PING_URL      = ""http://{serverIp}:8888/api/esp32/ping"";
 
-// ========== CẤU HÌNH CHÂN SPI TFT ST7735 ==========
+// ========== CẤU HÌNH CHÂN CHO ESP32-C3 SUPER MINI -> TFT 2.8"" ILI9341 ==========
 #define TFT_CS    5
-#define TFT_RST   4
-#define TFT_DC    2
-// MOSI = 23, SCK = 18 (SPI mặc định của ESP32)
+#define TFT_DC    4
+#define TFT_RST   3
+#define TFT_MOSI  7
+#define TFT_SCK   6
 
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
-// Trạng thái hiển thị để tránh chớp màn hình (Flicker)
+// Khai báo trước các hàm (Forward Declarations)
+void showScreenIdle(String store, String msg);
+void showScreenQR(String qrData, String orderCode, String amount);
+void showScreenSuccess(String orderCode, String amount, String bank);
+void showConnectingWiFi();
+void showWiFiError();
+void sendPing();
+void fetchScreenData();
+String cleanAscii(String s);
+void printCenter(String text, int y, int size = 1, uint16_t color = ILI9341_WHITE, int maxWidth = 230, int screenW = 240);
+
+// Trạng thái hiển thị để chống chớp màn hình (Flicker Free)
 String lastState = """";
 String lastOrderCode = """";
 unsigned long lastPingTime = 0;
 
 void setup() {{
   Serial.begin(115200);
-  Serial.println(""\n--- KHOI DONG MAN HINH KHACH HANG ESP32 WiFi ---"");
+  delay(150);
+  Serial.println(""\n--- KHOI DONG MAN HINH KHACH HANG ESP32-C3 TFT 2.8\"" WiFi ---"");
 
-  // Khởi tạo SPI phần cứng ESP32 (MOSI=23, SCK=18)
-  SPI.begin(18, -1, 23, TFT_CS);
+  // Reset cứng màn hình
+  pinMode(TFT_RST, OUTPUT);
+  digitalWrite(TFT_RST, HIGH); delay(10);
+  digitalWrite(TFT_RST, LOW);  delay(20);
+  digitalWrite(TFT_RST, HIGH); delay(150);
 
-  // Khởi tạo màn hình ST7735 1.8 inch (128x160)
-  // LƯU Ý: Hầu hết màn hình TFT 1.8"" ST7735 bán ở VN dùng INITR_BLACKTAB
-  tft.initR(INITR_BLACKTAB); // Thử BLACKTAB - hầu hết module China dùng loại này
-  tft.setRotation(0);        // 0: 128x160 Dọc, 1: 160x128 Ngang
-  tft.fillScreen(ST77XX_BLACK);
-  delay(150); // Chờ màn hình ổn định
+  // Khởi tạo phần cứng SPI cho ESP32-C3 (SCK=6, MOSI=7)
+  SPI.begin(TFT_SCK, -1, TFT_MOSI, TFT_CS);
+
+  // Khởi động ILI9341 với xung nhịp SPI cao 40MHz
+  tft.begin(40000000);
+  tft.setRotation(0); // 0 = Dọc 240x320 (Portrait), đặt bàn quét mã cực đẹp
+  tft.fillScreen(ILI9341_BLACK);
 
   showConnectingWiFi();
 
@@ -398,7 +426,7 @@ void loop() {{
 
   // Lấy dữ liệu hiển thị từ Máy chủ Bán hàng
   fetchScreenData();
-  delay(1200); // Lắng nghe cập nhật mỗi 1.2s
+  delay(1200); // Lắng nghe cập nhật mỗi 1.2 giây
 }}
 
 // ================= GỬI PING BÁO TRẠNG THÁI =================
@@ -406,9 +434,9 @@ void sendPing() {{
   HTTPClient http;
   http.begin(PING_URL);
   http.addHeader(""Content-Type"", ""application/json"");
-  String payload = ""{{\\""ip\\"":\"" "" + WiFi.localIP().toString() +
-                   ""\\"",\\""rssi\\"":"" + String(WiFi.RSSI()) +
-                   "",\\""version\\"":""\\""1.0.0\\""}}"";"";
+  String payload = ""{{\\""ip\\"":\"""" + WiFi.localIP().toString() +
+                   ""\"",\""rssi\"":"" + String(WiFi.RSSI()) +
+                   "",\""version\"":\""1.0.0\""}}"";
   http.POST(payload);
   http.end();
 }}
@@ -431,6 +459,7 @@ void fetchScreenData() {{
       String qrContent = doc[""qrContent""].as<String>();
       String store = doc[""storeName""].as<String>();
       String msg = doc[""message""].as<String>();
+      String bank = doc[""bankName""].as<String>();
 
       // Chỉ vẽ lại màn hình khi có sự thay đổi trạng thái hoặc mã đơn
       if (state != lastState || orderCode != lastOrderCode) {{
@@ -438,9 +467,9 @@ void fetchScreenData() {{
         lastOrderCode = orderCode;
 
         if (state == ""QR"") {{
-          showScreenQR(qrContent); // Full màn hình mã QR
+          showScreenQR(qrContent, orderCode, amount);
         }} else if (state == ""SUCCESS"") {{
-          showScreenSuccess(orderCode, amount);
+          showScreenSuccess(orderCode, amount, bank);
         }} else {{
           showScreenIdle(store, msg);
         }}
@@ -451,146 +480,112 @@ void fetchScreenData() {{
 }}
 
 // ===== HÀM CHỐNG LỖI FONT: CHUYỂN UTF-8 TIẾNG VIỆT SANG ASCII TIÊU CHUẨN =====
-// Hỗ trợ đầy đủ 2-byte (U+00C0..U+017F) và 3-byte (U+1E00..U+1EFF) tiếng Việt
 String cleanAscii(String s) {{
-  String out = "";
+  String out = """";
   int len = s.length();
   for (int i = 0; i < len; i++) {{
     uint8_t c = (uint8_t)s[i];
     if (c < 128) {{
-      // ASCII thuần – giữ nguyên
       out += (char)c;
     }} else if (c == 0xC3) {{
-      // 2-byte UTF-8 U+00C0..U+00FF (Latin Extended)
       i++;
       if (i < len) {{
         uint8_t c2 = (uint8_t)s[i];
         switch (c2) {{
-          // a, à, á, â, ã, ä, å
           case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: out += 'a'; break;
-          // A, À, Á, Â, Ã, Ä, Å
           case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: out += 'A'; break;
-          // e, è, é, ê, ë
           case 0xA8: case 0xA9: case 0xAA: case 0xAB: out += 'e'; break;
-          // E, È, É, Ê, Ë
           case 0x88: case 0x89: case 0x8A: case 0x8B: out += 'E'; break;
-          // i, ì, í, î, ï
           case 0xAC: case 0xAD: case 0xAE: case 0xAF: out += 'i'; break;
-          // I, Ì, Í, Î, Ï
           case 0x8C: case 0x8D: case 0x8E: case 0x8F: out += 'I'; break;
-          // o, ò, ó, ô, õ, ö
           case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: out += 'o'; break;
-          // O, Ò, Ó, Ô, Õ, Ö
           case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: out += 'O'; break;
-          // u, ù, ú, û, ü
           case 0xB9: case 0xBA: case 0xBB: case 0xBC: out += 'u'; break;
-          // U, Ù, Ú, Û, Ü
           case 0x99: case 0x9A: case 0x9B: case 0x9C: out += 'U'; break;
-          // y, ý
           case 0xBD: out += 'y'; break;
-          // Y, Ý
           case 0x9D: out += 'Y'; break;
           default: break;
         }}
       }}
     }} else if (c == 0xC4) {{
-      // 2-byte UTF-8 U+0100..U+017F: Đ/đ và ă/Ă, ơ/Ơ, ư/Ư...
       i++;
       if (i < len) {{
         uint8_t c2 = (uint8_t)s[i];
-        if (c2 == 0x90) out += 'D';       // Đ
-        else if (c2 == 0x91) out += 'd';  // đ
-        else if (c2 == 0x82 || c2 == 0x83) out += 'a';  // Ă/ă
+        if (c2 == 0x90) out += 'D';
+        else if (c2 == 0x91) out += 'd';
+        else if (c2 == 0x82 || c2 == 0x83) out += 'a';
         else out += 'a';
       }}
     }} else if (c == 0xC6) {{
-      // 2-byte UTF-8 Ơ/ơ (0xC6 0xA0/0xA1), Ư/ư (0xC6 0xAF/0xB0)
       i++;
       if (i < len) {{
         uint8_t c2 = (uint8_t)s[i];
-        if (c2 == 0xA0 || c2 == 0xA1) out += 'o';  // Ơ/ơ
-        else if (c2 == 0xAF || c2 == 0xB0) out += 'u';  // Ư/ư
+        if (c2 == 0xA0 || c2 == 0xA1) out += 'o';
+        else if (c2 == 0xAF || c2 == 0xB0) out += 'u';
         else out += '?';
       }}
     }} else if (c == 0xE1) {{
-      // 3-byte UTF-8 U+1E00..U+1EFF (Latin Extended Additional - tiếng Việt có dấu)
-      // Byte pattern: 0xE1 0xB8..0xBF hoặc 0xE1 0xBB..0xBF
       i++;
       if (i + 1 < len) {{
         uint8_t b2 = (uint8_t)s[i];
         uint8_t b3 = (uint8_t)s[i + 1];
         i++;
-        // U+1EA0..U+1EF9 - Bảng chữ có dấu tiếng Việt
         if (b2 == 0xBA) {{
           switch (b3) {{
-            // Ạ=A0, ạ=A1, Ả=A2, ả=A3, Ấ=A4, ấ=A5, Ầ=A6, ầ=A7
             case 0xA0: case 0xA2: case 0xA4: case 0xA6: case 0xA8: case 0xAA: case 0xAC: case 0xAE: out += 'A'; break;
             case 0xA1: case 0xA3: case 0xA5: case 0xA7: case 0xA9: case 0xAB: case 0xAD: case 0xAF: out += 'a'; break;
-            // Ặ=B0..Ắ=B4..Ặ=B6
             case 0xB0: case 0xB2: case 0xB4: case 0xB6: out += 'A'; break;
             case 0xB1: case 0xB3: case 0xB5: case 0xB7: out += 'a'; break;
-            // Ẹ=B8, ẹ=B9, Ẻ=BA, ẻ=BB, Ẽ=BC, ẽ=BD, Ế=BE, ế=BF
             case 0xB8: case 0xBA: case 0xBC: case 0xBE: out += 'E'; break;
             case 0xB9: case 0xBB: case 0xBD: case 0xBF: out += 'e'; break;
             default: out += '?'; break;
           }}
         }} else if (b2 == 0xBB) {{
           switch (b3) {{
-            // Ề=80, ề=81, Ể=82, ể=83, Ễ=84, ễ=85, Ệ=86, ệ=87
             case 0x80: case 0x82: case 0x84: case 0x86: out += 'E'; break;
             case 0x81: case 0x83: case 0x85: case 0x87: out += 'e'; break;
-            // Ỉ=88, ỉ=89, Ị=8A, ị=8B
             case 0x88: case 0x8A: out += 'I'; break;
             case 0x89: case 0x8B: out += 'i'; break;
-            // Ọ=8C, ọ=8D, Ỏ=8E, ỏ=8F, Ố=90, ố=91, Ồ=92, ồ=93
             case 0x8C: case 0x8E: case 0x90: case 0x92: case 0x94: case 0x96: case 0x98: case 0x9A: out += 'O'; break;
             case 0x8D: case 0x8F: case 0x91: case 0x93: case 0x95: case 0x97: case 0x99: case 0x9B: out += 'o'; break;
-            // Ộ=9C, ộ=9D, Ớ=9E, ớ=9F
             case 0x9C: case 0x9E: out += 'O'; break;
             case 0x9D: case 0x9F: out += 'o'; break;
-            // Ờ=A0..Ợ=A6
             case 0xA0: case 0xA2: case 0xA4: case 0xA6: out += 'O'; break;
             case 0xA1: case 0xA3: case 0xA5: case 0xA7: out += 'o'; break;
-            // Ụ=A8, ụ=A9, Ủ=AA, ủ=AB, Ứ=AC, ứ=AD, Ừ=AE, ừ=AF
             case 0xA8: case 0xAA: case 0xAC: case 0xAE: out += 'U'; break;
             case 0xA9: case 0xAB: case 0xAD: case 0xAF: out += 'u'; break;
-            // Ử=B0, ử=B1, Ữ=B2, ữ=B3, Ự=B4, ự=B5
             case 0xB0: case 0xB2: case 0xB4: out += 'U'; break;
             case 0xB1: case 0xB3: case 0xB5: out += 'u'; break;
-            // Ỳ=B6, ỳ=B7, Ỵ=B8, ỵ=B9, Ỷ=BA, ỷ=BB, Ỹ=BC, ỹ=BD
             case 0xB6: case 0xB8: case 0xBA: case 0xBC: out += 'Y'; break;
             case 0xB7: case 0xB9: case 0xBB: case 0xBD: out += 'y'; break;
             default: out += '?'; break;
           }}
-        }} else {{
-          // Các byte khác trong range 0xE1 - bỏ qua
         }}
       }}
-    }} else {{
-      // Byte không xác định - bỏ qua
     }}
   }}
   return out;
 }}
 
-// ===== HÀM CĂN GIỮA VÀ TỰ ĐỘNG CHỐNG TRÀN CHỮ TRÊN MÀN HÌNH 128x160 =====
-void printCenter(String text, int y, int size = 1, uint16_t color = ST77XX_WHITE, int maxWidth = 124) {{
+// ===== HÀM CĂN GIỮA VÀ TỰ ĐỘNG CHỐNG TRÀN CHỮ TRÊN MÀN HÌNH 240x320 =====
+void printCenter(String text, int y, int size = 1, uint16_t color = ILI9341_WHITE, int maxWidth = 230, int screenW = 240) {{
   text = cleanAscii(text);
   text.trim();
   int charW = 6 * size;
   int maxChars = maxWidth / charW;
-  if (text.length() > maxChars) {{
+  if (maxChars < 1) maxChars = 1;
+  if ((int)text.length() > maxChars) {{
     if (size > 1) {{
-      size = 1;
-      charW = 6;
+      size--;
+      charW = 6 * size;
       maxChars = maxWidth / charW;
     }}
-    if (text.length() > maxChars) {{
+    if ((int)text.length() > maxChars && maxChars > 2) {{
       text = text.substring(0, maxChars - 2) + "".."";
     }}
   }}
   int textWidth = text.length() * charW;
-  int x = (128 - textWidth) / 2;
+  int x = (screenW - textWidth) / 2;
   if (x < 2) x = 2;
 
   tft.setTextSize(size);
@@ -601,122 +596,178 @@ void printCenter(String text, int y, int size = 1, uint16_t color = ST77XX_WHITE
 
 // ================= GIAO DIỆN 1: MÀN HÌNH CHỜ (IDLE) =================
 void showScreenIdle(String store, String msg) {{
-  tft.fillScreen(ST77XX_BLACK);
+  tft.fillScreen(ILI9341_BLACK);
 
-  // Thanh tiêu đề màu xanh navy (0x0277)
-  tft.fillRect(0, 0, 128, 28, 0x0277);
-  tft.drawFastHLine(0, 28, 128, 0x041F);
-  printCenter(store, 10, 1, ST77XX_WHITE, 120);
+  // Thanh tiêu đề phía trên (y: 0..46)
+  tft.fillRect(0, 0, 240, 46, 0x0277);
+  tft.drawFastHLine(0, 46, 240, 0x041F);
+  printCenter(store, 14, 2, ILI9341_WHITE, 230, 240);
 
-  // Lời chào trung tâm to rõ
-  printCenter(""XIN CHAO!"", 54, 2, ST77XX_CYAN, 120);
-  printCenter(""Cam on quy khach!"", 86, 1, ST77XX_WHITE, 120);
-  printCenter(""Hen gap lai!"", 102, 1, 0xCE79, 120);
+  // Khung biểu tượng chào mừng ở giữa
+  tft.fillRoundRect(16, 68, 208, 165, 8, 0x10A2);
+  tft.drawRoundRect(16, 68, 208, 165, 8, 0x21E8);
 
-  // Dưới cùng: Tín hiệu kết nối
-  tft.drawFastHLine(10, 136, 108, 0x39E7);
-  printCenter(""WiFi: ONLINE"", 144, 1, ST77XX_GREEN, 120);
+  printCenter(""XIN CHAO!"", 92, 3, ILI9341_CYAN, 196, 240);
+  printCenter(""Cam on quy khach da ghe tham!"", 132, 1, ILI9341_WHITE, 196, 240);
+  printCenter(""San sang thanh toan VietQR"", 152, 1, 0xCE79, 196, 240);
+  printCenter(""Hen gap lai quy khach!"", 182, 1, ILI9341_GREENYELLOW, 196, 240);
+
+  // Dưới cùng: Báo kết nối WiFi
+  tft.drawFastHLine(16, 260, 208, 0x39E7);
+  printCenter(""WiFi: "" + WiFi.localIP().toString(), 275, 1, ILI9341_GREEN, 230, 240);
+  printCenter(""ESP32-C3 + 2.8\"" TFT 240x320"", 295, 1, 0x7BEF, 230, 240);
 }}
 
-// ================= GIAO DIỆN 2: MÃ VIETQR FULL MÀN HÌNH =================
-// Bỏ hết chữ, logo, thông tin tài khoản - chỉ hiển thị mã QR to nhất có thể
-void showScreenQR(String qrData) {{
-  drawQRCodeFullScreen(qrData);
+// ================= GIAO DIỆN 2: MÃ VIETQR SẮC NÉT KÈM SỐ TIỀN =================
+// Tính toán version QR nhỏ nhất tương ứng với độ dài chuỗi (tránh tràn buffer gây crash ESP32)
+int getMinQrVersion(int len) {{
+  if (len <= 17) return 1;
+  if (len <= 32) return 2;
+  if (len <= 53) return 3;
+  if (len <= 78) return 4;
+  if (len <= 106) return 5;
+  if (len <= 134) return 6;
+  if (len <= 154) return 7;
+  if (len <= 192) return 8;
+  if (len <= 230) return 9;
+  if (len <= 271) return 10;
+  return -1;
 }}
 
-// ================= GIAO DIỆN 3: BÁO THÀNH CÔNG (SUCCESS) =================
-void showScreenSuccess(String orderCode, String amount) {{
-  tft.fillScreen(0x04A0); // Nền xanh lá đậm dịu mắt
+#define QR_BUF_SIZE 1024
+static uint8_t qrcodeData[QR_BUF_SIZE];
+static QRCode qrcode;
 
-  // Thanh tiêu đề thông báo
-  tft.fillRect(0, 0, 128, 32, 0x0360);
-  printCenter(""DA NHAN TIEN!"", 10, 1, ST77XX_YELLOW, 120);
+void showScreenQR(String qrData, String orderCode, String amount) {{
+  qrData.trim();
+  if (qrData.length() == 0) return;
 
-  // Hộp chi tiết hoá đơn
-  tft.fillRoundRect(8, 42, 112, 58, 4, ST77XX_BLACK);
-  tft.drawRoundRect(8, 42, 112, 58, 4, ST77XX_WHITE);
-
-  printCenter(orderCode, 52, 1, ST77XX_CYAN, 106);
-  printCenter(amount, 74, 1, ST77XX_YELLOW, 106);
-
-  printCenter(""Cam on quy khach!"", 116, 1, ST77XX_WHITE, 120);
-  printCenter(""HEN GAP LAI"", 134, 1, 0x07E0, 120);
-}}
-
-// ================= MÀN HÌNH KẾT NỐI WIFI =================
-void showConnectingWiFi() {{
-  tft.fillScreen(ST77XX_BLACK);
-  tft.setTextColor(ST77XX_WHITE);
-  tft.setTextSize(1);
-  tft.setCursor(10, 50);
-  tft.println(""DANG KET NOI WIFI..."");
-  tft.setCursor(10, 70);
-  tft.setTextColor(ST77XX_YELLOW);
-  tft.println(WIFI_SSID);
-}}
-
-// ================= MÀN HÌNH LỖI WIFI =================
-void showWiFiError() {{
-  tft.fillScreen(ST77XX_RED);
-  tft.setTextColor(ST77XX_WHITE);
-  tft.setTextSize(1);
-  tft.setCursor(15, 60);
-  tft.println(""LOI KET NOI WIFI"");
-  tft.setCursor(10, 80);
-  tft.println(""Kiem tra lai Pass!"");
-}}
-
-// Callback hiển thị mã QR lên màn hình TFT 1.8 ST7735 bằng thư viện ESP32 gốc (Native)
-// ===== HÀM VẼ MÃ QR TOÀN MÀN HÌNH TFT 1.8 (128x160) - KHÔNG CÓ VIỀN / CHỮ =====
-void drawQRCodeFullScreen(String text) {{
-  text.trim();
-  if (text.length() == 0) return;
-
-  QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(4)];
-  int version = 4;
-  int err = qrcode_initText(&qrcode, qrcodeData, version, ECC_LOW, text.c_str());
-  if (err != 0) {{
-    version = 6;
-    uint8_t qrcodeData6[qrcode_getBufferSize(6)];
-    err = qrcode_initText(&qrcode, qrcodeData6, version, ECC_LOW, text.c_str());
-    if (err != 0) {{
-      tft.fillScreen(ST77XX_BLACK);
-      tft.setTextColor(ST77XX_RED);
-      tft.setTextSize(1);
-      tft.setCursor(10, 60);
-      tft.println(""LOI SINH MA QR!"");
-      return;
-    }}
+  int minVer = getMinQrVersion(qrData.length());
+  if (minVer < 0 || minVer > 10) {{
+    tft.fillScreen(ILI9341_BLACK);
+    printCenter(""LOI: QR DATA QUA DAI!"", 130, 2, ILI9341_RED, 230, 240);
+    printCenter(""Do dai: "" + String(qrData.length()), 160, 1, ILI9341_WHITE, 230, 240);
+    return;
   }}
 
-  int size = qrcode.size;
-  int scale = 124 / size;
+  int8_t err = -1;
+  int version = minVer;
+  while (err != 0 && version <= 10) {{
+    uint16_t needed = qrcode_getBufferSize(version);
+    if (needed > QR_BUF_SIZE) break;
+    err = qrcode_initText(&qrcode, qrcodeData, version, ECC_LOW, qrData.c_str());
+    if (err != 0) version++;
+  }}
+
+  if (err != 0) {{
+    tft.fillScreen(ILI9341_BLACK);
+    printCenter(""LOI SINH MA QR!"", 130, 2, ILI9341_RED, 230, 240);
+    printCenter(""Thu lai hoac kiem tra"", 160, 1, ILI9341_WHITE, 230, 240);
+    printCenter(""cai dat ngan hang."", 175, 1, ILI9341_WHITE, 230, 240);
+    return;
+  }}
+
+  tft.fillScreen(ILI9341_BLACK);
+
+  // 1. Thanh tiêu đề phía trên: Mã đơn hàng (y: 0..38)
+  tft.fillRect(0, 0, 240, 38, 0x0277);
+  tft.drawFastHLine(0, 38, 240, 0x041F);
+  String headerText = ""QUET VIETQR"";
+  if (orderCode.length() > 0) {{
+    headerText = ""DON: "" + orderCode;
+  }}
+  printCenter(headerText, 11, 2, ILI9341_WHITE, 230, 240);
+
+  // 2. Vẽ mã QR to ở trung tâm
+  int qrSize = qrcode.size;
+  int scale = 196 / qrSize;
   if (scale < 1) scale = 1;
+  if (scale > 4) scale = 4;
+  int qrPixelSize = qrSize * scale;
+  int startX = (240 - qrPixelSize) / 2;
+  int startY = 44 + (196 - qrPixelSize) / 2;
 
-  int qrPixelSize = size * scale;
-  int startX = (128 - qrPixelSize) / 2;
-  int startY = (160 - qrPixelSize) / 2;
+  // Khung nền trắng tương phản cao để quét siêu nhạy
+  int pad = 5;
+  tft.fillRoundRect(startX - pad, startY - pad, qrPixelSize + pad * 2, qrPixelSize + pad * 2, 4, ILI9341_WHITE);
 
-  tft.fillScreen(ST77XX_WHITE);
-
+  // Vẽ từng module QR
   for (uint8_t y = 0; y < qrcode.size; y++) {{
     for (uint8_t x = 0; x < qrcode.size; x++) {{
       if (qrcode_getModule(&qrcode, x, y)) {{
         tft.fillRect(startX + (x * scale),
                      startY + (y * scale),
-                     scale, scale, ST77XX_BLACK);
+                     scale, scale, ILI9341_BLACK);
       }}
     }}
   }}
+
+  // 3. Khung số tiền thanh toán phía dưới (y: 248..320)
+  tft.fillRect(0, 248, 240, 72, 0x0A20);
+  tft.drawFastHLine(0, 248, 240, 0x21E8);
+
+  if (amount.length() > 0 && amount != ""0 VND"") {{
+    printCenter(""SO TIEN THANH TOAN:"", 253, 1, 0xCE79, 230, 240);
+    printCenter(amount, 268, 2, ILI9341_YELLOW, 230, 240);
+  }} else {{
+    printCenter(""QUET MA DE THANH TOAN"", 264, 2, ILI9341_YELLOW, 230, 240);
+  }}
+  printCenter(""App Ngan hang / Vi dien tu"", 298, 1, ILI9341_WHITE, 230, 240);
+}}
+
+// ================= GIAO DIỆN 3: BÁO THÀNH CÔNG (SUCCESS) =================
+void showScreenSuccess(String orderCode, String amount, String bank) {{
+  tft.fillScreen(0x04A0); // Nền xanh lá đậm dịu mắt
+
+  // Thanh tiêu đề thông báo
+  tft.fillRect(0, 0, 240, 44, 0x0360);
+  tft.drawFastHLine(0, 44, 240, 0x05E5);
+  printCenter(""DA NHAN TIEN!"", 12, 2, ILI9341_YELLOW, 230, 240);
+
+  // Biểu tượng tích [V]
+  tft.fillCircle(120, 80, 24, ILI9341_WHITE);
+  tft.drawCircle(120, 80, 24, ILI9341_YELLOW);
+  tft.setTextSize(3);
+  tft.setTextColor(0x04A0);
+  tft.setCursor(111, 70);
+  tft.println(""V"");
+
+  // Hộp chi tiết hoá đơn
+  tft.fillRoundRect(14, 115, 212, 115, 8, ILI9341_BLACK);
+  tft.drawRoundRect(14, 115, 212, 115, 8, ILI9341_WHITE);
+
+  if (orderCode.length() > 0) {{
+    printCenter(""Ma don: "" + orderCode, 128, 2, ILI9341_CYAN, 200, 240);
+  }}
+  printCenter(amount, 158, 3, ILI9341_YELLOW, 200, 240);
+  if (bank.length() > 0) {{
+    printCenter(""Nhan qua: "" + bank, 198, 1, 0xCE79, 200, 240);
+  }}
+
+  printCenter(""Cam on quy khach da mua hang!"", 252, 1, ILI9341_WHITE, 230, 240);
+  printCenter(""HEN GAP LAI QUY KHACH!"", 278, 2, ILI9341_GREENYELLOW, 230, 240);
+}}
+
+// ================= MÀN HÌNH KẾT NỐI WIFI =================
+void showConnectingWiFi() {{
+  tft.fillScreen(ILI9341_BLACK);
+  printCenter(""DANG KET NOI WIFI..."", 120, 2, ILI9341_WHITE, 230, 240);
+  printCenter(WIFI_SSID, 155, 2, ILI9341_YELLOW, 230, 240);
+}}
+
+// ================= MÀN HÌNH LỖI WIFI =================
+void showWiFiError() {{
+  tft.fillScreen(ILI9341_RED);
+  printCenter(""LOI KET NOI WIFI!"", 120, 2, ILI9341_WHITE, 230, 240);
+  printCenter(""Kiem tra lai mat khau / song"", 155, 1, ILI9341_YELLOW, 230, 240);
 }}
 ";
     }
 
     /// <summary>
-    /// Tạo mã nguồn Arduino .ino kết nối TRỰC TIẾP QUA CỔNG USB SERIAL
-    /// Không dùng WiFi - cực kỳ ổn định, cấp nguồn qua USB
-    /// Màn hình QR hiển thị full screen không có chữ
+    /// Tạo mã nguồn Arduino .ino kết nối TRỰC TIẾP QUA CỔNG USB TYPE-C
+    /// Không dùng WiFi - cực kỳ ổn định, máy tính tự cấp nguồn qua cổng USB
+    /// Hỗ trợ hoàn hảo ESP32-C3 Super Mini + Màn hình 2.8" TFT 240x320 ILI9341
     /// </summary>
     public string GenerateArduinoUsbCode()
     {
@@ -724,80 +775,105 @@ void drawQRCodeFullScreen(String text) {{
 
         return $@"/*
  * =====================================================================
- * PHẦN MỀM TẠP HOÁ VIỆT - MÀN HÌNH PHỤ KHÁCH HÀNG (USB CẮM TRỰC TIẾP)
- * KẾT NỐI: CỔNG USB MÁY TÍNH (CẤP NGUỒN + TRUYỀN TÍN HIỆU SERIAL 115200)
- * KHÔNG DÙNG WIFI -> KHÔNG LO RỚT MẠNG, ĐỘ TRỄ 0 GIÂY, CỰC KỲ ỔN ĐỊNH
+ * PHẦN MỀM BÁN HÀNG - MÀN HÌNH PHỤ KHÁCH HÀNG (CÁP USB CẮM TRỰC TIẾP)
+ * KẾT NỐI: CỔNG TYPE-C USB MÁY TÍNH THU NGÂN (CẤP NGUỒN + TRUYỀN DỮ LIỆU)
+ * KHÔNG CẦN WIFI - KHÔNG SỢ RỚT MẠNG - ĐỘ TRỄ 0 GIÂY - CẮM LÀ CHẠY NGAY
+ * PHẦN CỨNG: TENSTAR ROBOT ESP32-C3 SUPER MINI + 2.8"" TFT SPI 240x320 ILI9341
  * =====================================================================
  *
- * SƠ ĐỒ ĐẤU DÂY (ESP32 30 PIN -> TFT 1.8"" 128x160 SPI ST7735):
+ * SƠ ĐỒ ĐẤU NỐI DÂY (ESP32-C3 SUPER MINI -> MÀN HÌNH TFT 2.8"" ILI9341 SPI):
  * ---------------------------------------------------------------------
- *  TFT PIN   | ESP32 GPIO  | GHI CHÚ
- *  ----------+-------------+------------------------------------------
- *  VCC       | 3.3V (hoặc 5V / VIN nếu board có IC hạ áp 3.3V)
- *  GND       | GND
- *  CS        | GPIO 5      | Chip Select
- *  RESET     | GPIO 4      | Reset màn hình
- *  A0 (DC)   | GPIO 2      | Data / Command
- *  SDA (MOSI)| GPIO 23     | Hardware SPI MOSI
- *  SCK (SCLK)| GPIO 18     | Hardware SPI Clock
- *  LED (BLK) | 3.3V        | Đèn nền màn hình (Backlight)
+ *  TFT 2.8"" PIN  | ESP32-C3 SUPER MINI | GHI CHÚ
+ *  --------------+---------------------+--------------------------------
+ *  VCC           | 5V (hoặc 3.3V)      | Nguồn cấp (màn hình có IC hạ áp U2)
+ *  GND           | G (GND)             | Nguồn âm / Mass
+ *  CS            | GPIO 5              | TFT Chip Select
+ *  RESET (RES)   | GPIO 3              | TFT Reset phần cứng
+ *  DC (RS)       | GPIO 4              | Data / Command
+ *  SDI (MOSI)    | GPIO 7              | Hardware SPI MOSI của ESP32-C3
+ *  SCK (CLK)     | GPIO 6              | Hardware SPI Clock của ESP32-C3
+ *  LED (BLK)     | 3.3V                | Đèn nền màn hình (sáng liên tục)
+ *  SDO (MISO)    | Không nối (NC)      | Không bắt buộc với hiển thị QR
  * ---------------------------------------------------------------------
  *
- * THƯ VIỆN CẦN CÀI TRÊN ARDUINO IDE (Vào Sketch -> Include Library -> Manage Libraries):
- * 1. Adafruit GFX Library (bởi Adafruit)
- * 2. Adafruit ST7735 and ST7789 Library (bởi Adafruit)
- * 3. QRCode (bởi Richard Moore) -> gõ ""qrcode"" trong Manage Libraries và cài đặt
+ * CÀI ĐẶT TRÊN ARDUINO IDE (RẤT QUAN TRỌNG VỚI ESP32-C3 SUPER MINI):
+ * 1. Vào Sketch -> Include Library -> Manage Libraries (Ctrl+Shift+I):
+ *    - Adafruit GFX Library (bởi Adafruit)
+ *    - Adafruit ILI9341 (bởi Adafruit)
+ *    - QRCode (bởi Richard Moore) -> gõ ""qrcode"" và bấm Install
+ * 2. Menu Tools trên Arduino IDE:
+ *    - Board: ""ESP32C3 Dev Module"" (hoặc ""AirM2M_CORE_ESP32C3"")
+ *    - USB CDC On Boot: ""Enabled""  <--- BẮT BUỘC BẬT DÒNG NÀY ĐỂ GIAO TIẾP QUA CỔNG TYPE-C!
+ *    - Flash Size: ""4MB (32Mb)""
+ *    - Upload Speed: ""921600"" hoặc ""460800""
  * =====================================================================
  */
 
 #include <Adafruit_GFX.h>
-#include <Adafruit_ST7735.h>
+#include <Adafruit_ILI9341.h>
 #include <SPI.h>
 #include <qrcode.h>
 
-// ========== CẤU HÌNH CHÂN SPI TFT ST7735 ==========
+// ========== CẤU HÌNH CHÂN CHO ESP32-C3 SUPER MINI -> TFT 2.8"" ILI9341 ==========
 #define TFT_CS    5
-#define TFT_RST   4
-#define TFT_DC    2
-// MOSI = GPIO 23, SCK = GPIO 18 (Hardware SPI mặc định của ESP32)
+#define TFT_DC    4
+#define TFT_RST   3
+#define TFT_MOSI  7
+#define TFT_SCK   6
 
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+
+// Khai báo trước các hàm (Forward Declarations)
+void showScreenIdle(String store, String msg);
+void showScreenQR(String qrData, String orderCode, String amount);
+void showScreenSuccess(String orderCode, String amount, String bank);
+void processUsbCommand(String cmdLine);
+String cleanAscii(String s);
+void printCenter(String text, int y, int size = 1, uint16_t color = ILI9341_WHITE, int maxWidth = 230, int screenW = 240);
 
 void setup() {{
   // Khởi động cổng Serial USB tốc độ cao 115200 baud
   Serial.begin(115200);
-  Serial.setTimeout(50); // Timeout đọc ngắn để phản hồi tức thì
+  Serial.setTimeout(50);
+  delay(200); // Chờ USB CDC ổn định
 
-  // Reset cứng màn hình trước khi init (sửa lỗi màn hình trắng)
+  // Reset cứng màn hình trước khi khởi tạo
   pinMode(TFT_RST, OUTPUT);
   digitalWrite(TFT_RST, HIGH); delay(10);
   digitalWrite(TFT_RST, LOW);  delay(20);
   digitalWrite(TFT_RST, HIGH); delay(150);
 
-  // Khởi tạo SPI phần cứng ESP32 (MOSI=23, SCK=18)
-  SPI.begin(18, -1, 23, TFT_CS);
+  // Khởi tạo phần cứng SPI cho ESP32-C3 (SCK=6, MOSI=7)
+  SPI.begin(TFT_SCK, -1, TFT_MOSI, TFT_CS);
 
-  // Khởi tạo màn hình ST7735 1.8"" inch 128x160
-  // Nếu màn hình có viền xanh lá -> dùng INITR_GREENTAB
-  // Nếu màn hình có viền đen -> dùng INITR_BLACKTAB
-  tft.initR(INITR_GREENTAB);  // << Viền xanh lá dùng dòng này
-  // tft.initR(INITR_BLACKTAB); // << Nếu sai thì bỏ comment dòng này, comment dòng trên
-  tft.setRotation(1);         // 1 = 160x128 Ngang
-  tft.fillScreen(ST77XX_BLACK);
-  delay(200);
+  // Khởi động ILI9341 với xung nhịp SPI cao 40MHz
+  tft.begin(40000000);
+  tft.setRotation(0); // 0 = Dọc 240x320 (Portrait)
+  tft.fillScreen(ILI9341_BLACK);
+  delay(150);
 
   // Hiển thị màn hình chờ ban đầu
   showScreenIdle(""{storeName}"", ""Xin chao quy khach!"");
-  Serial.println(""READY|ESP32_CUSTOMER_DISPLAY_USB_OK"");
+  Serial.println(""READY|ESP32_C3_CUSTOMER_DISPLAY_USB_OK"");
 }}
 
+// Buffer tích lũy lệnh USB từng ký tự — tránh bị cắt cụt khi dữ liệu dài qua USB CDC
+String _usbInputBuffer = """";
+
 void loop() {{
-  // Đọc lệnh gửi từ máy tính thu ngân qua cáp USB
-  if (Serial.available() > 0) {{
-    String line = Serial.readStringUntil('\n');
-    line.trim();
-    if (line.length() > 0) {{
-      processUsbCommand(line);
+  while (Serial.available() > 0) {{
+    char c = (char)Serial.read();
+    if (c == '\n') {{
+      _usbInputBuffer.trim();
+      if (_usbInputBuffer.length() > 0) {{
+        processUsbCommand(_usbInputBuffer);
+        _usbInputBuffer = """";
+      }}
+    }} else if (c != '\r') {{
+      _usbInputBuffer += c;
+      if (_usbInputBuffer.length() > 512) {{
+        _usbInputBuffer = """";
+      }}
     }}
   }}
 }}
@@ -808,7 +884,7 @@ void processUsbCommand(String cmdLine) {{
   if (cmdLine.length() == 0) return;
 
   if (cmdLine == ""PING"") {{
-    Serial.println(""PONG|ESP32_TFT18|USB_ONLINE"");
+    Serial.println(""PONG|ESP32_C3_TFT28|USB_ONLINE"");
     return;
   }}
 
@@ -821,24 +897,37 @@ void processUsbCommand(String cmdLine) {{
   if (action == ""QR"") {{
     // Cú pháp hỗ trợ linh hoạt:
     // 1) QR|chuoi_vietqr_emvco
-    // 2) QR|HD000099|250.000 đ|chuoi_vietqr_emvco
+    // 2) QR|HD000099|250.000 VND|chuoi_vietqr_emvco
+    String orderCode = """";
+    String amount = """";
     String qrData = rest;
-    int lastPipe = rest.lastIndexOf('|');
-    if (lastPipe != -1 && (rest.length() - lastPipe) > 20) {{
-      qrData = rest.substring(lastPipe + 1);
+
+    int secondPipe = rest.indexOf('|');
+    if (secondPipe != -1) {{
+      orderCode = rest.substring(0, secondPipe);
+      String rest2 = rest.substring(secondPipe + 1);
+      int thirdPipe = rest2.indexOf('|');
+      if (thirdPipe != -1) {{
+        amount = rest2.substring(0, thirdPipe);
+        qrData = rest2.substring(thirdPipe + 1);
+      }} else {{
+        qrData = rest2;
+      }}
     }}
-    showScreenQR(qrData); // Full màn hình, không có chữ
+
+    showScreenQR(qrData, orderCode, amount);
     Serial.println(""ACK|QR_SHOWN"");
   }}
   else if (action == ""SUCCESS"") {{
-    // Cú pháp: SUCCESS|HD000099|250.000 đ|MBBank
+    // Cú pháp: SUCCESS|HD000099|250.000 VND|MBBank
     int secondPipe = rest.indexOf('|');
     if (secondPipe != -1) {{
       String orderCode = rest.substring(0, secondPipe);
       String rest2 = rest.substring(secondPipe + 1);
       int thirdPipe = rest2.indexOf('|');
       String amount = (thirdPipe != -1) ? rest2.substring(0, thirdPipe) : rest2;
-      showScreenSuccess(orderCode, amount);
+      String bank = (thirdPipe != -1) ? rest2.substring(thirdPipe + 1) : """";
+      showScreenSuccess(orderCode, amount, bank);
       Serial.println(""ACK|SUCCESS_SHOWN|"" + orderCode);
     }}
   }}
@@ -968,95 +1057,156 @@ void printCenter(String text, int y, int size = 1, uint16_t color = ST77XX_WHITE
 
 // ================= GIAO DIỆN 1: MÀN HÌNH CHỜ (IDLE) =================
 void showScreenIdle(String store, String msg) {{
-  tft.fillScreen(ST77XX_BLACK);
+  tft.fillScreen(ILI9341_BLACK);
 
-  // Thanh tiêu đề màu xanh navy (0x0277)
-  tft.fillRect(0, 0, 128, 28, 0x0277);
-  tft.drawFastHLine(0, 28, 128, 0x041F);
-  printCenter(store, 10, 1, ST77XX_WHITE, 150, 160);
+  // Thanh tiêu đề phía trên (y: 0..46)
+  tft.fillRect(0, 0, 240, 46, 0x0277);
+  tft.drawFastHLine(0, 46, 240, 0x041F);
+  printCenter(store, 14, 2, ILI9341_WHITE, 230, 240);
 
-  // Lời chào trung tâm to rõ (rotation=1: 160x128 ngang)
-  printCenter(""XIN CHAO!"", 44, 2, ST77XX_CYAN, 150, 160);
-  printCenter(""Cam on quy khach!"", 76, 1, ST77XX_WHITE, 150, 160);
-  printCenter(""Hen gap lai!"", 90, 1, 0xCE79, 150, 160);
+  // Khung biểu tượng chào mừng ở giữa
+  tft.fillRoundRect(16, 68, 208, 165, 8, 0x10A2);
+  tft.drawRoundRect(16, 68, 208, 165, 8, 0x21E8);
+
+  printCenter(""XIN CHAO!"", 92, 3, ILI9341_CYAN, 196, 240);
+  printCenter(""Cam on quy khach da ghe tham!"", 132, 1, ILI9341_WHITE, 196, 240);
+  printCenter(""San sang thanh toan VietQR"", 152, 1, 0xCE79, 196, 240);
+  printCenter(""Hen gap lai quy khach!"", 182, 1, ILI9341_GREENYELLOW, 196, 240);
 
   // Dưới cùng: Báo kết nối USB ổn định
-  tft.drawFastHLine(10, 110, 140, 0x39E7);
-  printCenter(""USB: 115200 BAUD"", 116, 1, ST77XX_GREEN, 150, 160);
+  tft.drawFastHLine(16, 260, 208, 0x39E7);
+  printCenter(""KET NOI: USB SERIAL 115200 BAUD"", 275, 1, ILI9341_GREEN, 230, 240);
+  printCenter(""ESP32-C3 + 2.8\"" TFT 240x320"", 295, 1, 0x7BEF, 230, 240);
 }}
 
-// ===== GIAO DIỆN 2: MÃ VIETQR FULL MÀN HÌNH - KHÔNG CÓ CHỮ / LOGO =====
-// Toàn bộ màn hình dành cho mã QR để khách dễ quét
-void showScreenQR(String qrData) {{
-  drawQRCodeFullScreen(qrData);
+// ================= GIAO DIỆN 2: MÃ VIETQR SẮC NÉT KÈM SỐ TIỀN =================
+// Tính toán version QR nhỏ nhất tương ứng với độ dài chuỗi (tránh tràn buffer gây crash ESP32)
+int getMinQrVersion(int len) {{
+  if (len <= 17) return 1;
+  if (len <= 32) return 2;
+  if (len <= 53) return 3;
+  if (len <= 78) return 4;
+  if (len <= 106) return 5;
+  if (len <= 134) return 6;
+  if (len <= 154) return 7;
+  if (len <= 192) return 8;
+  if (len <= 230) return 9;
+  if (len <= 271) return 10;
+  return -1;
 }}
 
-// ================= GIAO DIỆN 3: BÁO THÀNH CÔNG (SUCCESS) =================
-void showScreenSuccess(String orderCode, String amount) {{
-  tft.fillScreen(0x04A0); // Nền xanh lá đậm dịu mắt
+#define QR_BUF_SIZE 1024
+static uint8_t qrcodeData[QR_BUF_SIZE];
+static QRCode qrcode;
 
-  // Thanh tiêu đề thông báo (160x128 ngang)
-  tft.fillRect(0, 0, 160, 28, 0x0360);
-  printCenter(""DA NHAN TIEN!"", 8, 1, ST77XX_YELLOW, 150, 160);
+void showScreenQR(String qrData, String orderCode, String amount) {{
+  qrData.trim();
+  if (qrData.length() == 0) return;
 
-  // Hộp chi tiết hoá đơn
-  tft.fillRoundRect(10, 36, 140, 52, 4, ST77XX_BLACK);
-  tft.drawRoundRect(10, 36, 140, 52, 4, ST77XX_WHITE);
-
-  printCenter(orderCode, 44, 1, ST77XX_CYAN, 134, 160);
-  printCenter(amount, 64, 1, ST77XX_YELLOW, 134, 160);
-
-  printCenter(""Cam on quy khach!"", 96, 1, ST77XX_WHITE, 150, 160);
-  printCenter(""HEN GAP LAI"", 112, 1, 0x07E0, 150, 160);
-}}
-
-// ================= GIAO DIỆN 2: MÃ VIETQR FULL MÀN HÌNH =================
-// Dùng thư viện QRCode tiêu chuẩn (bởi Richard Moore / ricmoo)
-void drawQRCodeFullScreen(String text) {{
-  text.trim();
-  if (text.length() == 0) return;
-
-  // Phiên bản 3 (29x29 module) đủ chứa mã VietQR, độ phóng đại scale=4 (116x116px) vừa khít màn hình 128px
-  QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(4)];
-  int version = 4;
-  int err = qrcode_initText(&qrcode, qrcodeData, version, ECC_LOW, text.c_str());
-  if (err != 0) {{
-    // Nếu quá dài, thử phiên bản 6
-    version = 6;
-    uint8_t qrcodeData6[qrcode_getBufferSize(6)];
-    err = qrcode_initText(&qrcode, qrcodeData6, version, ECC_LOW, text.c_str());
-    if (err != 0) {{
-      tft.fillScreen(ST77XX_BLACK);
-      tft.setTextColor(ST77XX_RED);
-      tft.setTextSize(1);
-      tft.setCursor(10, 60);
-      tft.println(""LOI SINH MA QR!"");
-      return;
-    }}
+  int minVer = getMinQrVersion(qrData.length());
+  if (minVer < 0 || minVer > 10) {{
+    tft.fillScreen(ILI9341_BLACK);
+    printCenter(""LOI: QR DATA QUA DAI!"", 130, 2, ILI9341_RED, 230, 240);
+    printCenter(""Do dai: "" + String(qrData.length()), 160, 1, ILI9341_WHITE, 230, 240);
+    return;
   }}
 
-  int size = qrcode.size;
-  int scale = 124 / size;
+  int8_t err = -1;
+  int version = minVer;
+  while (err != 0 && version <= 10) {{
+    uint16_t needed = qrcode_getBufferSize(version);
+    if (needed > QR_BUF_SIZE) break;
+    err = qrcode_initText(&qrcode, qrcodeData, version, ECC_LOW, qrData.c_str());
+    if (err != 0) version++;
+  }}
+
+  if (err != 0) {{
+    tft.fillScreen(ILI9341_BLACK);
+    printCenter(""LOI SINH MA QR!"", 130, 2, ILI9341_RED, 230, 240);
+    printCenter(""Thu lai hoac kiem tra"", 160, 1, ILI9341_WHITE, 230, 240);
+    printCenter(""cai dat ngan hang."", 175, 1, ILI9341_WHITE, 230, 240);
+    return;
+  }}
+
+  tft.fillScreen(ILI9341_BLACK);
+
+  // 1. Thanh tiêu đề phía trên: Mã đơn hàng (y: 0..38)
+  tft.fillRect(0, 0, 240, 38, 0x0277);
+  tft.drawFastHLine(0, 38, 240, 0x041F);
+  String headerText = ""QUET VIETQR"";
+  if (orderCode.length() > 0) {{
+    headerText = ""DON: "" + orderCode;
+  }}
+  printCenter(headerText, 11, 2, ILI9341_WHITE, 230, 240);
+
+  // 2. Vẽ mã QR to ở trung tâm
+  int qrSize = qrcode.size;
+  int scale = 196 / qrSize;
   if (scale < 1) scale = 1;
+  if (scale > 4) scale = 4;
+  int qrPixelSize = qrSize * scale;
+  int startX = (240 - qrPixelSize) / 2;
+  int startY = 44 + (196 - qrPixelSize) / 2;
 
-  int qrPixelSize = size * scale;
-  int startX = (160 - qrPixelSize) / 2;
-  int startY = (128 - qrPixelSize) / 2;
+  // Khung nền trắng tương phản cao để quét siêu nhạy
+  int pad = 5;
+  tft.fillRoundRect(startX - pad, startY - pad, qrPixelSize + pad * 2, qrPixelSize + pad * 2, 4, ILI9341_WHITE);
 
-  // Xoá màn hình thành màu trắng
-  tft.fillScreen(ST77XX_WHITE);
-
-  // Vẽ từng module QR lên màn hình TFT ST7735
+  // Vẽ từng module QR
   for (uint8_t y = 0; y < qrcode.size; y++) {{
     for (uint8_t x = 0; x < qrcode.size; x++) {{
       if (qrcode_getModule(&qrcode, x, y)) {{
         tft.fillRect(startX + (x * scale),
                      startY + (y * scale),
-                     scale, scale, ST77XX_BLACK);
+                     scale, scale, ILI9341_BLACK);
       }}
     }}
   }}
+
+  // 3. Khung số tiền thanh toán phía dưới (y: 248..320)
+  tft.fillRect(0, 248, 240, 72, 0x0A20);
+  tft.drawFastHLine(0, 248, 240, 0x21E8);
+
+  if (amount.length() > 0 && amount != ""0 VND"") {{
+    printCenter(""SO TIEN THANH TOAN:"", 253, 1, 0xCE79, 230, 240);
+    printCenter(amount, 268, 2, ILI9341_YELLOW, 230, 240);
+  }} else {{
+    printCenter(""QUET MA DE THANH TOAN"", 264, 2, ILI9341_YELLOW, 230, 240);
+  }}
+  printCenter(""App Ngan hang / Vi dien tu"", 298, 1, ILI9341_WHITE, 230, 240);
+}}
+
+// ================= GIAO DIỆN 3: BÁO THÀNH CÔNG (SUCCESS) =================
+void showScreenSuccess(String orderCode, String amount, String bank) {{
+  tft.fillScreen(0x04A0); // Nền xanh lá đậm dịu mắt
+
+  // Thanh tiêu đề thông báo
+  tft.fillRect(0, 0, 240, 44, 0x0360);
+  tft.drawFastHLine(0, 44, 240, 0x05E5);
+  printCenter(""DA NHAN TIEN!"", 12, 2, ILI9341_YELLOW, 230, 240);
+
+  // Biểu tượng tích [V]
+  tft.fillCircle(120, 80, 24, ILI9341_WHITE);
+  tft.drawCircle(120, 80, 24, ILI9341_YELLOW);
+  tft.setTextSize(3);
+  tft.setTextColor(0x04A0);
+  tft.setCursor(111, 70);
+  tft.println(""V"");
+
+  // Hộp chi tiết hoá đơn
+  tft.fillRoundRect(14, 115, 212, 115, 8, ILI9341_BLACK);
+  tft.drawRoundRect(14, 115, 212, 115, 8, ILI9341_WHITE);
+
+  if (orderCode.length() > 0) {{
+    printCenter(""Ma don: "" + orderCode, 128, 2, ILI9341_CYAN, 200, 240);
+  }}
+  printCenter(amount, 158, 3, ILI9341_YELLOW, 200, 240);
+  if (bank.length() > 0) {{
+    printCenter(""Nhan qua: "" + bank, 198, 1, 0xCE79, 200, 240);
+  }}
+
+  printCenter(""Cam on quy khach da mua hang!"", 252, 1, ILI9341_WHITE, 230, 240);
+  printCenter(""HEN GAP LAI QUY KHACH!"", 278, 2, ILI9341_GREENYELLOW, 230, 240);
 }}
 ";
     }

@@ -909,6 +909,8 @@ window.switchCart = (idx) => {
   // Restore form inputs from new active cart
   const cart = getActiveCart();
   document.getElementById('customerSearchInput').value = cart.customerName || '';
+  const phoneEl = document.getElementById('customerPhoneInput');
+  if (phoneEl) phoneEl.value = cart.customerPhone || '';
   document.getElementById('discountInput').value = cart.discountAmount || '';
   document.getElementById('discountNoteInput').value = cart.discountNote || '';
   document.getElementById('receivedAmountInput').value = cart.receivedAmount || '';
@@ -927,6 +929,7 @@ window.switchCart = (idx) => {
     quickCash.style.display = 'none';
   }
 
+  updateDebtWarningState();
   updateCartUI();
 };
 
@@ -947,6 +950,8 @@ window.closeCart = (e, idx) => {
 function saveFormToCurrentCart() {
   const cart = getActiveCart();
   cart.customerName = document.getElementById('customerSearchInput').value.trim();
+  const phoneEl = document.getElementById('customerPhoneInput');
+  if (phoneEl) cart.customerPhone = phoneEl.value.trim();
   cart.discountAmount = parseFloat(document.getElementById('discountInput').value) || 0;
   cart.discountNote = document.getElementById('discountNoteInput').value.trim();
   cart.receivedAmount = parseFloat(document.getElementById('receivedAmountInput').value) || 0;
@@ -963,6 +968,78 @@ document.getElementById('holdOrderBtn').addEventListener('click', () => {
   addNewCart();
   alert(`Đã lưu tạm "${cart.name}". Hệ thống đã mở đơn mới để bạn tính cho khách tiếp theo!`);
 });
+
+// ==================== POS CUSTOMER AUTO-MATCH & DEBT WARNING ====================
+function setupPosCustomerEvents() {
+  const nameInput = document.getElementById('customerSearchInput');
+  const phoneInput = document.getElementById('customerPhoneInput');
+  const foundBadge = document.getElementById('posCustomerFoundBadge');
+
+  if (!nameInput || !phoneInput) return;
+
+  nameInput.addEventListener('input', () => {
+    const n = nameInput.value.trim().toLowerCase();
+    const match = (state.customers || []).find(c => c.customerName && c.customerName.trim().toLowerCase() === n);
+    if (match && match.phone) {
+      phoneInput.value = match.phone;
+      if (foundBadge) foundBadge.style.display = 'inline';
+    } else {
+      if (foundBadge) foundBadge.style.display = 'none';
+    }
+    updateDebtWarningState();
+  });
+
+  phoneInput.addEventListener('input', () => {
+    const p = phoneInput.value.trim();
+    const match = (state.customers || []).find(c => c.phone && c.phone.trim() === p);
+    if (match) {
+      nameInput.value = match.customerName;
+      if (foundBadge) foundBadge.style.display = 'inline';
+    }
+    updateDebtWarningState();
+  });
+
+  // Khi bấm chuyển tab phương thức thanh toán
+  document.querySelectorAll('.payment-tabs .pay-method-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setTimeout(updateDebtWarningState, 50);
+    });
+  });
+}
+
+function updateDebtWarningState() {
+  const cart = getActiveCart();
+  const isDebt = cart && cart.paymentMethod === 'Ghi nợ';
+  const badge = document.getElementById('debtRequiredBadge');
+  const warning = document.getElementById('debtCustomerWarning');
+  const nameInput = document.getElementById('customerSearchInput');
+  const phoneInput = document.getElementById('customerPhoneInput');
+
+  if (badge) badge.style.display = isDebt ? 'inline' : 'none';
+
+  if (!isDebt) {
+    if (warning) warning.style.display = 'none';
+    if (nameInput) nameInput.style.borderColor = '';
+    if (phoneInput) phoneInput.style.borderColor = '';
+    return;
+  }
+
+  const n = (nameInput?.value || '').trim();
+  const p = (phoneInput?.value || '').trim();
+  const hasName = n.length >= 2 && n.toLowerCase() !== 'khách lẻ';
+  const hasPhone = p.length >= 8;
+
+  if (hasName && hasPhone) {
+    if (warning) warning.style.display = 'none';
+    if (nameInput) nameInput.style.borderColor = '#16a34a';
+    if (phoneInput) phoneInput.style.borderColor = '#16a34a';
+  } else {
+    if (warning) warning.style.display = 'block';
+    if (nameInput) nameInput.style.borderColor = hasName ? '' : '#ef4444';
+    if (phoneInput) phoneInput.style.borderColor = hasPhone ? '' : '#ef4444';
+  }
+}
+window.updateDebtWarningState = updateDebtWarningState;
 
 // ==================== POS CATALOG & CART ====================
 function renderPosCategories() {
@@ -1215,8 +1292,27 @@ async function handleCheckout() {
     const discountNote = document.getElementById('discountNoteInput').value.trim();
     const finalTotal = Math.max(0, subtotal - discountAmount);
 
-    const customerName = document.getElementById('customerSearchInput').value.trim() || 'Khách lẻ';
-    const customer = state.customers.find(c => c.customerName.toLowerCase() === customerName.toLowerCase());
+    const customerName = document.getElementById('customerSearchInput').value.trim();
+    const customerPhone = (document.getElementById('customerPhoneInput')?.value || '').trim();
+
+    if (cart.paymentMethod === 'Ghi nợ') {
+      if (!customerName || customerName.toLowerCase() === 'khách lẻ' || customerName.length < 2) {
+        alert('⚠️ ĐƠN HÀNG GHI NỢ BẮT BUỘC CÓ TÊN KHÁCH HÀNG!\n\nBạn đang chọn hình thức thanh toán "Ghi nợ", vui lòng nhập đầy đủ Họ và Tên của khách hàng (không được để trống hoặc "Khách lẻ").');
+        document.getElementById('customerSearchInput').focus();
+        return;
+      }
+      if (!customerPhone || customerPhone.length < 8) {
+        alert('⚠️ ĐƠN HÀNG GHI NỢ BẮT BUỘC CÓ SỐ ĐIỆN THOẠI KHÁCH HÀNG!\n\nBạn đang chọn hình thức thanh toán "Ghi nợ", vui lòng nhập Số điện thoại khách hàng hợp lệ (tối thiểu 8-10 chữ số) để lưu vào sổ nợ và quản lý công nợ.');
+        document.getElementById('customerPhoneInput')?.focus();
+        return;
+      }
+    }
+
+    const finalCustName = customerName || 'Khách lẻ';
+    const customer = (state.customers || []).find(c =>
+      (customerPhone && c.phone && c.phone.trim() === customerPhone) ||
+      (finalCustName !== 'Khách lẻ' && c.customerName.toLowerCase() === finalCustName.toLowerCase())
+    );
 
     let receivedAmount = parseFloat(document.getElementById('receivedAmountInput').value) || 0;
     if (cart.paymentMethod === 'Tiền mặt' && receivedAmount < finalTotal) {
@@ -1229,10 +1325,11 @@ async function handleCheckout() {
         checkoutBtn.disabled = false;
         checkoutBtn.innerHTML = origCheckoutHTML;
       }
-      openVietQrModal(finalTotal, customerName, async () => {
+      openVietQrModal(finalTotal, finalCustName, async () => {
         await sendCheckoutRequest({
           customerId: customer ? customer.customerID : null,
-          customerName,
+          customerName: finalCustName,
+          customerPhone: customerPhone || null,
           paymentMethod: 'Chuyển khoản',
           discountAmount,
           discountNote,
@@ -1245,7 +1342,8 @@ async function handleCheckout() {
 
     await sendCheckoutRequest({
       customerId: customer ? customer.customerID : null,
-      customerName,
+      customerName: finalCustName,
+      customerPhone: customerPhone || null,
       paymentMethod: cart.paymentMethod,
       discountAmount,
       discountNote,
@@ -1290,6 +1388,7 @@ async function sendCheckoutRequest(payload) {
     } else {
       state.carts[0].items = [];
       state.carts[0].customerName = '';
+      state.carts[0].customerPhone = '';
       state.carts[0].discountAmount = 0;
       state.carts[0].discountNote = '';
       state.carts[0].receivedAmount = 0;
@@ -1299,10 +1398,16 @@ async function sendCheckoutRequest(payload) {
     document.getElementById('discountNoteInput').value = '';
     document.getElementById('receivedAmountInput').value = '';
     document.getElementById('customerSearchInput').value = '';
+    const phoneEl = document.getElementById('customerPhoneInput');
+    if (phoneEl) phoneEl.value = '';
+    const foundBadge = document.getElementById('posCustomerFoundBadge');
+    if (foundBadge) foundBadge.style.display = 'none';
+    updateDebtWarningState();
     renderCartTabs();
     updateCartUI();
 
     await loadProducts();
+    await loadCustomers();
     renderPosProducts();
 
     showReceiptModal(data);
@@ -1688,7 +1793,12 @@ async function openVietQrModal(amount, customerName, onConfirm) {
         const d = await res.json();
         if (d && d.qrContent) {
           const formattedAmt = `${Math.round(amount).toLocaleString('vi-VN')} VND`;
-          sendEsp32UsbCommand(`QR|${memo}|${formattedAmt}|${d.qrContent}`);
+          const qrCmd = `QR|${memo}|${formattedAmt}|${d.qrContent}`;
+          window._lastPendingEsp32QrCmd = qrCmd;
+          const sent = await sendEsp32UsbCommand(qrCmd);
+          if (typeof updatePosEsp32Display === 'function') {
+            updatePosEsp32Display(sent);
+          }
         }
       }
     }).catch(() => {});
@@ -1696,6 +1806,7 @@ async function openVietQrModal(amount, customerName, onConfirm) {
 
   // Helper hàm đóng modal VietQR và dọn dẹp sạch sẽ trạng thái
   const closeVietQrModal = () => {
+    window._lastPendingEsp32QrCmd = null;
     if (qrPollingTimer) {
       clearInterval(qrPollingTimer);
       qrPollingTimer = null;
@@ -2784,7 +2895,7 @@ let _allCustomers = [];
 
 async function loadAndRenderCustomers() {
   try {
-    const search = (document.getElementById('customerSearchInput')?.value || '').trim();
+    const search = (document.getElementById('customerTabSearchInput')?.value || '').trim();
     const url = search ? `/api/customers?search=${encodeURIComponent(search)}` : '/api/customers';
     const res = await fetch(url);
     if (!res.ok) return;
@@ -4224,11 +4335,12 @@ function setupEventListeners() {
   });
 
   // Customer tab events
-  const customerSearch = document.getElementById('customerSearchInput');
-  if (customerSearch) {
-    customerSearch.addEventListener('input', () => loadAndRenderCustomers());
-    customerSearch.addEventListener('keydown', e => { if (e.key === 'Escape') { customerSearch.value = ''; loadAndRenderCustomers(); } });
+  const customerTabSearch = document.getElementById('customerTabSearchInput');
+  if (customerTabSearch) {
+    customerTabSearch.addEventListener('input', () => loadAndRenderCustomers());
+    customerTabSearch.addEventListener('keydown', e => { if (e.key === 'Escape') { customerTabSearch.value = ''; loadAndRenderCustomers(); } });
   }
+  setupPosCustomerEvents();
   const openAddCustBtn = document.getElementById('openAddCustomerModalBtn');
   if (openAddCustBtn) openAddCustBtn.addEventListener('click', openAddCustomerModal);
   const confirmSaveCustBtn = document.getElementById('confirmSaveCustomerBtn');
@@ -4371,33 +4483,226 @@ window.esp32UsbState = {
   isConnected: false
 };
 
-async function sendEsp32UsbCommand(cmdString) {
-  if (!window.esp32UsbState.isConnected) return false;
+// Đọc phản hồi debug từ ESP32 và in ra browser console
+async function startEsp32SerialReader(port) {
+  if (!port || !port.readable || window.esp32UsbState.reader) return;
   try {
-    // Đảm bảo chỉ gửi ký tự ASCII printable (0x20-0x7E) và | (0x7C) để ESP32 hiển thị đúng font
-    const safeCmdString = (cmdString || '')
-      .normalize('NFC')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
-      .replace(/[^\x20-\x7E\n]/g, '');
-
-    if (!window.esp32UsbState.writer && window.esp32UsbState.port && window.esp32UsbState.port.writable) {
-      window.esp32UsbState.writer = window.esp32UsbState.port.writable.getWriter();
-    }
-    if (!window.esp32UsbState.writer) return false;
-    const encoder = new TextEncoder();
-    await window.esp32UsbState.writer.write(encoder.encode(safeCmdString + '\n'));
-    return true;
-  } catch (e) {
-    console.warn('Loi truyen du lieu USB Serial sang ESP32:', e);
-    try {
-      if (window.esp32UsbState.writer) {
-        window.esp32UsbState.writer.releaseLock();
+    const reader = port.readable.getReader();
+    window.esp32UsbState.reader = reader;
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (window.esp32UsbState.isConnected) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        const t = line.trim();
+        if (t) {
+          console.log('[ESP32-RX]', t);
+          if (t.includes('ACK|QR_DRAWN') || t.includes('ACK|QR_SHOWN')) {
+            const modalState = document.getElementById('vietQrEsp32State');
+            if (modalState) modalState.innerHTML = '<span style="color: #16a34a; font-weight: 700;">🟢 Đang hiển thị mã QR trên TFT</span>';
+          } else if (t.startsWith('ERR|')) {
+            const modalState = document.getElementById('vietQrEsp32State');
+            if (modalState) modalState.innerHTML = `<span style="color: #dc2626; font-weight: 700;">⚠️ ${escapeHtml(t)}</span>`;
+          }
+        }
       }
-    } catch (_) { }
+    }
+    reader.releaseLock();
+  } catch (e) {
+    console.warn('[ESP32-RX] Reader dừng:', e.message);
+  } finally {
+    window.esp32UsbState.reader = null;
+  }
+}
+
+// Queue để serialize các lệnh USB — tránh lỗi "WritableStream is locked"
+let _esp32WriteQueue = Promise.resolve();
+window._lastPendingEsp32QrCmd = null;
+
+// Cập nhật trạng thái hiển thị của màn hình phụ ESP32 trên toàn bộ giao diện (POS, Modal QR, Cài đặt)
+function updatePosEsp32Display(connected, statusText = '') {
+  const dot = document.getElementById('posEsp32Dot');
+  const label = document.getElementById('posEsp32Label');
+  const btn = document.getElementById('btnPosConnectEsp32');
+  const btnDisc = document.getElementById('btnPosDisconnectEsp32');
+  const usbBadge = document.getElementById('esp32UsbPortBadge');
+  const connectUsbBtn = document.getElementById('btnConnectUsbSerial');
+  const disconnectUsbBtn = document.getElementById('btnDisconnectUsbSerial');
+
+  const modalState = document.getElementById('vietQrEsp32State');
+  const modalBtn = document.getElementById('btnVietQrConnectEsp32');
+  const modalDiscBtn = document.getElementById('btnVietQrDisconnectEsp32');
+
+  if (connected) {
+    if (dot) dot.style.background = '#16a34a';
+    if (label) label.innerHTML = `Màn hình phụ ESP32: <span style="color:#16a34a;">🟢 Sẵn sàng ${statusText ? `(${escapeHtml(statusText)})` : ''}</span>`;
+    if (btn) btn.style.display = 'none';
+    if (btnDisc) btnDisc.style.display = 'inline-block';
+
+    if (modalState) modalState.innerHTML = `<span style="color: #16a34a; font-weight: 700;">🟢 Đang hiển thị mã QR</span>`;
+    if (modalBtn) modalBtn.style.display = 'none';
+    if (modalDiscBtn) modalDiscBtn.style.display = 'inline-block';
+
+    if (usbBadge) {
+      usbBadge.textContent = '🟢 Đã kết nối USB: 115200 Baud (Sẵn sàng)';
+      usbBadge.style.background = '#15803d';
+    }
+    if (connectUsbBtn) connectUsbBtn.style.display = 'none';
+    if (disconnectUsbBtn) disconnectUsbBtn.style.display = 'inline-flex';
+  } else {
+    if (dot) dot.style.background = '#94a3b8';
+    if (label) label.innerHTML = 'Màn hình phụ ESP32: <span style="color:#64748b;">⚪ Chưa kết nối</span>';
+    if (btn) btn.style.display = 'inline-block';
+    if (btnDisc) btnDisc.style.display = 'none';
+
+    if (modalState) modalState.innerHTML = `<span style="color: #dc2626; font-weight: 700;">🔴 Chưa kết nối</span>`;
+    if (modalBtn) modalBtn.style.display = 'inline-block';
+    if (modalDiscBtn) modalDiscBtn.style.display = 'none';
+
+    if (usbBadge) {
+      usbBadge.textContent = '⚪ Chưa kết nối cáp USB';
+      usbBadge.style.background = '#64748b';
+    }
+    if (connectUsbBtn) connectUsbBtn.style.display = 'inline-flex';
+    if (disconnectUsbBtn) disconnectUsbBtn.style.display = 'none';
+  }
+}
+window.updatePosEsp32Display = updatePosEsp32Display;
+
+// Hàm ngắt kết nối USB ESP32
+window.disconnectEsp32UsbQuick = async function() {
+  try {
+    if (window.esp32UsbState.reader) {
+      try { await window.esp32UsbState.reader.cancel(); } catch (_) {}
+      window.esp32UsbState.reader = null;
+    }
+    if (window.esp32UsbState.writer) {
+      try { await window.esp32UsbState.writer.close(); } catch (_) {}
+      window.esp32UsbState.writer = null;
+    }
+    if (window.esp32UsbState.port) {
+      try { await window.esp32UsbState.port.close(); } catch (_) {}
+      window.esp32UsbState.port = null;
+    }
+  } catch (_) {}
+  window.esp32UsbState.isConnected = false;
+  updatePosEsp32Display(false);
+};
+
+// Hàm xoay lật màn hình dọc 180 độ
+let _currentEsp32Rotation = 2;
+window.toggleRotateEsp32 = async function() {
+  _currentEsp32Rotation = (_currentEsp32Rotation === 2) ? 0 : 2;
+  await sendEsp32UsbCommand(`ROTATE|${_currentEsp32Rotation}`);
+};
+
+// Hàm kết nối nhanh màn hình phụ ESP32 từ bất kỳ đâu (POS, Modal QR, Cài đặt)
+window.connectEsp32UsbQuick = async function() {
+  if (!('serial' in navigator)) {
+    alert('Trình duyệt hiện tại chưa hỗ trợ Web Serial API.\nVui lòng mở phần mềm bằng Google Chrome, Microsoft Edge hoặc Cốc Cốc trên máy tính để kết nối USB trực tiếp.');
+    return;
+  }
+
+  try {
+    const port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+
+    window.esp32UsbState.port = port;
     window.esp32UsbState.writer = null;
+    window.esp32UsbState.isConnected = true;
+    _esp32WriteQueue = Promise.resolve();
+
+    startEsp32SerialReader(port);
+    updatePosEsp32Display(true);
+
+    if (window._lastPendingEsp32QrCmd) {
+      await sendEsp32UsbCommand(window._lastPendingEsp32QrCmd);
+    } else {
+      const store = removeVietnameseTones(state.settings?.storeName || 'TAP HOA VIET').toUpperCase();
+      await sendEsp32UsbCommand(`IDLE|${store}|Xin chao quy khach!`);
+    }
+  } catch (e) {
+    if (e.name === 'NotFoundError') {
+      return; // Người dùng bấm huỷ chọn cổng
+    }
+    console.error('Lỗi kết nối cổng USB:', e);
+    const msg = e.message || '';
+    if (msg.includes('Failed to open') || e.name === 'NetworkError') {
+      alert('⚠️ CỔNG COM ĐANG BỊ CHIẾM (PORT BUSY)!\n\nChi tiết: ' + msg + '\n\n👉 NGUYÊN NHÂN: Cổng COM5 đang bị phần mềm khác (như Arduino IDE hoặc cửa sổ Serial Monitor) chiếm giữ.\n\n👉 CÁCH XỬ LÝ NHANH:\n1. Mở Arduino IDE -> ĐÓNG cửa sổ Serial Monitor ở góc dưới (hoặc tắt hoàn toàn Arduino IDE).\n2. Bấm lại nút "Kết nối" trên web để kết nối.');
+    } else {
+      alert('Lỗi kết nối cổng USB: ' + msg);
+    }
+  }
+};
+
+async function sendEsp32UsbCommand(cmdString) {
+  if (!('serial' in navigator)) {
     return false;
   }
+
+  // Nếu chưa kết nối, thử tự động lấy lại cổng đã từng cấp quyền
+  if (!window.esp32UsbState.isConnected || !window.esp32UsbState.port) {
+    try {
+      const ports = await navigator.serial.getPorts();
+      if (ports && ports.length > 0) {
+        const port = ports[0];
+        try {
+          await port.open({ baudRate: 115200 });
+        } catch (_) { /* Có thể cổng đã mở sẵn */ }
+        window.esp32UsbState.port = port;
+        window.esp32UsbState.writer = null;
+        window.esp32UsbState.isConnected = true;
+        _esp32WriteQueue = Promise.resolve();
+        startEsp32SerialReader(port);
+        updatePosEsp32Display(true);
+      }
+    } catch (_) { }
+  }
+
+  if (!window.esp32UsbState.isConnected) {
+    console.warn('[ESP32-USB] Bỏ qua: chưa kết nối USB');
+    updatePosEsp32Display(false);
+    return false;
+  }
+
+  // Mỗi lệnh xếp hàng, chờ lệnh trước hoàn thành rồi mới gửi
+  const result = _esp32WriteQueue.then(async () => {
+    try {
+      const safeCmdString = (cmdString || '')
+        .normalize('NFC')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+        .replace(/[^\x20-\x7E\n]/g, '');
+
+      if (!window.esp32UsbState.port || !window.esp32UsbState.port.writable) {
+        console.warn('[ESP32-USB] Port không writable!');
+        return false;
+      }
+
+      // Dùng persistent writer — chỉ getWriter() một lần, giữ mãi
+      if (!window.esp32UsbState.writer) {
+        window.esp32UsbState.writer = window.esp32UsbState.port.writable.getWriter();
+      }
+
+      const encoder = new TextEncoder();
+      await window.esp32UsbState.writer.write(encoder.encode(safeCmdString + '\n'));
+      console.log('[ESP32-USB] Gửi OK:', safeCmdString.substring(0, 60));
+      updatePosEsp32Display(true);
+      return true;
+    } catch (e) {
+      console.error('[ESP32-USB] Lỗi gửi lệnh:', e.message);
+      try { window.esp32UsbState.writer?.releaseLock(); } catch (_) {}
+      window.esp32UsbState.writer = null;
+      return false;
+    }
+  });
+
+  _esp32WriteQueue = result.catch(() => {});
+  return result;
 }
 
 function setupEsp32CustomerDisplay() {
@@ -4444,36 +4749,7 @@ function setupEsp32CustomerDisplay() {
 
   // 2. Quản lý kết nối Cổng USB (Web Serial API - Cắm dây USB trực tiếp)
   if (btnConnectUsb && btnDisconnectUsb && usbBadge) {
-    btnConnectUsb.addEventListener('click', async () => {
-      if (!('serial' in navigator)) {
-        alert('Trình duyệt hiện tại chưa hỗ trợ Web Serial API.\nVui lòng mở phần mềm bằng Google Chrome, Microsoft Edge hoặc Cốc Cốc trên máy tính để kết nối USB trực tiếp.');
-        return;
-      }
-
-      try {
-        const port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-
-        const writer = port.writable.getWriter();
-        window.esp32UsbState.port = port;
-        window.esp32UsbState.writer = writer;
-        window.esp32UsbState.isConnected = true;
-
-        usbBadge.textContent = '🟢 Đã kết nối USB: 115200 Baud (Sẵn sàng)';
-        usbBadge.style.background = '#15803d';
-        btnConnectUsb.style.display = 'none';
-        btnDisconnectUsb.style.display = 'inline-flex';
-
-        // Gửi thông điệp chào ban đầu qua USB (phải dùng removeVietnameseTones để ESP32 hiển thị đúng)
-        const store = removeVietnameseTones(state.settings?.storeName || 'TAP HOA VIET').toUpperCase();
-        await sendEsp32UsbCommand(`IDLE|${store}|Xin chao quy khach!`);
-        alert('✓ Đã kết nối thành công với ESP32 qua cổng USB!\nTừ giờ khi tính tiền mã QR sẽ lập tức hiển thị ra màn hình TFT.');
-      } catch (e) {
-        if (e.name !== 'NotFoundError') {
-          alert('Lỗi kết nối cổng USB: ' + e.message);
-        }
-      }
-    });
+    btnConnectUsb.addEventListener('click', connectEsp32UsbQuick);
 
     btnDisconnectUsb.addEventListener('click', async () => {
       if (window.esp32UsbState.writer) {
@@ -4489,10 +4765,7 @@ function setupEsp32CustomerDisplay() {
         window.esp32UsbState.port = null;
       }
       window.esp32UsbState.isConnected = false;
-      usbBadge.textContent = '⚪ Chưa kết nối cáp USB';
-      usbBadge.style.background = '#64748b';
-      btnConnectUsb.style.display = 'inline-flex';
-      btnDisconnectUsb.style.display = 'none';
+      updatePosEsp32Display(false);
     });
 
     // Tự động kết nối lại cổng USB đã từng cấp quyền khi tải trang
@@ -4503,24 +4776,25 @@ function setupEsp32CustomerDisplay() {
             const port = ports[0];
             await port.open({ baudRate: 115200 });
             window.esp32UsbState.port = port;
-            window.esp32UsbState.writer = port.writable.getWriter();
+            window.esp32UsbState.writer = null;
             window.esp32UsbState.isConnected = true;
-            usbBadge.textContent = '🟢 Đã kết nối USB: 115200 Baud (Sẵn sàng)';
-            usbBadge.style.background = '#15803d';
-            btnConnectUsb.style.display = 'none';
-            btnDisconnectUsb.style.display = 'inline-flex';
-          } catch (_) { }
+            _esp32WriteQueue = Promise.resolve();
+            updatePosEsp32Display(true);
+          } catch (_) {
+            updatePosEsp32Display(false);
+          }
+        } else {
+          updatePosEsp32Display(false);
         }
-      }).catch(() => {});
+      }).catch(() => {
+        updatePosEsp32Display(false);
+      });
 
       navigator.serial.addEventListener('disconnect', () => {
         window.esp32UsbState.isConnected = false;
         window.esp32UsbState.writer = null;
         window.esp32UsbState.port = null;
-        usbBadge.textContent = '⚠️ Cáp USB đã rút ra';
-        usbBadge.style.background = '#dc2626';
-        btnConnectUsb.style.display = 'inline-flex';
-        btnDisconnectUsb.style.display = 'none';
+        updatePosEsp32Display(false);
       });
     }
   }
@@ -4549,11 +4823,19 @@ function setupEsp32CustomerDisplay() {
       const bank = state.settings?.qrBankBin || '970436';
       const acc = state.settings?.qrAccountNo || '123456';
       const amt = Math.round(screen.amount || 0);
+      const amountFormatted = screen.amountFormatted || formatVND(amt);
       const qrUrl = `https://img.vietqr.io/image/${bank}-${acc}-qr_only.png?amount=${amt}&addInfo=${encodeURIComponent(order)}`;
 
       sim.innerHTML = `
         <div class="tft-sim-qr-fullscreen">
-          <img src="${qrUrl}" class="qr-img" alt="Mã QR Toàn Màn Hình">
+          <div class="tft-sim-qr-header">DON: ${escapeHtml(order)}</div>
+          <div class="tft-sim-qr-body">
+            <img src="${qrUrl}" class="qr-img" alt="Mã VietQR 2.8 inch">
+          </div>
+          <div class="tft-sim-qr-footer">
+            <div style="font-size: 8.5px; color: #cbd5e1; letter-spacing: 0.3px;">SO TIEN THANH TOAN</div>
+            <div class="tft-sim-qr-amount">${escapeHtml(amountFormatted)}</div>
+          </div>
         </div>
       `;
     } else if (screen?.state === 'SUCCESS') {

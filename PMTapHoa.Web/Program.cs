@@ -311,16 +311,61 @@ app.MapPost("/api/sales/checkout", ([FromServices] CoreServices services, [FromB
     }).ToList();
 
     var isDebt = string.Equals(req.PaymentMethod, "Ghi nợ", StringComparison.OrdinalIgnoreCase);
+    var custName = req.CustomerName?.Trim();
+    var custPhone = req.CustomerPhone?.Trim();
+    int? customerId = req.CustomerId;
+
+    if (isDebt)
+    {
+        if (string.IsNullOrWhiteSpace(custName) || custName.Equals("Khách lẻ", StringComparison.OrdinalIgnoreCase))
+        {
+            return Results.BadRequest(new { message = "Đơn hàng ghi nợ bắt buộc phải có đầy đủ Tên khách hàng (không được để trống hoặc 'Khách lẻ')." });
+        }
+        if (string.IsNullOrWhiteSpace(custPhone) || custPhone.Length < 8)
+        {
+            return Results.BadRequest(new { message = "Đơn hàng ghi nợ bắt buộc phải có Số điện thoại khách hàng hợp lệ (tối thiểu 8-10 chữ số) để theo dõi công nợ." });
+        }
+
+        // Tự động liên kết hoặc tạo mới hồ sơ khách hàng để quản lý công nợ
+        if (customerId == null || customerId <= 0)
+        {
+            var existing = services.CustomerService.GetByPhone(custPhone);
+            if (existing != null)
+            {
+                customerId = existing.CustomerID;
+                if (string.IsNullOrWhiteSpace(custName) || custName.Equals("Khách lẻ", StringComparison.OrdinalIgnoreCase))
+                {
+                    custName = existing.CustomerName;
+                }
+            }
+            else
+            {
+                try
+                {
+                    customerId = services.CustomerService.Create(new Customer
+                    {
+                        CustomerName = custName,
+                        Phone = custPhone
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[CustomerService] Cannot auto-create customer: {ex.Message}");
+                }
+            }
+        }
+    }
+
     int saleId;
     try
     {
         saleId = services.SalesService.SaveSale(
             cart,
-            req.CustomerName,
+            custName,
             isDebt,
             req.DiscountAmount,
             req.DiscountNote,
-            req.CustomerId);
+            customerId);
     }
     catch (InvalidOperationException ex)
     {
@@ -1442,6 +1487,7 @@ public record CartItemDto(int ProductId, string? Barcode, string ProductName, in
 public record CheckoutRequest(
     int? CustomerId,
     string? CustomerName,
+    string? CustomerPhone,
     string PaymentMethod,
     decimal DiscountAmount,
     string? DiscountNote,

@@ -201,12 +201,26 @@
             </div>
 
             <div class="cart-footer">
-              <!-- Customer selection -->
-              <div class="cart-customer-input">
-                <span class="icon">👤</span>
-                <input type="text" id="customerSearchInput"
-                  placeholder="Tên khách hàng hoặc số điện thoại (khách lẻ)..." list="customerDataList">
-                <datalist id="customerDataList"></datalist>
+              <!-- Customer selection (Tên & Số điện thoại) -->
+              <div class="pos-customer-box" style="margin-bottom: 10px; padding: 8px 10px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--text-primary);">
+                  <span>👤 Khách Hàng <span id="debtRequiredBadge" style="display:none; color:#dc2626; font-size:11px; font-weight:700;">(Bắt buộc khi ghi nợ)</span></span>
+                  <span id="posCustomerFoundBadge" style="display:none; color:#16a34a; font-size:11px; font-weight:600;">✓ Đã có hồ sơ</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <div style="flex: 1.2; position: relative;">
+                    <input type="text" id="customerSearchInput" class="pos-input" style="width: 100%; font-size: 12.5px; padding: 6px 10px;"
+                      placeholder="Tên khách hàng (khách lẻ)..." list="customerDataList" autocomplete="off">
+                    <datalist id="customerDataList"></datalist>
+                  </div>
+                  <div style="flex: 1; position: relative;">
+                    <input type="tel" id="customerPhoneInput" class="pos-input" style="width: 100%; font-size: 12.5px; padding: 6px 10px;"
+                      placeholder="Số điện thoại..." autocomplete="off">
+                  </div>
+                </div>
+                <div id="debtCustomerWarning" style="display:none; margin-top: 6px; padding: 5px 8px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 11.5px; color: #dc2626; font-weight: 600;">
+                  ⚠️ Đơn hàng ghi nợ bắt buộc nhập Tên và Số điện thoại khách hàng!
+                </div>
               </div>
 
               <!-- Payment Method Selection -->
@@ -255,6 +269,26 @@
                 <div class="summary-line total">
                   <span>THANH TOÁN:</span>
                   <span class="total-num" id="totalAmountDisplay">0 đ</span>
+                </div>
+              </div>
+
+              <!-- Màn hình phụ Quick Status -->
+              <div class="pos-esp32-quick-bar"
+                style="margin-bottom: 10px; padding: 7px 10px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                  <span id="posEsp32Dot"
+                    style="display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #94a3b8;"></span>
+                  <span id="posEsp32Label" style="font-weight: 600;">Màn hình phụ: <span style="color:#64748b;">⚪ Chưa
+                      kết nối</span></span>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button type="button" id="btnPosConnectEsp32" class="btn btn-secondary btn-sm"
+                    style="padding: 2px 8px; font-size: 11px; font-weight: 600;" onclick="connectEsp32UsbQuick()">🔌 Kết
+                    nối</button>
+                  <button type="button" id="btnPosRotateEsp32" class="btn btn-outline-secondary btn-sm"
+                    style="padding: 2px 8px; font-size: 11px; font-weight: 600;" title="Xoay lật màn hình 180 độ" onclick="toggleRotateEsp32()">🔄 Xoay</button>
+                  <button type="button" id="btnPosDisconnectEsp32" class="btn btn-outline-danger btn-sm"
+                    style="padding: 2px 8px; font-size: 11px; font-weight: 600; display: none;" onclick="disconnectEsp32UsbQuick()">Ngắt kết nối</button>
                 </div>
               </div>
 
@@ -367,7 +401,7 @@
           <div class="content-card-header">
             <h3 class="content-card-title">👤 Danh Sách Khách Hàng</h3>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-              <input type="text" id="customerSearchInput" class="pos-input" style="max-width:240px;"
+              <input type="text" id="customerTabSearchInput" class="pos-input" style="max-width:240px;"
                 placeholder="🔍 Tìm tên hoặc SĐT...">
               <button class="btn btn-primary" id="openAddCustomerModalBtn">+ Thêm khách hàng</button>
             </div>
@@ -1321,7 +1355,8 @@
             <div class="content-card-header"
               style="display: flex; justify-content: space-between; align-items: center;">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <h3 class="content-card-title">📺 Màn Hình Phụ Khách Hàng (ESP32 + TFT 1.8" SPI)</h3>
+                <h3 class="content-card-title">📺 Màn Hình Phụ Khách Hàng (ESP32-C3 Super Mini + TFT 2.8" SPI 240x320)
+                </h3>
                 <span class="badge" id="esp32StatusBadge"
                   style="font-size: 12px; padding: 4px 10px; background: #64748b; color: #fff;">Đang kiểm tra...</span>
               </div>
@@ -1334,9 +1369,9 @@
             </div>
             <div class="modal-body">
               <div class="esp32-layout-grid">
-                <!-- Mô phỏng màn hình TFT 1.8 inch (128x160) -->
+                <!-- Mô phỏng màn hình TFT 2.8 inch (240x320) -->
                 <div class="tft-bezel">
-                  <div class="tft-header-label">TFT 1.8" ST7735</div>
+                  <div class="tft-header-label">TFT 2.8" ILI9341 (240x320)</div>
                   <div class="tft-screen-active" id="tftScreenSimulator">
                     <div class="tft-sim-idle">
                       <div class="header" id="simStoreHeader">TẠP HOÁ VIỆT</div>
@@ -1356,9 +1391,10 @@
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                   <div
                     style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.2); border-radius: var(--radius-md); padding: 12px 14px; font-size: 13px;">
-                    📌 <strong>Nguyên lý hoạt động:</strong> Màn hình TFT 1.8" gắn vào vi điều khiển ESP32 đặt hướng về
-                    phía khách mua hàng.
-                    Khi thu ngân ấn thanh toán (F4), mã VietQR phóng to toàn màn hình sẽ tự động hiện lên để khách quét
+                    📌 <strong>Nguyên lý hoạt động:</strong> Màn hình màu 2.8" TFT 240x320 gắn vào mạch ESP32-C3 Super
+                    Mini đặt hướng về
+                    phía khách mua hàng. Khi thu ngân ấn thanh toán (F4), mã VietQR kích thước lớn 190x190px cùng số
+                    tiền thanh toán màu vàng nổi bật sẽ tự động hiện lên để khách quét
                     nhanh. Sau khi tiền vào tài khoản, màn hình chuyển sang màu xanh lá báo "ĐÃ NHẬN TIỀN!".
                   </div>
 
@@ -1460,72 +1496,83 @@
                   <details
                     style="margin-top: 8px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 14px;">
                     <summary style="cursor: pointer; font-size: 12.5px; font-weight: 700; color: #0284c7;">
-                      🔌 Bấm vào đây để xem Sơ Đồ Đấu Nối Dây (ESP32 30 Pin -> Màn Hình TFT 1.8 SPI ST7735)
+                      🔌 Bấm vào đây để xem Sơ Đồ Đấu Nối Dây (ESP32-C3 Super Mini -> Màn Hình TFT 2.8" SPI 240x320
+                      ILI9341)
                     </summary>
                     <div style="margin-top: 10px;">
                       <table class="esp32-pinout-table">
                         <thead>
                           <tr>
-                            <th>Chân Màn Hình TFT 1.8"</th>
-                            <th>Chân ESP32 (GPIO)</th>
+                            <th>Chân Màn Hình TFT 2.8"</th>
+                            <th>Chân ESP32-C3 Super Mini</th>
                             <th>Chức Năng & Màu Dây Khuyên Dùng</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr>
                             <td><strong>VCC</strong></td>
-                            <td><strong>3.3V</strong> (hoặc 5V)</td>
-                            <td>Nguồn dương (Dây Đỏ)</td>
+                            <td><strong>5V</strong> (hoặc 3.3V)</td>
+                            <td>Nguồn dương cấp màn hình (Dây Đỏ)</td>
                           </tr>
                           <tr>
                             <td><strong>GND</strong></td>
-                            <td><strong>GND</strong></td>
+                            <td><strong>G</strong> (GND)</td>
                             <td>Nguồn âm / Mass (Dây Đen)</td>
                           </tr>
                           <tr>
                             <td><strong>CS</strong></td>
                             <td><strong>GPIO 5</strong></td>
-                            <td>Chip Select (Dây Cam)</td>
+                            <td>Chip Select màn hình (Dây Cam)</td>
                           </tr>
                           <tr>
                             <td><strong>RESET (RES)</strong></td>
+                            <td><strong>GPIO 3</strong></td>
+                            <td>Reset phần cứng màn hình (Dây Vàng)</td>
+                          </tr>
+                          <tr>
+                            <td><strong>DC (RS)</strong></td>
                             <td><strong>GPIO 4</strong></td>
-                            <td>Reset màn hình (Dây Vàng)</td>
+                            <td>Data / Command Select (Dây Xanh lá)</td>
                           </tr>
                           <tr>
-                            <td><strong>A0 (DC)</strong></td>
-                            <td><strong>GPIO 2</strong></td>
-                            <td>Data / Command (Dây Xanh lá)</td>
+                            <td><strong>SDI (MOSI)</strong></td>
+                            <td><strong>GPIO 7</strong></td>
+                            <td>Hardware SPI MOSI của ESP32-C3 (Dây Xanh dương)</td>
                           </tr>
                           <tr>
-                            <td><strong>SDA (MOSI)</strong></td>
-                            <td><strong>GPIO 23</strong></td>
-                            <td>Hardware SPI Data (Dây Xanh dương)</td>
-                          </tr>
-                          <tr>
-                            <td><strong>SCK (SCLK)</strong></td>
-                            <td><strong>GPIO 18</strong></td>
-                            <td>Hardware SPI Clock (Dây Tím)</td>
+                            <td><strong>SCK (CLK)</strong></td>
+                            <td><strong>GPIO 6</strong></td>
+                            <td>Hardware SPI Clock của ESP32-C3 (Dây Tím)</td>
                           </tr>
                           <tr>
                             <td><strong>LED (BLK)</strong></td>
                             <td><strong>3.3V</strong></td>
-                            <td>Đèn nền màn hình (Backlight)</td>
+                            <td>Đèn nền màn hình Backlight (Dây Nâu)</td>
+                          </tr>
+                          <tr>
+                            <td><strong>SDO (MISO)</strong></td>
+                            <td><em>Không nối (NC)</em></td>
+                            <td>Không cần nối với chức năng quét QR</td>
                           </tr>
                         </tbody>
                       </table>
-                      <div style="margin-top: 10px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; background: rgba(2, 132, 199, 0.06); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(2, 132, 199, 0.18);">
-                        <div>🛠️ <strong>CÀI ĐẶT TRÊN BẤT KỲ MÁY TÍNH NÀO (CHUẨN THƯƠNG MẠI):</strong></div>
+                      <div
+                        style="margin-top: 10px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; background: rgba(2, 132, 199, 0.06); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(2, 132, 199, 0.18);">
+                        <div>🛠️ <strong>HƯỚNG DẪN CÀI ĐẶT & NẠP CODE ARDUINO (ESP32-C3 SUPER MINI):</strong></div>
                         <div style="margin-top: 4px;">
-                          1. <strong>Driver USB:</strong> Nếu cắm cáp USB vào máy tính mà trình duyệt không hiện cổng COM, chỉ cần cài 1 trong 2 driver phổ biến nhất:<br>
-                          • Driver chip <strong>CH340</strong> (phổ biến 90% mạch ESP32 bán tại VN): <a href="https://www.wch.cn/downloads/CH341SER_EXE.html" target="_blank" style="color: #0284c7; font-weight: 600;">Tải Driver CH340 Windows</a><br>
-                          • Driver chip <strong>CP2102</strong> (mạch ESP32 chính hãng/NodeMCU): <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank" style="color: #0284c7; font-weight: 600;">Tải Driver CP2102</a><br>
-                          2. <strong>Trình duyệt:</strong> Dùng Google Chrome, Microsoft Edge hoặc Cốc Cốc trên mọi hệ điều hành (Windows 10, 11, MacOS). Trình duyệt sẽ tự động nhớ cổng COM sau lần cấp quyền đầu tiên.<br>
-                          3. <strong>Nạp code Arduino:</strong> Mở Arduino IDE -> Quản lý Thư viện (Ctrl+Shift+I) -> Cài 3 thư viện:<br>
+                          1. <strong>Cổng USB Type-C:</strong> ESP32-C3 Super Mini có cổng Type-C tích hợp sẵn bộ giao
+                          tiếp USB Serial/JTAG (CDC). Cắm cáp Type-C từ máy tính vào là Windows nhận cổng COM ngay,
+                          không lo lỗi driver.<br>
+                          2. <strong>Trình duyệt:</strong> Mở phần mềm bằng Google Chrome, Microsoft Edge hoặc Cốc Cốc
+                          trên máy tính thu ngân để kết nối USB trực tiếp (Web Serial API).<br>
+                          3. <strong>Nạp code Arduino:</strong> Mở Arduino IDE -> Quản lý Thư viện (Ctrl+Shift+I) -> Cài
+                          3 thư viện:<br>
                           • <code>Adafruit GFX Library</code> (bởi Adafruit)<br>
-                          • <code>Adafruit ST7735 and ST7789 Library</code> (bởi Adafruit)<br>
+                          • <code>Adafruit ILI9341</code> (bởi Adafruit)<br>
                           • <code>QRCode</code> (bởi Richard Moore) -> gõ "qrcode" và bấm Install.<br>
-                          Chọn Board <strong>ESP32 Dev Module</strong> và bấm nút Nạp (Upload).
+                          Trên menu <strong>Tools</strong>: Chọn Board <strong>ESP32C3 Dev Module</strong>, và
+                          <strong>BẬT USB CDC On Boot: "Enabled"</strong> (để truyền nhận dữ liệu qua Type-C), sau đó
+                          bấm nút Nạp (Upload).
                         </div>
                       </div>
                     </div>
@@ -2038,21 +2085,26 @@
       </div>
       <div class="modal-body" style="align-items: center; padding: 16px 20px;">
         <!-- QR container with Radar Pulse animation -->
-        <div class="qr-radar-wrapper" id="vietQrWrapper" style="display: flex; justify-content: center; align-items: center; min-height: 280px; width: 100%;">
+        <div class="qr-radar-wrapper" id="vietQrWrapper"
+          style="display: flex; justify-content: center; align-items: center; min-height: 280px; width: 100%;">
           <img id="vietQrImg" src="" alt="Mã QR"
             style="width: 280px; height: 280px; object-fit: contain; display: block; border-radius: 8px; background: #fff; padding: 8px;">
 
           <!-- Quick Config Box if Account No is missing -->
-          <div id="vietQrMissingConfig" style="display: none; padding: 16px 14px; background: #fff7ed; border: 1.5px dashed #f97316; border-radius: 12px; max-width: 320px; width: 100%; box-sizing: border-box; text-align: left;">
+          <div id="vietQrMissingConfig"
+            style="display: none; padding: 16px 14px; background: #fff7ed; border: 1.5px dashed #f97316; border-radius: 12px; max-width: 320px; width: 100%; box-sizing: border-box; text-align: left;">
             <div style="text-align: center; margin-bottom: 10px;">
               <div style="font-size: 28px;">💳</div>
-              <div style="font-weight: 800; font-size: 14px; color: #9a3412; margin-top: 2px;">Chưa Cài Đặt Tài Khoản Ngân Hàng</div>
-              <div style="font-size: 11.5px; color: #7c2d12; margin-top: 2px;">Nhập số tài khoản bên dưới để tự động tạo mã QR:</div>
+              <div style="font-weight: 800; font-size: 14px; color: #9a3412; margin-top: 2px;">Chưa Cài Đặt Tài Khoản
+                Ngân Hàng</div>
+              <div style="font-size: 11.5px; color: #7c2d12; margin-top: 2px;">Nhập số tài khoản bên dưới để tự động tạo
+                mã QR:</div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <div>
                 <label style="font-size: 11px; font-weight: 700; color: #7c2d12;">Ngân hàng nhận tiền:</label>
-                <select id="quickQrBankSelect" class="pos-select" style="font-size: 12px; padding: 5px 8px; width: 100%; margin-top: 2px;">
+                <select id="quickQrBankSelect" class="pos-select"
+                  style="font-size: 12px; padding: 5px 8px; width: 100%; margin-top: 2px;">
                   <option value="970422">MBBank - Ngân hàng Quân Đội (970422)</option>
                   <option value="970436" selected>Vietcombank - VCB (970436)</option>
                   <option value="970415">VietinBank - CTG (970415)</option>
@@ -2076,26 +2128,36 @@
               </div>
               <div>
                 <label style="font-size: 11px; font-weight: 700; color: #7c2d12;">Số tài khoản ngân hàng:</label>
-                <input type="text" id="quickQrAccountNo" class="pos-input" style="font-size: 12px; padding: 6px 8px; width: 100%; margin-top: 2px;" placeholder="Nhập số tài khoản...">
+                <input type="text" id="quickQrAccountNo" class="pos-input"
+                  style="font-size: 12px; padding: 6px 8px; width: 100%; margin-top: 2px;"
+                  placeholder="Nhập số tài khoản...">
               </div>
               <div>
                 <label style="font-size: 11px; font-weight: 700; color: #7c2d12;">Tên chủ tài khoản (không dấu):</label>
-                <input type="text" id="quickQrAccountName" class="pos-input" style="font-size: 12px; padding: 6px 8px; width: 100%; margin-top: 2px;" placeholder="VD: NGUYEN VAN A">
+                <input type="text" id="quickQrAccountName" class="pos-input"
+                  style="font-size: 12px; padding: 6px 8px; width: 100%; margin-top: 2px;"
+                  placeholder="VD: NGUYEN VAN A">
               </div>
-              <button type="button" id="btnSaveQuickQr" class="btn btn-primary btn-sm" style="margin-top: 4px; width: 100%; padding: 8px; font-size: 12.5px; font-weight: 700; background: #ea580c; border: none;">
+              <button type="button" id="btnSaveQuickQr" class="btn btn-primary btn-sm"
+                style="margin-top: 4px; width: 100%; padding: 8px; font-size: 12.5px; font-weight: 700; background: #ea580c; border: none;">
                 ✓ Lưu & Tạo Mã QR Ngay
               </button>
             </div>
           </div>
 
           <!-- Fallback error box if image fails to load -->
-          <div id="vietQrErrorBox" style="display: none; padding: 16px 14px; background: #fef2f2; border: 1.5px dashed #ef4444; border-radius: 12px; max-width: 320px; width: 100%; box-sizing: border-box; text-align: center;">
+          <div id="vietQrErrorBox"
+            style="display: none; padding: 16px 14px; background: #fef2f2; border: 1.5px dashed #ef4444; border-radius: 12px; max-width: 320px; width: 100%; box-sizing: border-box; text-align: center;">
             <div style="font-size: 28px;">📡⚠️</div>
-            <div style="font-weight: 800; font-size: 13.5px; color: #b91c1c; margin-top: 4px;">Không Thể Tải Ảnh Mã QR</div>
-            <div style="font-size: 11px; color: #7f1d1d; margin-top: 2px;">Vui lòng kiểm tra kết nối mạng Internet hoặc số tài khoản.</div>
-            <div id="vietQrFallbackDetails" style="margin-top: 10px; background: #fff; border-radius: 8px; padding: 10px; text-align: left; font-size: 11.5px; line-height: 1.6; border: 1px solid #fee2e2;">
+            <div style="font-weight: 800; font-size: 13.5px; color: #b91c1c; margin-top: 4px;">Không Thể Tải Ảnh Mã QR
             </div>
-            <button type="button" id="btnRetryVietQr" class="btn btn-secondary btn-sm" style="margin-top: 10px; width: 100%; font-size: 12px;">
+            <div style="font-size: 11px; color: #7f1d1d; margin-top: 2px;">Vui lòng kiểm tra kết nối mạng Internet hoặc
+              số tài khoản.</div>
+            <div id="vietQrFallbackDetails"
+              style="margin-top: 10px; background: #fff; border-radius: 8px; padding: 10px; text-align: left; font-size: 11.5px; line-height: 1.6; border: 1px solid #fee2e2;">
+            </div>
+            <button type="button" id="btnRetryVietQr" class="btn btn-secondary btn-sm"
+              style="margin-top: 10px; width: 100%; font-size: 12px;">
               🔄 Thử Tải Lại Mã QR
             </button>
           </div>
@@ -2125,6 +2187,23 @@
           </span>
         </div>
 
+        <!-- ESP32 Customer Display Status inside Modal -->
+        <div id="vietQrEsp32StatusBox"
+          style="margin-top: 10px; padding: 6px 12px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 12px; display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+          <span id="vietQrEsp32StatusText">📺 <b>Màn hình phụ:</b> <span id="vietQrEsp32State">Đang kiểm
+              tra...</span></span>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" id="btnVietQrConnectEsp32" class="btn btn-primary btn-sm"
+              style="padding: 2px 8px; font-size: 11px; font-weight: 700; display: none;"
+              onclick="connectEsp32UsbQuick()">🔌 Kết nối ngay</button>
+            <button type="button" id="btnVietQrRotateEsp32" class="btn btn-outline-secondary btn-sm"
+              style="padding: 2px 8px; font-size: 11px; font-weight: 600;" title="Xoay lật màn hình 180 độ" onclick="toggleRotateEsp32()">🔄 Xoay</button>
+            <button type="button" id="btnVietQrDisconnectEsp32" class="btn btn-outline-danger btn-sm"
+              style="padding: 2px 8px; font-size: 11px; font-weight: 600; display: none;"
+              onclick="disconnectEsp32UsbQuick()">Ngắt kết nối</button>
+          </div>
+        </div>
+
         <div id="vietQrSuccessBox" class="vietqr-status-success" style="display: none; margin-top: 14px; width: 100%;">
           <div style="font-size: 32px;">🎉</div>
           <div id="vietQrSuccessTitle" style="font-size: 16px; font-weight: 800; color: #15803d; margin-top: 4px;">✓ ĐÃ
@@ -2135,7 +2214,8 @@
       </div>
 
       <div class="modal-footer" style="display: flex; gap: 8px; width: 100%;">
-        <button class="btn btn-secondary" id="cancelVietQrModalBtn" data-close="vietQrModal" style="flex: 1;">Hủy Bỏ</button>
+        <button class="btn btn-secondary" id="cancelVietQrModalBtn" data-close="vietQrModal" style="flex: 1;">Hủy
+          Bỏ</button>
         <button class="btn btn-success" id="vietQrDoneBtn" style="flex: 2;">✓ Xác Nhận Thủ Công</button>
       </div>
     </div>
@@ -2195,7 +2275,7 @@
     <div class="image-lightbox-caption" id="lightboxCaption"></div>
   </div>
 
-  <script src="js/app.js?v=20260911_v12"></script>
+  <script src="js/app.js?v=20260913_v16"></script>
 </body>
 
 </html>
